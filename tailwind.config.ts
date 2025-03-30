@@ -1,11 +1,7 @@
 import type { Config } from "tailwindcss"
 
 const config = {
-    darkMode: ["class"],
     content: [
-        "./pages/**/*.{ts,tsx}",
-        "./components/**/*.{ts,tsx}",
-        "./app/**/*.{ts,tsx}",
         "./src/**/*.{ts,tsx}",
     ],
     prefix: "",
@@ -17,8 +13,17 @@ const config = {
                 "2xl": "1400px",
             },
         },
+        backgroundImage: {
+            "radial-gradient":
+            "radial-gradient(circle at 50% 40%, white ,black)",         
+        },
         extend: {
             colors: {
+                themeBlack: "#0909B",
+                themeGrey: "#27272A",
+                themeDarkGrey: "#27272A",
+                themeTextGrey: "#B4B0AE",
+                themeTextWhite: "#F7ECE9",
                 border: "hsl(var(--border))",
                 input: "hsl(var(--input))",
                 ring: "hsl(var(--ring))",

@@ -118,5 +118,24 @@ html{
 .radial--blur{
     -webkit-backdrop-filter: blur(100px);
     filter: blur(100px);
+    background: #877874;
+}
+
+@media only screen and (max-width: 800px){
+    .text-radial--circle {
+        background-image: radial-gradient(
+            circle farthest-side,
+            rgba(113,103,104,0.2) 20%,
+            black 70%
+        );
+        background-size: 100% 50%;
+        background-repeat: no-repeat;
+        background-position: top center;
+    }
+}
+
+.swiper-autoheight .swiper-slide{
+    height: 100% !important;
+    
 }
 
