@@ -16,8 +16,8 @@ export default function Home() {
             <div>
                 <CallToAction />
                 <DasboardSnippet />
+                <PricingSection />
             </div>
-            <PricingSection />
         </main>
     )
 }

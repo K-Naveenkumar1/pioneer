@@ -10,7 +10,7 @@ const DasboardSnippet = (props: Props) => {
             <Image
                 priority
                 src="/dashboard-snippet.png"
-                className="opacity-[0.95]"
+                className="opacity-[0.95] rounded-md"
                 alt="snippet"
                 sizes="100vw"
                 fill

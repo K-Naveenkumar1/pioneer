@@ -1,6 +1,6 @@
 import GlassSheet from "@/components/global/glass-sheet"
 import { Button } from "@/components/ui/button"
-import { LogOut, MenuIcon } from "lucide-react"
+import { LogInIcon, MenuIcon } from "lucide-react"
 import Link from "next/link"
 import Menu from "./menu"
 
@@ -15,7 +15,7 @@ const LandingPageNavbar = (props: Props) => {
           <Link href="/sign-in">
           <Button variant="outline"
           className="bg-themeBlack rounded-2xl flex gap-2 border-themeGrey hover:bg-themeGrey">
-            <LogOut />
+            <LogInIcon />
             Login
           </Button>
 

@@ -1,6 +1,6 @@
-import CreditCard from "@/icons/Credit"
-import Home from "@/icons/Home"
-import Explore from "@/icons/price"
+import { BsFillCreditCardFill } from "react-icons/bs";
+import { HiHome } from "react-icons/hi2";
+import { MdExplore } from "react-icons/md";
 
 export type MenuProps =  
  {
@@ -16,21 +16,21 @@ export const LANDING_PAGE_MENU:MenuProps[] =[
     {
         id:0,
         lable: "Home",
-        icon: <Home />,
+        icon: <HiHome />,
         path: "/",
         section: true,
     },
     {
         id:1,
         lable: "Pricing",
-        icon: <CreditCard />,
+        icon: <BsFillCreditCardFill />,
         path: "#pricing",
         section: true,
     },
     {
         id:1,
         lable: "Explore",
-        icon: <Explore />,
+        icon: <MdExplore />,
         path: "/explore",
     },
 

@@ -1,10 +1,62 @@
+import BackdropGradient from "@/components/global/backdrop-gradient"
+import GradientText from "@/components/global/gradient-text"
+import { Button } from "@/components/ui/button"
+import { Card, CardDescription, CardTitle } from "@/components/ui/card"
+import Link from "next/link"
+import { FaCheck } from "react-icons/fa"
 
 type Props = {}
 
-const PricingSection = (props: Props) => {
+export const PricingSection = (props: Props) => {
   return (
-    <div className="w-full pt-20"></div>
+    <div className="w-full pt-20 flex flex-col items-center gap-3" id="pricing">
+      <BackdropGradient className="w-8/12 h-full opacity-40 flex flex-col items-center">
+        <GradientText className="text-4xl font-semibold text-center " element="H2">
+          Pricing Plans That Fit Your Right
+        </GradientText>
+        <p className="text-sm md:text-center text-left text-muted-foreground text-gray-400">
+          Choose your according to your need and become a billionaire family
+          <br className="hidden md:block" />
+          collabrate, and cultivate meaningful relationships
+        </p>
+      </BackdropGradient>
+      <Card className="p-7 mt-10 md:w-auto w-full bg-themeBlack border-themeGrey">
+        <div className="flex flex-col gap-2">
+            <CardTitle>99/m</CardTitle>
+            <CardDescription className="text-gray-400">
+              Great if you're getting Started
+            </CardDescription>
+            <Link href="#" className="w-full mt-3">
+              <Button variant="default" className="bg-[#333337] w-full rounded-2xl text-white hover:text-[#333337]">
+                Start for free
+              </Button>
+            </Link>
+        </div>
+        <div className="flex flex-col gap-2 text-gray-400 mt-5">
+          <p>Features</p>
+            <span className="flex gap-2 mt-3 items-center">
+            <FaCheck />
+             Feature Number 1
+            </span>
+            <span className="flex gap-2 items-center">
+            <FaCheck />
+             Feature Number 2
+            </span>
+            <span className="flex gap-2 items-center">
+            <FaCheck />
+             Feature Number 3
+            </span>
+            <span className="flex gap-2 items-center">
+            <FaCheck />
+             Feature Number 4
+            </span>
+            <span className="flex gap-2 items-center">
+            <FaCheck />
+             Feature Number 5
+            </span>
+
+        </div>
+      </Card>
+    </div>
   )
 }
-
-export default PricingSection
