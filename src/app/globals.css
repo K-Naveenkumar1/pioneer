@@ -84,7 +84,7 @@ html{
     background-repeat: no-repeat;
 }
 
-.text-gradient{
+.text-gradiant{
     background: linear-gradient(to right,#4a4e58 , white,#716778);
     background-clip: text;
     -webkit-text-fill-color: transparent;
