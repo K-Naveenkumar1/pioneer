@@ -12,3 +12,57 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+modal user {
+  id    string   @id @default(dbgenerated("gen_random_uuid()
+  ")) @db.Uuid
+  firstname string
+  lastname string
+  createdAt DateTime @default(now())
+  clerkId string   @unique
+  image string?
+  stripeId string
+
+  group Group[]
+  membership Members[]
+  posts Post[]
+  likes Like[]
+  comments Comment[]
+  message Message[]
+}
+
+model Subscription {
+  id    String   @id @default(dbgenerated("gen_random_uuid()
+  ")) @db.Uuid
+  createdAt DateTime @default(now())
+  price Int?
+  active Boolean @default(false)
+  Group Group? @relation(fileds: [groupId], references:
+  [id], onDelete: Cascade)
+}
+
+modal Group {
+   id    String   @id @default(dbgenerated("gen_random_uuid()
+  ")) @db.Uuid
+  name String  @unique
+  category String 
+  thumbnail String?
+  description String?
+  gallery String[]
+  jsonDescription String?
+  htmlDescription String?
+  icon String?
+  member Members[]
+  channel Channel[]
+  privacy GROUP_PRIVACY @default(PRIVATE)
+  active Boolean @default(false)
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId],
+  references: [id],onDelete: Cascade)
+  userId  String @db.Uuid
+  courses  Course[]
+  affiliate Affiliate?
+  domain String?
+  subscription Subscription[]
+}
+

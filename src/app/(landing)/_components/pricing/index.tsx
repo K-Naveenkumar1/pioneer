@@ -12,7 +12,7 @@ export const PricingSection = (props: Props) => {
     <div className="w-full pt-20 flex flex-col items-center gap-3" id="pricing">
       <BackdropGradient className="w-8/12 h-full opacity-40 flex flex-col items-center">
         <GradientText className="text-4xl font-semibold text-center " element="H2">
-          Pricing Plans That Fit Your Right
+          Pricing Plans For Billionaires
         </GradientText>
         <p className="text-sm md:text-center text-left text-muted-foreground text-gray-400">
           Choose your according to your need and become a billionaire family
@@ -22,7 +22,7 @@ export const PricingSection = (props: Props) => {
       </BackdropGradient>
       <Card className="p-7 mt-10 md:w-auto w-full bg-themeBlack border-themeGrey">
         <div className="flex flex-col gap-2">
-            <CardTitle>99/m</CardTitle>
+            <CardTitle>₹ 99/m</CardTitle>
             <CardDescription className="text-gray-400">
               Great if you're getting Started
             </CardDescription>
