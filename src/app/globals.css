@@ -64,6 +64,7 @@ html{
     }
 }
 
+
 @layer base {
     * {
         @apply border-border;
@@ -120,6 +121,7 @@ html{
     filter: blur(100px);
     background: #877874;
 }
+
 
 @media only screen and (max-width: 800px){
     .text-radial--circle {
