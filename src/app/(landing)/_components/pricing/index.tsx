@@ -14,7 +14,7 @@ export const PricingSection = (props: Props) => {
         <GradientText className="text-4xl font-semibold text-center " element="H2">
           Pricing Plans For Billionaires
         </GradientText>
-        <p className="text-sm md:text-center text-left text-muted-foreground text-gray-400">
+        <p className="text-sm md:text-center text-center text-muted-foreground text-themeTextGrey">
           Choose your according to your need and become a billionaire family
           <br className="hidden md:block" />
           collabrate, and cultivate meaningful relationships
@@ -23,7 +23,7 @@ export const PricingSection = (props: Props) => {
       <Card className="p-7 mt-10 md:w-auto w-full bg-themeBlack border-themeGrey">
         <div className="flex flex-col gap-2">
             <CardTitle>₹ 99/m</CardTitle>
-            <CardDescription className="text-gray-400">
+            <CardDescription className="text-themeTextGrey">
               Great if you're getting Started
             </CardDescription>
             <Link href="#" className="w-full mt-3">
@@ -32,7 +32,7 @@ export const PricingSection = (props: Props) => {
               </Button>
             </Link>
         </div>
-        <div className="flex flex-col gap-2 text-gray-400 mt-5">
+        <div className="flex flex-col gap-2 text-themeTextGrey mt-5">
           <p>Features</p>
             <span className="flex gap-2 mt-3 items-center">
             <FaCheck />

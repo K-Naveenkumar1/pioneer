@@ -11,7 +11,7 @@ type Props = {}
 const SignInForm = (props: Props) => {
     const { isPending, onAuthenticateUser, register, errors } = useAuthSignIn()
   return (
-    <form className="flex flex-col gap-3 mt-10 " onSubmit={onAuthenticateUser}>
+    <form className="flex flex-col gap-3 mt-10 text-themeTextGrey" onSubmit={onAuthenticateUser}>
         {PIONEER_CONSTANTS.signInForm.map((field) => (
             <FormGenerator
                 {...field}
