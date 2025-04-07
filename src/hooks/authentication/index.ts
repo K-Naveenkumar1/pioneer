@@ -190,7 +190,7 @@ export const useGoogleAuth =() => {
             return signIn.authenticateWithRedirect({
                 strategy,
                 redirectUrl:"/callback",
-                redirectUrlComplete:"callback/sign-in",
+                redirectUrlComplete:"/callback/sign-in",
             })
         }catch (error) {
             console.error(error)
@@ -202,7 +202,7 @@ export const useGoogleAuth =() => {
             return signUp.authenticateWithRedirect({
                 strategy,
                 redirectUrl: "/callback",
-                redirectUrlComplete:"callback/sign-up",
+                redirectUrlComplete:"/callback/sign-up",
             })
         }catch (error) {
             console.error(error)

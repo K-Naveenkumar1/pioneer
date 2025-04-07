@@ -1,3 +1,4 @@
+import { onSignInUser } from "@/actions/auth"
 import { currentUser } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
 
@@ -13,5 +14,9 @@ const CompleteSignIn = async () => {
         return redirect(
         `/group/${authenticated.groupId}/channel/${authenticated.channelId}`,
     )
-    if(authenticated.status !== 200)
+    if(authenticated.status !== 200) {
+        redirect("/sign-in")
+    }
 }
+
+export default CompleteSignIn
