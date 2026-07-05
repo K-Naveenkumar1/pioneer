@@ -11,6 +11,9 @@ const CallToAction = (props: Props) => {
         <GradientText className="text-[35px] md:text-[40px] lg:text-[55px] xl:text-[70px] 2xl:text-[80px] leading-tight font-semibold" element="H1">
         Bringing Communities <br className="md:hidden"/>Together
         </GradientText>
+        <GradientText className="text-[35px] md:text-[40px] lg:text-[55px] xl:text-[70px] 2xl:text-[80px] leading-tight font-semibold" element="H1">
+        Every Students <br className="md:hidden"/>Deserve
+        </GradientText>
         <p className="text-sm md:text-center text-left text-muted-foreground text-themeTextGrey">
           Billionaire is vibrant online community platform that empowers
           people to connect, <br className="hidden md:block"/>{" "}

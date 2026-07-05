@@ -157,3 +157,10 @@ html{
     
 }
 
+/* Hide default browser reveal and clear buttons inside inputs (e.g., in Microsoft Edge) */
+input::-ms-reveal,
+input::-ms-clear {
+    display: none;
+}
+
+

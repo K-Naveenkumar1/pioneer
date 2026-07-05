@@ -1,7 +1,8 @@
+import ClerkClientProvider from "@/components/global/clerk-client-provider"
+import MobileBlocker from "@/components/global/mobile-blocker"
 import { ThemeProvider } from "@/components/theme"
 import { ReactQueryProvider } from "@/react-query/provider"
 import { ReduxProvider } from "@/redux/provider"
-import { ClerkProvider } from "@clerk/nextjs"
 import type { Metadata } from "next"
 import { Plus_Jakarta_Sans } from "next/font/google"
 import { Toaster } from "sonner"
@@ -11,8 +12,10 @@ const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
     title: "Billionaire",
-    description: "Luxury education at low price",
+    description: "Luxury education at affordable price",
 }
+
+export const dynamic = "force-dynamic"
 
 export default function RootLayout({
     children,
@@ -20,7 +23,7 @@ export default function RootLayout({
     children: React.ReactNode
 }>) {
     return (
-        <ClerkProvider>
+        <ClerkClientProvider>
             <html lang="en" suppressHydrationWarning>
                 <body className={`${jakarta.className} bg-black`}>
                     <ThemeProvider
@@ -29,12 +32,19 @@ export default function RootLayout({
                         disableTransitionOnChange
                     >
                         <ReduxProvider>
-                            <ReactQueryProvider>{children}</ReactQueryProvider>
+                            <ReactQueryProvider>
+                                <div className="block lg:hidden">
+                                    <MobileBlocker />
+                                </div>
+                                <div className="hidden lg:block min-h-screen">
+                                    {children}
+                                </div>
+                            </ReactQueryProvider>
                         </ReduxProvider>
                         <Toaster />
                     </ThemeProvider>
                 </body>
             </html>
-        </ClerkProvider>
+        </ClerkClientProvider>
     )
 }

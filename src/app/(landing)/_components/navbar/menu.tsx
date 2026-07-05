@@ -23,7 +23,7 @@ const Menu = ({orientation}: MenuProps) => {
                                 href={menuItem.path}
                                 onClick={menuItem.section ? () => onSetSection(menuItem.path) : undefined}
                                 className={cn(
-                                    "rounded-xl flex gap-2 py-4 px-4 items-center",
+                                    "rounded-xl flex gap-2 py-3 px-3 items-center",
                                     section == menuItem.path ? "bg-[#09090B] border-[#27272A]" : ""
                                 )}
                             >

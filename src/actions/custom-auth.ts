@@ -147,3 +147,19 @@ export async function getStudentUser() {
         return null
     }
 }
+
+/**
+ * Checks if a student roll number exists in the database.
+ */
+export async function checkRollNoAction(rollNo: string) {
+    try {
+        const student = await client.student.findUnique({
+            where: { rollNo: rollNo.trim() },
+            select: { id: true }
+        })
+        return { exists: !!student }
+    } catch (error) {
+        console.error("Check roll number error:", error)
+        return { exists: false, error: "Database error occurred" }
+    }
+}
