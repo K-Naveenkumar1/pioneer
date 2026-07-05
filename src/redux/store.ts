@@ -4,7 +4,7 @@ import { combineReducers, configureStore } from "@reduxjs/toolkit"
 import { TypedUseSelectorHook, useSelector } from "react-redux"
 
 const rootReducer = combineReducers({
-     
+     _placeholder: (state = null) => state
     //add all your reducers here
 })
 

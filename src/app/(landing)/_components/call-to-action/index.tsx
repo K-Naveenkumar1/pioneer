@@ -21,7 +21,7 @@ const CallToAction = (props: Props) => {
           <Button variant="outline" className="rounded-xl bg-transparent text-base border-themeGrey">
             Watch Demo
           </Button>
-          <Link href="/sign-in">
+          <Link href="/login">
           <Button className="rounded-xl text-base flex gap-2 w-full">
             <BadgePlus /> Get Started
           </Button>

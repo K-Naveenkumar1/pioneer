@@ -3,12 +3,12 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id        String  @id @default(uuid())
   firstname String
   lastname  String
   clerkId   String  @unique
@@ -24,21 +24,21 @@ model User {
 }
 
 model Subscription {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id        String   @id @default(uuid())
   createdAt DateTime @default(now())
   price     Int?
   active    Boolean  @default(false)
   Group     Group?   @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  groupId   String   @db.Uuid
+  groupId   String
 }
 
 model Group {
-  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id              String         @id @default(uuid())
   name            String         @unique
   category        String
   thumbnail       String?
   description     String?
-  gallery         String[]
+  gallery         String?
   JsonDescription String?
   htmlDescription String?
   icon            String?
@@ -48,7 +48,7 @@ model Group {
   active          Boolean        @default(false)
   createdAt       DateTime       @default(now())
   user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId          String         @db.Uuid
+  userId          String
   courses         Course[]
   affiliate       Affiliate?
   domain          String?
@@ -56,66 +56,66 @@ model Group {
 }
 
 model Members {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id        String   @id @default(uuid())
   User      User?    @relation(fields: [userId], references: [id])
-  userId    String?  @db.Uuid
+  userId    String?
   Group     Group?   @relation(fields: [groupId], references: [id])
-  groupId   String?  @db.Uuid
+  groupId   String?
   createdAt DateTime @default(now())
 
   @@index([userId, groupId])
 }
 
 model Post {
-  id          String    @id @db.Uuid
+  id          String    @id @default(uuid())
   createdAt   DateTime  @default(now())
   title       String?
   JsonContent String?
   htmlContent String?
   content     String
   author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  authorId    String    @db.Uuid
+  authorId    String
   likes       Like[]
   comments    Comment[]
   channel     Channel   @relation(fields: [channelId], references: [id], onDelete: Cascade)
-  channelId   String    @db.Uuid
+  channelId   String
 }
 
 model Like {
-  id        String   @id @db.Uuid
+  id        String   @id @default(uuid())
   createdAt DateTime @default(now())
   post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  postId    String   @db.Uuid
+  postId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String   @db.Uuid
+  userId    String
 }
 
 model Comment {
-  id        String    @id @db.Uuid
+  id        String    @id @default(uuid())
   createdAt DateTime  @default(now())
   content   String
   post      Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
-  postId    String    @db.Uuid
+  postId    String
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String    @db.Uuid
+  userId    String
   replied   Boolean?  @default(false)
   reply     Comment[] @relation(name: "CommentToComment")
   Comment   Comment?  @relation(name: "CommentToComment", fields: [commentId], references: [id])
-  commentId String?   @db.Uuid
+  commentId String?
 }
 
 model Channel {
-  id        String   @id @db.Uuid
+  id        String   @id @default(uuid())
   name      String
   icon      String
   posts     Post[]
   createdAt DateTime @default(now())
   Group     Group?   @relation(fields: [groupId], references: [id])
-  groupId   String?  @db.Uuid
+  groupId   String?
 }
 
 model Course {
-  id          String   @id @db.Uuid
+  id          String   @id @default(uuid())
   name        String
   thumbnail   String
   published   Boolean  @default(false)
@@ -123,49 +123,171 @@ model Course {
   description String
   createdAt   DateTime @default(now())
   Group       Group?   @relation(fields: [groupId], references: [id])
-  groupId     String?  @db.Uuid
+  groupId     String?
   modules     Module[]
 }
 
 model Module {
-  id        String    @id @db.Uuid
+  id        String    @id @default(uuid())
   Course    Course?   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  courseId  String?   @db.Uuid
+  courseId  String?
   title     String
   section   Section[]
   createdAt DateTime  @default(now())
 }
 
 model Section {
-  id          String   @id @db.Uuid
+  id          String   @id @default(uuid())
   name        String   @default("New Section")
   icon        String   @default("doc")
   complete    Boolean  @default(false)
   createdAt   DateTime @default(now())
   Module      Module?  @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  moduleId    String?  @db.Uuid
+  moduleId    String?
   content     String?
   htmlContent String?
   JsonContent String?
 }
 
 model Affiliate {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id        String   @id @default(uuid())
   Group     Group?   @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  groupId   String?  @unique @db.Uuid
+  groupId   String?  @unique
   createdAt DateTime @default(now())
 }
 
 model Message {
-  id         String   @id @db.Uuid
+  id         String   @id @default(uuid())
   message    String
   createdAt  DateTime @default(now())
   sender     User?    @relation(fields: [senderId], references: [id], onDelete: Cascade)
-  senderId   String?  @db.Uuid
-  receiverId String?  @db.Uuid
+  senderId   String?
+  receiverId String?
 }
 
 enum GROUP_PRIVACY {
   PUBLIC
   PRIVATE
+}
+
+// ==========================================
+// NEW MODELS FOR STUDENT EXAM & PRACTICE PLATFORM
+// ==========================================
+
+model Admin {
+  id       String @id @default(uuid())
+  username String @unique
+  password String // hashed password
+}
+
+model Student {
+  id           String           @id @default(uuid())
+  rollNo       String           @unique
+  name         String
+  password     String // hashed password
+  department   String?
+  isFirstLogin Boolean          @default(true)
+  isAllowedInClass Boolean      @default(false)
+  isAssignedWFH    Boolean      @default(false)
+  wfhDeadline      DateTime?
+  createdAt    DateTime         @default(now())
+  attendance   Attendance[]
+  submissions  TaskSubmission[]
+  attempts     ExamAttempt[]
+  notes        Note[]
+  classId      String?
+  class        Class?           @relation(fields: [classId], references: [id], onDelete: SetNull)
+}
+
+model Class {
+  id                 String    @id @default(uuid())
+  name               String    @unique
+  students           Student[]
+  noTaskDeclarations NoTaskDeclaration[]
+  createdAt          DateTime  @default(now())
+}
+
+model Note {
+  id        String   @id @default(uuid())
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  content   String   @db.Text
+  date      String   // yyyy-mm-dd format
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([studentId, date])
+}
+
+model Attendance {
+  id        String    @id @default(uuid())
+  studentId String
+  student   Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  checkIn   DateTime
+  checkOut  DateTime?
+  date      String    // yyyy-mm-dd format
+  type      String    @default("CLASS") // CLASS or WFH
+}
+
+model Task {
+  id          String           @id @default(uuid())
+  title       String
+  description String           @db.Text
+  createdAt   DateTime         @default(now())
+  submissions TaskSubmission[]
+}
+
+model TaskSubmission {
+  id          String   @id @default(uuid())
+  taskId      String
+  task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  content     String   @db.Text
+  submittedAt DateTime @default(now())
+  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED
+}
+
+model Exam {
+  id        String         @id @default(uuid())
+  title     String
+  duration  Int            // in minutes
+  createdAt DateTime       @default(now())
+  questions ExamQuestion[]
+  attempts  ExamAttempt[]
+}
+
+model ExamQuestion {
+  id            String @id @default(uuid())
+  examId        String
+  exam          Exam   @relation(fields: [examId], references: [id], onDelete: Cascade)
+  questionText  String @db.Text
+  optionA       String @db.Text
+  optionB       String @db.Text
+  optionC       String @db.Text
+  optionD       String @db.Text
+  correctAnswer String // A, B, C, or D
+}
+
+model ExamAttempt {
+  id          String    @id @default(uuid())
+  examId      String
+  exam        Exam      @relation(fields: [examId], references: [id], onDelete: Cascade)
+  studentId   String
+  student     Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  score       Int
+  answers     String    @db.Text // JSON string of selected answers
+  warnings    Int       @default(0)
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+}
+
+model NoTaskDeclaration {
+  id        String   @id @default(uuid())
+  date      String   // yyyy-mm-dd
+  classId   String
+  class     Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([date, classId])
 }

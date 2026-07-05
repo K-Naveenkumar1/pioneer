@@ -12,7 +12,7 @@ const LandingPageNavbar = (props: Props) => {
         <p className="font-bold text-2xl">Billionaire.</p>
         <Menu orientation="desktop"/>
         <div className="flex gap-2">
-          <Link href="/sign-in">
+          <Link href="/login">
           <Button variant="outline"
           className="bg-themeBlack rounded-2xl flex gap-2 border-themeGrey hover:bg-themeGrey">
             <LogInIcon />

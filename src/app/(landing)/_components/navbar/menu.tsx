@@ -17,21 +17,20 @@ const Menu = ({orientation}: MenuProps) => {
             return (
                 <Card className="bg-themeGrey border-themeGrey bg-clip-padding backdrop--blur_safari backdrop-filter backdrop-blur-2xl bg-opacity-60 p-1 lg:flex hidden rounded-xl">
                     <CardContent className="p-0 flex gap-2">
-                        {PIONEER_CONSTANTS.LandingPageMenu.map((menuItem) =>
-                        (
+                        {PIONEER_CONSTANTS.LandingPageMenu.map((menuItem) => (
                             <Link
-                            href={menuItem.path}
-                            {...(menuItem.section && {
-                                onClick: () => onSetSection(menuItem.path),
-                            })}
-                            className={cn(
-                                "rounded-xl flex gap-2 py-4 px-4 items-center",
-                                section == menuItem.path ? "bg-[#09090B] border-[#27272A]"
-                                : "",  
-                            )}
-                            key={menuItem.id}>
-                                {section == menuItem.path && menuItem.icon}
-                                {menuItem.lable}
+                                key={menuItem.id}
+                                href={menuItem.path}
+                                onClick={menuItem.section ? () => onSetSection(menuItem.path) : undefined}
+                                className={cn(
+                                    "rounded-xl flex gap-2 py-4 px-4 items-center",
+                                    section == menuItem.path ? "bg-[#09090B] border-[#27272A]" : ""
+                                )}
+                            >
+                                <>
+                                    {section == menuItem.path && menuItem.icon}
+                                    {menuItem.lable}
+                                </>
                             </Link>
                         ))}
                     </CardContent>
@@ -39,23 +38,24 @@ const Menu = ({orientation}: MenuProps) => {
             )
         case "mobile":
             return (
-            <div className="flex flex-col mt-10">
-                {PIONEER_CONSTANTS.LandingPageMenu.map
-                ((menuItem) => (
-                    <Link href={menuItem.path}
-                    {...(menuItem.section &&{ onClick: () => onSetSection(menuItem.path),
-
-                    })}
-                    className={cn(
-                        "rounded-xl flex gap-2 py-2 px-4 items-center",
-                        section == menuItem.path ? "bg-themeGrey border-[#27272A]" : "",
-                    )}
-                    key={menuItem.id}>
-                        {menuItem.icon}
-                        {menuItem.lable}
-                    </Link>
-                ))}
-            </div>
+                <div className="flex flex-col mt-10">
+                    {PIONEER_CONSTANTS.LandingPageMenu.map((menuItem) => (
+                        <Link
+                            key={menuItem.id}
+                            href={menuItem.path}
+                            onClick={menuItem.section ? () => onSetSection(menuItem.path) : undefined}
+                            className={cn(
+                                "rounded-xl flex gap-2 py-2 px-4 items-center",
+                                section == menuItem.path ? "bg-themeGrey border-[#27272A]" : ""
+                            )}
+                        >
+                            <>
+                                {menuItem.icon}
+                                {menuItem.lable}
+                            </>
+                        </Link>
+                    ))}
+                </div>
             )
         default:
             return <></>
