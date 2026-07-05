@@ -13,7 +13,8 @@ import {
     MoreVertical,
     Clock,
     FileText,
-    Trophy
+    Trophy,
+    MessageSquare
 } from "lucide-react"
 import { logoutAction } from "@/actions/custom-auth"
 import { toast } from "sonner"
@@ -68,6 +69,11 @@ const data = {
           title: "Leaderboard",
           url: "/student/leaderboard",
           icon: Trophy,
+        },
+        {
+          title: "Doubts Chat",
+          url: "/student/chat",
+          icon: MessageSquare,
         },
       ],
     },

@@ -5,6 +5,7 @@ generator client {
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
+  relationMode = "prisma"
 }
 
 model User {
@@ -100,7 +101,7 @@ model Comment {
   userId    String
   replied   Boolean?  @default(false)
   reply     Comment[] @relation(name: "CommentToComment")
-  Comment   Comment?  @relation(name: "CommentToComment", fields: [commentId], references: [id])
+  Comment   Comment?  @relation(name: "CommentToComment", fields: [commentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   commentId String?
 }
 
@@ -195,6 +196,7 @@ model Student {
   submissions  TaskSubmission[]
   attempts     ExamAttempt[]
   notes        Note[]
+  messages     StudentMessage[]
   classId      String?
   class        Class?           @relation(fields: [classId], references: [id], onDelete: SetNull)
 }
@@ -291,3 +293,12 @@ model NoTaskDeclaration {
 
   @@unique([date, classId])
 }
+
+model StudentMessage {
+  id        String   @id @default(uuid())
+  message   String   @db.Text
+  createdAt DateTime @default(now())
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
