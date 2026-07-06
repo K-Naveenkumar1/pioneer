@@ -160,7 +160,7 @@ export default function StudentExamsPage() {
                                 </div>
                             </div>
 
-                            <div className="bg-zinc-950 border border-themeGrey/60 rounded-xl p-5 space-y-3.5 text-xs text-themeTextWhite">
+                            <div className="bg-[#121212] border border-themeGrey/60 rounded-xl p-5 space-y-3.5 text-xs text-themeTextWhite">
                                 <h4 className="font-bold text-red-400 uppercase tracking-wider text-[10px]">
                                     Lockdown Rules & Instructions
                                 </h4>

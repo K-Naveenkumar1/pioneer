@@ -8,9 +8,11 @@ import {
     Check, 
     AlertCircle, 
     ShieldCheck, 
-    LockKeyhole 
+    LockKeyhole,
+    UploadCloud
 } from "lucide-react"
 import { toast } from "sonner"
+import * as XLSX from "xlsx"
 
 import GlassCard from "@/components/global/glass-card"
 import { Button } from "@/components/ui/button"
@@ -21,7 +23,8 @@ import {
     adminAssignWFHAction,
     adminCreateClassAction,
     adminGetClassesAction,
-    adminUpdateStudentAction
+    adminUpdateStudentAction,
+    adminBatchCreateStudentsAction
 } from "@/actions/admin-actions"
 
 export default function AdminStudentsPage() {
@@ -29,11 +32,11 @@ export default function AdminStudentsPage() {
     const [classes, setClasses] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const [isPending, startTransition] = useTransition()
+    const [importing, setImporting] = useState(false)
 
     // Form inputs
     const [rollNo, setRollNo] = useState("")
     const [name, setName] = useState("")
-    const [tempPassword, setTempPassword] = useState("")
     const [selectedClassId, setSelectedClassId] = useState("")
     const [newClassName, setNewClassName] = useState("")
 
@@ -100,25 +103,84 @@ export default function AdminStudentsPage() {
 
     const handleCreateStudent = (e: React.FormEvent) => {
         e.preventDefault()
-        if (!rollNo.trim() || !name.trim() || !tempPassword.trim()) {
-            toast.error("Please fill in all inputs.")
+        if (!rollNo.trim() || !name.trim()) {
+            toast.error("Please fill in roll number and name.")
             return
         }
 
         startTransition(async () => {
-            const res = await adminCreateStudentAction(rollNo, name, tempPassword, selectedClassId)
+            const res = await adminCreateStudentAction(rollNo, name, undefined, selectedClassId)
             if (res.success) {
                 toast.success(res.message || "Student created successfully.")
                 // Reset form
                 setRollNo("")
                 setName("")
-                setTempPassword("")
                 setSelectedClassId("")
                 loadStudents()
             } else {
                 toast.error(res.error || "Failed to create student")
             }
         })
+    }
+
+    const handleExcelUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || e.target.files.length === 0) return
+
+        const file = e.target.files[0]
+        setImporting(true)
+
+        const reader = new FileReader()
+        reader.onload = async (evt) => {
+            try {
+                const bstr = evt.target?.result
+                const wb = XLSX.read(bstr, { type: 'binary' })
+                const wsname = wb.SheetNames[0]
+                const ws = wb.Sheets[wsname]
+                const data = XLSX.utils.sheet_to_json<any>(ws)
+
+                if (data.length === 0) {
+                    toast.error("The selected Excel file is empty.")
+                    setImporting(false)
+                    return
+                }
+
+                // Map excel columns case-insensitively
+                const mapped = data.map((row: any) => {
+                    const keys = Object.keys(row)
+                    const nameKey = keys.find(k => k.toLowerCase() === "name")
+                    const rollKey = keys.find(k => k.toLowerCase() === "rollno" || k.toLowerCase() === "roll no" || k.toLowerCase() === "rollnumber" || k.toLowerCase() === "roll")
+                    const classKey = keys.find(k => k.toLowerCase() === "class" || k.toLowerCase() === "batch")
+
+                    return {
+                        name: nameKey ? String(row[nameKey]).trim() : "",
+                        rollNo: rollKey ? String(row[rollKey]).trim() : "",
+                        className: classKey ? String(row[classKey]).trim() : ""
+                    }
+                }).filter(s => s.name && s.rollNo)
+
+                if (mapped.length === 0) {
+                    toast.error("No valid student rows found. Make sure columns 'Name' and 'RollNo' exist.")
+                    setImporting(false)
+                    return
+                }
+
+                startTransition(async () => {
+                    const res = await adminBatchCreateStudentsAction(mapped)
+                    if (res.success) {
+                        toast.success(res.message || "Students imported successfully.")
+                        loadStudents()
+                    } else {
+                        toast.error(res.error || "Failed to import students.")
+                    }
+                })
+            } catch (err: any) {
+                toast.error("Failed to parse Excel file: " + err.message)
+            } finally {
+                setImporting(false)
+                e.target.value = "" // reset input
+            }
+        }
+        reader.readAsBinaryString(file)
     }
 
     const handleCreateClass = (e: React.FormEvent) => {
@@ -232,23 +294,6 @@ export default function AdminStudentsPage() {
 
                             <div>
                                 <label className="block text-xs font-semibold text-themeTextGrey uppercase mb-2">
-                                    Temporary Password
-                                </label>
-                                <input
-                                    type="text"
-                                    required
-                                    placeholder="Min 6 characters"
-                                    value={tempPassword}
-                                    onChange={(e) => setTempPassword(e.target.value)}
-                                    className="w-full px-4 py-3 bg-black/40 border border-themeGrey rounded-xl text-white placeholder-themeTextGrey focus:outline-none focus:ring-2 focus:ring-white/20 transition-all text-sm"
-                                />
-                                <p className="text-[10px] text-themeTextGrey mt-1">
-                                    The student will be prompted to reset this password on their first login.
-                                </p>
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-semibold text-themeTextGrey uppercase mb-2">
                                     Assign Class/Batch
                                 </label>
                                 <select
@@ -265,6 +310,10 @@ export default function AdminStudentsPage() {
                                 </select>
                             </div>
 
+                            <p className="text-[10px] text-themeTextGrey leading-normal">
+                                * The student's default login password will be automatically set to their **Roll Number**. They will be prompted to reset it on their first login.
+                            </p>
+
                             <Button
                                 type="submit"
                                 disabled={isPending}
@@ -274,6 +323,36 @@ export default function AdminStudentsPage() {
                             </Button>
                         </form>
                     </GlassCard>
+
+                    {/* Import from Excel Section */}
+                    <div className="space-y-6 pt-4">
+                        <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                            <UploadCloud size={18} /> Import Students (Excel)
+                        </h3>
+                        <GlassCard className="p-6 border border-themeGrey space-y-4">
+                            <div className="border border-dashed border-themeGrey rounded-2xl bg-black/30 p-6 text-center hover:bg-black/50 transition-all relative cursor-pointer">
+                                <input
+                                    type="file"
+                                    accept=".xlsx, .xls"
+                                    onChange={handleExcelUpload}
+                                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                    disabled={importing || isPending}
+                                />
+                                <div className="space-y-2">
+                                    <UploadCloud size={28} className="mx-auto text-themeTextGrey" />
+                                    <div className="text-xs text-themeTextWhite font-semibold">
+                                        {importing ? "Processing Excel File..." : "Select Excel File (.xlsx)"}
+                                    </div>
+                                    <div className="text-[10px] text-themeTextGrey font-mono">
+                                        Required columns: Name, RollNo, Class
+                                    </div>
+                                </div>
+                            </div>
+                            <p className="text-[10px] text-themeTextGrey leading-relaxed">
+                                Automatically registers all students. If a class in the sheet doesn't exist, it will be automatically created. Default passwords are set to the students' roll numbers.
+                            </p>
+                        </GlassCard>
+                    </div>
 
                     {/* Manage Classes Section */}
                     <div className="space-y-6 pt-4">

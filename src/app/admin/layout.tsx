@@ -29,8 +29,8 @@ export default async function AdminLayout({ children }: Props) {
                 <div className="flex flex-col gap-8">
                     {/* Brand logo */}
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-white rounded-lg text-black">
-                            <Shield size={22} />
+                        <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-white">
+                            <div className="size-3.5 rounded-full bg-black" />
                         </div>
                         <div>
                             <h2 className="font-extrabold text-lg tracking-tight">Navedx.</h2>

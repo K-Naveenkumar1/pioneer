@@ -1,11 +1,11 @@
 "use client"
 
-import React, { useEffect, useRef, useState, useTransition } from "react"
-import { Send, MessageSquare, Clock, User, ArrowDown } from "lucide-react"
-import { toast } from "sonner"
-import { getStudentChatMessagesAction, sendStudentChatMessageAction } from "@/actions/student-chat-actions"
 import { getStudentUser } from "@/actions/custom-auth"
+import { getStudentChatMessagesAction, sendStudentChatMessageAction } from "@/actions/student-chat-actions"
 import { Button } from "@/components/ui/button"
+import { ArrowDown, Clock, MessageSquare, Send, User } from "lucide-react"
+import React, { useEffect, useRef, useState, useTransition } from "react"
+import { toast } from "sonner"
 
 interface Message {
   id: string
@@ -129,14 +129,14 @@ export default function StudentChatPage() {
         <div className="space-y-6 flex flex-col h-[calc(100vh-12rem)] max-w-5xl mx-auto">
             {/* Header Description */}
             <div className="flex-shrink-0">
-                <h1 className="text-4xl font-extrabold tracking-tight text-white pb-2 flex items-center gap-2">
-                    <MessageSquare className="text-indigo-400" /> Doubts Discussion
+                <h1 className="text-5xl font-extrabold tracking-tight text-white pb-2 flex items-center gap-2">
+                    Doubts Discussion
                 </h1>
                 <p className="text-sm text-zinc-400">Collaborative workspace to ask doubts, share insights, and discuss code with all other students.</p>
             </div>
 
             {/* Chat Container Box */}
-            <div className="flex-1 bg-zinc-950/60 border border-zinc-800/80 rounded-2xl flex flex-col overflow-hidden relative shadow-2xl backdrop-blur-md">
+            <div className="flex-1 bg-[#121212] border border-zinc-800/80 rounded-2xl flex flex-col overflow-hidden relative shadow-lg">
                 {/* Message Feed */}
                 <div 
                     ref={feedRef}
@@ -217,7 +217,7 @@ export default function StudentChatPage() {
                 {/* Chat Input Bar */}
                 <form 
                     onSubmit={handleSendMessage} 
-                    className="flex-shrink-0 p-4 border-t border-zinc-800/80 bg-zinc-950/80 flex items-center gap-3"
+                    className="flex-shrink-0 p-4 border-t border-zinc-800/80 bg-[#121212] flex items-center gap-3"
                 >
                     <input
                         type="text"

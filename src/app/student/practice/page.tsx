@@ -247,7 +247,7 @@ export default function StudentPracticePage() {
                         <p className="text-xs text-themeTextGrey">Secure learning environment guidelines</p>
                     </div>
 
-                    <div className="text-left bg-zinc-950/60 p-5 rounded-2xl border border-themeGrey/60 space-y-3.5 text-xs text-themeTextGrey leading-relaxed">
+                    <div className="text-left bg-[#121212] p-5 rounded-2xl border border-themeGrey/60 space-y-3.5 text-xs text-themeTextGrey leading-relaxed">
                         <p className="font-bold text-white flex items-center gap-1.5 mb-1 text-sm">
                             <ShieldAlert size={16} className="text-amber-400" />
                             Lockdown Rules & Instructions:
@@ -427,7 +427,7 @@ export default function StudentPracticePage() {
                     </GlassCard>
 
                     {/* Stdout/Stderr Terminal Output */}
-                    <GlassCard className="border border-themeGrey flex flex-col flex-1 bg-zinc-950/80 overflow-hidden">
+                    <GlassCard className="border border-themeGrey flex flex-col flex-1 bg-[#121212] overflow-hidden">
                         {/* Terminal Header */}
                         <div className="bg-black/60 px-4 py-3 border-b border-themeGrey/60 flex items-center justify-between shrink-0">
                             <span className="text-xs font-semibold text-themeTextGrey uppercase tracking-wider flex items-center gap-1.5">

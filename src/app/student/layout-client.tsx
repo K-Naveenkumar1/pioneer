@@ -67,7 +67,7 @@ export default function StudentLayoutClient({ student, children }: Props) {
             <SidebarWrapper>
                 <StudentSidebar student={student} />
             </SidebarWrapper>
-            <SidebarInset className="bg-black text-white">
+            <SidebarInset className="bg-black text-white text-radial--circle">
                 <header className="flex h-16 shrink-0 items-center gap-2 px-4 border-b border-zinc-800/40">
                     <SidebarTrigger className="-ml-1 text-zinc-400 hover:text-white" />
                     <Separator orientation="vertical" className="mr-2 h-4 bg-zinc-800" />

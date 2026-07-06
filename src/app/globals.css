@@ -179,23 +179,26 @@ h1 svg {
     -webkit-text-fill-color: initial !important;
 }
 
-/* Premium Glassmorphism Effect */
+/* Solid dark gray design for cards */
 .glass-effect {
-    background: rgba(39, 39, 42, 0.25) !important; /* refined transparency */
-    -webkit-backdrop-filter: blur(20px) !important;
-    backdrop-filter: blur(20px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37) !important;
+    background: #121212 !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    border: 1px solid rgba(39, 39, 42, 0.8) !important; /* matches border-zinc-800/80 */
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.37), 0 4px 6px -4px rgba(0, 0, 0, 0.37) !important; /* matches shadow-lg */
 }
 
-/* Glassmorphism sidebar for floating variant */
+/* Solid dark gray sidebar for floating variant to match cards */
 .group[data-variant="floating"] [data-sidebar="sidebar"] {
-    background: rgba(39, 39, 42, 0.25) !important;
-    -webkit-backdrop-filter: blur(20px) !important;
-    backdrop-filter: blur(20px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37) !important;
+    background: #121212 !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    border: 1px solid rgba(39, 39, 42, 0.8) !important; /* matches border-zinc-800/80 */
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.37), 0 4px 6px -4px rgba(0, 0, 0, 0.37) !important; /* matches shadow-lg */
+    border-radius: 1rem !important; /* Matches rounded-2xl */
 }
+
+
 
 
 

@@ -1,37 +1,7 @@
 "use client"
 
-import React, { useTransition } from "react"
-import { usePathname, useRouter } from "next/navigation"
-import Link from "next/link"
-import { 
-    LayoutDashboard, 
-    CheckSquare, 
-    BookOpen, 
-    Code, 
-    LogOut,
-    GraduationCap,
-    MoreVertical,
-    Clock,
-    FileText,
-    Trophy,
-    MessageSquare
-} from "lucide-react"
 import { logoutAction } from "@/actions/custom-auth"
-import { toast } from "sonner"
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
-  SidebarGroup,
-  useSidebar,
-} from "@/components/ui/sidebar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,7 +10,36 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
+  useSidebar,
+} from "@/components/ui/sidebar"
+import {
+  BookOpen,
+  CheckSquare,
+  Clock,
+  Code,
+  FileText,
+  LayoutDashboard,
+  LogOut,
+  MessageSquare,
+  MoreVertical,
+  Trophy
+} from "lucide-react"
+import Link from "next/link"
+import { usePathname, useRouter } from "next/navigation"
+import React, { useTransition } from "react"
+import { toast } from "sonner"
 
 interface StudentSidebarProps {
   student: {
@@ -135,11 +134,11 @@ export function StudentSidebar({ student, ...props }: StudentSidebarProps & Reac
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link href="/student/dashboard">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-white text-black">
-                  <GraduationCap className="size-4" />
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-white">
+                  <div className="size-7 rounded-full bg-black" />
                 </div>
-                <div className="flex flex-col gap-0.5 leading-none">
-                  <span className="font-bold text-sm text-white">Billionaire.</span>
+                <div className="flex flex-col leading-none">
+                  <span className="font-bold text-[19px] text-white">Billionaire.</span>
                   <span className="text-[10px] text-white/90">Student Portal</span>
                 </div>
               </Link>

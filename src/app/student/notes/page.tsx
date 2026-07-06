@@ -180,13 +180,13 @@ export default function StudentNotesPage() {
             {/* Notes Grid Workspace */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Notes Calendar Card */}
-                <div className="bg-zinc-950 border border-zinc-800 rounded-xl shadow-sm p-6 flex flex-col justify-between overflow-hidden relative col-span-1">
+                <div className="bg-[#121212] border border-zinc-800/80 rounded-2xl shadow-lg p-6 flex flex-col justify-between overflow-hidden relative col-span-1 hover:border-zinc-700/80 transition-all duration-300">
                     <div className="h-full flex flex-col justify-between gap-4">
                         <div>
                             <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5 mb-4">
                                 <CalendarIcon size={14} /> Notes Calendar
                             </span>
-                            <div className="flex justify-center bg-black/20 rounded-2xl p-2 border border-zinc-800">
+                            <div className="flex justify-center bg-black/20 rounded-2xl p-2 border border-zinc-800/80">
                                 <Calendar
                                     mode="single"
                                     selected={selectedDate}
@@ -205,7 +205,7 @@ export default function StudentNotesPage() {
                             <Button
                                 onClick={handleDownloadAllNotes}
                                 variant="outline"
-                                className="w-full h-11 border border-zinc-800 bg-zinc-950/40 hover:bg-zinc-900 text-zinc-300 rounded-xl flex items-center justify-center gap-2 text-xs font-semibold transition-all mt-4"
+                                className="w-full h-11 border border-zinc-800/80 bg-zinc-950/40 hover:bg-zinc-900 text-zinc-300 rounded-xl flex items-center justify-center gap-2 text-xs font-semibold transition-all mt-4"
                             >
                                 <DownloadIcon size={14} />
                                 Download All Notes (.txt)
@@ -215,7 +215,7 @@ export default function StudentNotesPage() {
                 </div>
 
                 {/* Notes Editor Card */}
-                <div className="bg-zinc-950 border border-zinc-800 rounded-xl shadow-sm p-6 flex flex-col justify-between overflow-hidden relative lg:col-span-2 min-h-[420px]">
+                <div className="bg-[#121212] border border-zinc-800/80 rounded-2xl shadow-lg p-6 flex flex-col justify-between overflow-hidden relative lg:col-span-2 min-h-[420px] hover:border-zinc-700/80 transition-all duration-300">
                     <div className="flex flex-col h-full gap-4 flex-1">
                         {/* Editor Header */}
                         <div className="flex justify-between items-center">

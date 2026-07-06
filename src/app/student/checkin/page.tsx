@@ -20,6 +20,29 @@ import {
 } from "@/actions/student-actions"
 import { Button } from "@/components/ui/button"
 
+const FlipDigit = ({ val }: { val: string }) => {
+    return (
+        <div className="relative w-10 h-16 md:w-14 md:h-20 bg-[#1c1c1e] border border-zinc-805/85 rounded-xl flex items-center justify-center select-none shadow-[inset_0_1px_3px_rgba(255,255,255,0.05),0_4px_6px_-1px_rgba(0,0,0,0.5)]">
+            <span className="text-3xl md:text-5xl font-black font-mono text-zinc-200">
+                {val}
+            </span>
+            {/* Divider line across the center */}
+            <div className="absolute inset-x-0 top-1/2 h-[1px] bg-black/60" />
+        </div>
+    )
+}
+
+const FlipSeparator = () => {
+    return (
+        <div className="relative w-6 h-16 md:w-8 md:h-20 bg-[#1c1c1e] border border-zinc-805/85 rounded-xl flex items-center justify-center select-none shadow-[inset_0_1px_3px_rgba(255,255,255,0.05),0_4px_6px_-1px_rgba(0,0,0,0.5)]">
+            <span className="text-2xl md:text-4xl font-bold font-mono text-zinc-400">
+                :
+            </span>
+            <div className="absolute inset-x-0 top-1/2 h-[1px] bg-black/60" />
+        </div>
+    )
+}
+
 export default function StudentCheckInPage() {
     const [isCheckedIn, setIsCheckedIn] = useState(false)
     const [activeRecord, setActiveRecord] = useState<any>(null)
@@ -132,7 +155,7 @@ export default function StudentCheckInPage() {
             {/* Attendance Workspace Card */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Timer Control Card */}
-                <div className="bg-zinc-950 border border-zinc-800 rounded-xl shadow-sm p-6 lg:col-span-2 flex flex-col justify-between overflow-hidden relative min-h-[300px]">
+                <div className="bg-[#121212] border border-zinc-800/80 rounded-2xl shadow-lg p-6 lg:col-span-2 flex flex-col justify-between overflow-hidden relative min-h-[300px] hover:border-zinc-700/80 transition-all duration-300">
                     <div className="flex justify-between items-start z-10">
                         <div>
                             <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -174,14 +197,21 @@ export default function StudentCheckInPage() {
 
                     {/* Elapsed Clock View */}
                     <div ref={clockRef} className="my-6 flex flex-col items-center justify-center relative z-10">
-                        <span className="text-xs text-zinc-400 uppercase tracking-widest font-semibold mb-1">
+                        <span className="text-xs text-zinc-400 uppercase tracking-widest font-semibold mb-3">
                             Session Duration
                         </span>
-                        <span className="text-5xl md:text-6xl font-black font-mono tracking-wider text-white select-none">
-                            {elapsedTime}
-                        </span>
+                        
+                        <div className="flex items-center gap-1.5 md:gap-2">
+                            {elapsedTime.split("").map((char, idx) => {
+                                if (char === ":") {
+                                    return <FlipSeparator key={idx} />
+                                }
+                                return <FlipDigit key={idx} val={char} />
+                            })}
+                        </div>
+
                         {isCheckedIn && (
-                            <span className="flex h-2.5 w-2.5 items-center justify-center mt-3">
+                            <span className="flex h-2.5 w-2.5 items-center justify-center mt-4">
                                 <span className="absolute inline-flex h-2.5 w-2.5 animate-ping rounded-full bg-emerald-400 opacity-75"></span>
                                 <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
                             </span>
@@ -230,7 +260,7 @@ export default function StudentCheckInPage() {
                 </div>
 
                 {/* Today's Activity Log */}
-                <div className="bg-zinc-950 border border-zinc-800 rounded-xl shadow-sm p-6 flex flex-col justify-between h-full min-h-[300px]">
+                <div className="bg-[#121212] border border-zinc-800/80 rounded-2xl shadow-lg p-6 flex flex-col justify-between h-full min-h-[300px] hover:border-zinc-700/80 transition-all duration-300">
                     <div className="h-full flex flex-col justify-between">
                         <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5 mb-4">
                             <Clock size={14} className="text-indigo-400" /> Today's Activity Log

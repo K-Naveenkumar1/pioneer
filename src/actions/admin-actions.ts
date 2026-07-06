@@ -8,29 +8,34 @@ import mammoth from "mammoth"
 /**
  * Creates a new student credentials profile.
  */
-export async function adminCreateStudentAction(rollNo: string, name: string, tempPassword: string, classId?: string) {
+export async function adminCreateStudentAction(rollNo: string, name: string, tempPassword?: string, classId?: string) {
     try {
         const admin = await getAdminUser()
         if (!admin) return { success: false, error: "Unauthorized" }
 
-        if (!rollNo.trim() || !name.trim() || !tempPassword.trim()) {
+        const cleanRoll = rollNo.trim()
+        const cleanName = name.trim()
+
+        if (!cleanRoll || !cleanName) {
             return { success: false, error: "Missing required fields" }
         }
 
+        const passwordToHash = (tempPassword && tempPassword.trim()) ? tempPassword.trim() : cleanRoll
+
         // Check if student rollNo already exists
         const existingStudent = await client.student.findUnique({
-            where: { rollNo: rollNo.trim() }
+            where: { rollNo: cleanRoll }
         })
 
         if (existingStudent) {
-            return { success: false, error: `Roll number ${rollNo} is already registered.` }
+            return { success: false, error: `Roll number ${cleanRoll} is already registered.` }
         }
 
         const student = await client.student.create({
             data: {
-                rollNo: rollNo.trim(),
-                name: name.trim(),
-                password: hashPassword(tempPassword.trim()),
+                rollNo: cleanRoll,
+                name: cleanName,
+                password: hashPassword(passwordToHash),
                 isFirstLogin: true,
                 classId: classId && classId.trim() !== "" ? classId.trim() : null
             }
@@ -39,6 +44,83 @@ export async function adminCreateStudentAction(rollNo: string, name: string, tem
         return { success: true, message: `Student profile ${student.rollNo} created successfully!` }
     } catch (e: any) {
         return { success: false, error: e.message || "Failed to create student profile" }
+    }
+}
+
+/**
+ * Creates multiple students in a transaction, auto-creating classes if they don't exist.
+ */
+export async function adminBatchCreateStudentsAction(
+    studentsList: { name: string; rollNo: string; className?: string }[]
+) {
+    try {
+        const admin = await getAdminUser()
+        if (!admin) return { success: false, error: "Unauthorized" }
+
+        if (!studentsList || studentsList.length === 0) {
+            return { success: false, error: "Empty student list" }
+        }
+
+        const results = await client.$transaction(async (tx) => {
+            const createdStudents = []
+            const skippedStudents = []
+
+            for (const item of studentsList) {
+                const cleanName = item.name?.toString().trim()
+                const cleanRoll = item.rollNo?.toString().trim()
+                const cleanClass = item.className?.toString().trim()
+
+                if (!cleanName || !cleanRoll) {
+                    continue
+                }
+
+                // Check if student already exists
+                const existing = await tx.student.findUnique({
+                    where: { rollNo: cleanRoll }
+                })
+
+                if (existing) {
+                    skippedStudents.push(cleanRoll)
+                    continue
+                }
+
+                let classId: string | null = null
+                if (cleanClass) {
+                    // Find or create class
+                    let cls = await tx.class.findUnique({
+                        where: { name: cleanClass }
+                    })
+                    if (!cls) {
+                        cls = await tx.class.create({
+                            data: { name: cleanClass }
+                        })
+                    }
+                    classId = cls.id
+                }
+
+                await tx.student.create({
+                    data: {
+                        name: cleanName,
+                        rollNo: cleanRoll,
+                        password: hashPassword(cleanRoll), // default password is rollNo
+                        isFirstLogin: true,
+                        classId: classId
+                    }
+                })
+                createdStudents.push(cleanRoll)
+            }
+
+            return { createdStudents, skippedStudents }
+        })
+
+        return { 
+            success: true, 
+            message: `Successfully registered ${results.createdStudents.length} students. Skipped ${results.skippedStudents.length} duplicates.`,
+            createdCount: results.createdStudents.length,
+            skippedCount: results.skippedStudents.length
+        }
+    } catch (e: any) {
+        return { success: false, error: e.message || "Failed to batch import students" }
     }
 }
 
@@ -294,6 +376,24 @@ export async function parseDocxQuestionsAction(base64Data: string) {
                     else if (letter === "D") currentQ.optionD = val
                     expectingNewQuestion = false
                 }
+                continue
+            }
+
+            // If it is a new question starting with a number (e.g. "16. What is...")
+            const newQMatch = line.match(/^(?:Question\s+)?\d+[\.\):-]\s*(.*)$/i)
+            if (newQMatch) {
+                if (currentQ) {
+                    questions.push(currentQ)
+                }
+                currentQ = {
+                    questionText: newQMatch[1].trim(),
+                    optionA: "",
+                    optionB: "",
+                    optionC: "",
+                    optionD: "",
+                    correctAnswer: ""
+                }
+                expectingNewQuestion = false
                 continue
             }
 
