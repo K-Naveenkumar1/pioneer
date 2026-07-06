@@ -153,7 +153,7 @@ export function StudentSidebar({ student, ...props }: StudentSidebarProps & Reac
           <SidebarMenu className="gap-4">
             {data.navMain.map((item) => (
               <SidebarMenuItem key={item.title}>
-                <div className="px-3 py-2 text-xs font-bold text-white uppercase tracking-wider select-none mb-1">
+                <div className="px-3 py-2 text-xs font-bold text-zinc-400 uppercase tracking-wider select-none mb-1">
                   {item.title}
                 </div>
                 {item.items?.length ? (

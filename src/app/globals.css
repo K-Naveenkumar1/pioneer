@@ -163,4 +163,41 @@ input::-ms-clear {
     display: none;
 }
 
+/* Premium heading text gradient */
+h1 {
+    background: linear-gradient(to right, #4a4e58, white, #716778) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    color: transparent !important;
+    width: fit-content;
+}
+
+/* Maintain original color for nested SVG icons in h1 headings */
+h1 svg {
+    color: white !important;
+    -webkit-text-fill-color: initial !important;
+}
+
+/* Premium Glassmorphism Effect */
+.glass-effect {
+    background: rgba(39, 39, 42, 0.25) !important; /* refined transparency */
+    -webkit-backdrop-filter: blur(20px) !important;
+    backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37) !important;
+}
+
+/* Glassmorphism sidebar for floating variant */
+.group[data-variant="floating"] [data-sidebar="sidebar"] {
+    background: rgba(39, 39, 42, 0.25) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37) !important;
+}
+
+
+
+
 
