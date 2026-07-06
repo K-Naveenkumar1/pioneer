@@ -144,12 +144,22 @@ export default function AdminStudentsPage() {
                     return
                 }
 
-                // Map excel columns case-insensitively
+                // Map excel columns case-insensitively and with partial matching fallbacks
                 const mapped = data.map((row: any) => {
                     const keys = Object.keys(row)
-                    const nameKey = keys.find(k => k.toLowerCase() === "name")
-                    const rollKey = keys.find(k => k.toLowerCase() === "rollno" || k.toLowerCase() === "roll no" || k.toLowerCase() === "rollnumber" || k.toLowerCase() === "roll")
-                    const classKey = keys.find(k => k.toLowerCase() === "class" || k.toLowerCase() === "batch")
+                    
+                    const findKey = (patterns: string[], fallbacks: string[]) => {
+                        const exact = keys.find(k => patterns.includes(k.trim().toLowerCase()))
+                        if (exact) return exact
+                        return keys.find(k => {
+                            const clean = k.trim().toLowerCase()
+                            return fallbacks.some(f => clean.includes(f))
+                        })
+                    }
+
+                    const nameKey = findKey(["name", "fullname", "full name", "student name", "studentname"], ["name"])
+                    const rollKey = findKey(["rollno", "roll no", "rollnumber", "roll number", "roll", "symbolno", "symbol no"], ["roll", "symbol"])
+                    const classKey = findKey(["class", "batch", "classname", "class name", "batchname", "batch name"], ["class", "batch"])
 
                     return {
                         name: nameKey ? String(row[nameKey]).trim() : "",
