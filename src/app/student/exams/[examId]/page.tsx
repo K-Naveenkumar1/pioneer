@@ -319,18 +319,7 @@ export default function LockdownExamPage() {
     if (completed) {
         return (
             <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
-                <div className="w-full max-w-xl p-8 bg-zinc-900/80 border border-zinc-800 rounded-3xl space-y-8 text-center shadow-2xl backdrop-blur-md">
-                    <div className="flex justify-center">
-                        <div className="p-4 bg-zinc-800/80 rounded-2xl text-white">
-                            <Award size={48} className="animate-bounce" />
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <h2 className="text-3xl font-bold tracking-tight text-white">Exam Completed</h2>
-                        <p className="text-xs text-zinc-500">Attempt log for {examTitle}</p>
-                    </div>
-
+                <div className="w-full max-w-md p-8 bg-zinc-900/80 border border-zinc-800 rounded-3xl space-y-6 text-center shadow-2xl backdrop-blur-md">
                     {isPending ? (
                         <div className="py-8 flex justify-center">
                             <span className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></span>
@@ -339,21 +328,15 @@ export default function LockdownExamPage() {
                         <div className="space-y-6">
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="bg-zinc-900/60 p-4 border border-zinc-800/60 rounded-2xl text-center">
-                                    <p className="text-xs text-zinc-500">Final Score</p>
+                                    <p className="text-xs text-zinc-500">Percentage</p>
                                     <p className="text-3xl font-extrabold text-white mt-1">{results.score}%</p>
                                 </div>
                                 <div className="bg-zinc-900/60 p-4 border border-zinc-800/60 rounded-2xl text-center">
-                                    <p className="text-xs text-zinc-500">Questions Answered</p>
+                                    <p className="text-xs text-zinc-500">Marks</p>
                                     <p className="text-3xl font-extrabold text-white mt-1">
                                         {results.correctCount} / {results.totalQuestions}
                                     </p>
                                 </div>
-                            </div>
-
-                            <div className="bg-zinc-900 p-4 border border-zinc-800/60 rounded-2xl text-left text-xs space-y-2">
-                                <p className="font-bold uppercase tracking-wider text-[10px] text-zinc-500">Attempt Metadata</p>
-                                <p className="text-zinc-300">Warnings Logged: <span className="font-semibold text-amber-400">{warnings} / 3</span></p>
-                                <p className="text-zinc-300">Result Status: <span className="font-semibold text-emerald-400">{results.score >= 50 ? "PASSED" : "FAILED / UNDER GRADE"}</span></p>
                             </div>
 
                             <Button
