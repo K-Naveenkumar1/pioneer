@@ -295,19 +295,20 @@ export async function adminGetDashboardStats() {
         const admin = await getAdminUser()
         if (!admin) return { success: false, error: "Unauthorized" }
 
-        const studentCount = await client.student.count()
-        const taskCount = await client.task.count()
-        const examCount = await client.exam.count()
-
-        // Active check-ins today (checkOut is null)
-        const activeCheckins = await client.attendance.findMany({
-            where: { checkOut: null },
-            include: {
-                student: {
-                    select: { name: true, rollNo: true }
+        // Execute all dashboard queries in parallel to drastically improve loading speed
+        const [studentCount, taskCount, examCount, activeCheckins] = await Promise.all([
+            client.student.count(),
+            client.task.count(),
+            client.exam.count(),
+            client.attendance.findMany({
+                where: { checkOut: null },
+                include: {
+                    student: {
+                        select: { name: true, rollNo: true }
+                    }
                 }
-            }
-        })
+            })
+        ])
 
         return {
             success: true,
@@ -705,26 +706,37 @@ export async function adminGetAttendanceReportAction(date: string, classId: stri
         const admin = await getAdminUser()
         if (!admin) return { success: false, error: "Unauthorized" }
 
-        const students = await client.student.findMany({
-            where: { classId: classId || undefined },
-            select: {
-                id: true,
-                name: true,
-                rollNo: true,
-                department: true,
-                attendance: {
-                    where: { date },
-                    orderBy: { checkIn: "asc" }
-                },
-                submissions: {
-                    include: { task: true }
+        // Fetch students, dayTasks, and noTaskDecl concurrently to optimize load speed
+        const [students, dayTasks, noTaskDecl] = await Promise.all([
+            client.student.findMany({
+                where: { classId: classId || undefined },
+                select: {
+                    id: true,
+                    name: true,
+                    rollNo: true,
+                    department: true,
+                    attendance: {
+                        where: { date },
+                        orderBy: { checkIn: "asc" }
+                    },
+                    submissions: {
+                        include: { task: true }
+                    }
                 }
-            }
-        })
+            }),
+            client.task.findMany({
+                select: { id: true, createdAt: true }
+            }),
+            client.noTaskDeclaration.findUnique({
+                where: {
+                    date_classId: {
+                        date,
+                        classId
+                    }
+                }
+            })
+        ])
 
-        const dayTasks = await client.task.findMany({
-            select: { id: true, createdAt: true }
-        })
         const tasksForDate = dayTasks.filter(t => {
             const d = new Date(t.createdAt)
             const offset = d.getTimezoneOffset()
@@ -732,14 +744,6 @@ export async function adminGetAttendanceReportAction(date: string, classId: stri
             return dateStr === date
         }).map(t => t.id)
 
-        const noTaskDecl = await client.noTaskDeclaration.findUnique({
-            where: {
-                date_classId: {
-                    date,
-                    classId
-                }
-            }
-        })
         const hasNoTaskDecl = !!noTaskDecl
 
         const report = students.map(student => {
@@ -1089,10 +1093,9 @@ export async function adminUpdateExamAction(
                 }
             })
 
-            // Retrieve current questions stored for this exam
+            // Retrieve current questions stored for this exam (all fields to compare changes)
             const existingQuestions = await tx.examQuestion.findMany({
-                where: { examId },
-                select: { id: true }
+                where: { examId }
             })
             const existingIds = existingQuestions.map(q => q.id)
 
@@ -1107,10 +1110,23 @@ export async function adminUpdateExamAction(
                 })
             }
 
-            // 2. Insert new questions and update existing ones in place
-            for (const q of questions) {
+            // 2. Build list of write promises (only update if fields differ)
+            const writePromises = questions.map(q => {
                 if (q.id && existingIds.includes(q.id)) {
-                    await tx.examQuestion.update({
+                    const existing = existingQuestions.find(ex => ex.id === q.id)
+                    if (existing) {
+                        const hasChanged = 
+                            existing.questionText !== q.questionText.trim() ||
+                            existing.optionA !== q.optionA.trim() ||
+                            existing.optionB !== q.optionB.trim() ||
+                            existing.optionC !== q.optionC.trim() ||
+                            existing.optionD !== q.optionD.trim() ||
+                            existing.correctAnswer.toUpperCase() !== q.correctAnswer.trim().toUpperCase()
+
+                        if (!hasChanged) return null // No changes, skip update query!
+                    }
+
+                    return tx.examQuestion.update({
                         where: { id: q.id },
                         data: {
                             questionText: q.questionText.trim(),
@@ -1122,7 +1138,7 @@ export async function adminUpdateExamAction(
                         }
                     })
                 } else {
-                    await tx.examQuestion.create({
+                    return tx.examQuestion.create({
                         data: {
                             examId,
                             questionText: q.questionText.trim(),
@@ -1134,7 +1150,13 @@ export async function adminUpdateExamAction(
                         }
                     })
                 }
-            }
+            }).filter((p): p is Exclude<typeof p, null> => p !== null)
+
+            // Run updates/creations concurrently
+            await Promise.all(writePromises)
+        }, {
+            maxWait: 15000,
+            timeout: 35000
         })
 
         return { success: true, message: "Exam updated successfully." }
@@ -1161,6 +1183,147 @@ export async function adminCheckNoTaskAction(date: string, classId: string) {
         })
 
         return { success: true, declared: !!existing }
+    } catch (e: any) {
+        return { success: false, error: e.message }
+    }
+}
+
+/**
+ * Retrieves all student attempts for a specific exam, categorizing them into live and completed.
+ */
+export async function adminGetExamSubmissionsAction(examId: string) {
+    try {
+        const admin = await getAdminUser()
+        if (!admin) return { success: false, error: "Unauthorized" }
+
+        const attempts = await client.examAttempt.findMany({
+            where: { examId },
+            include: {
+                student: {
+                    select: { name: true, rollNo: true }
+                },
+                exam: {
+                    include: {
+                        questions: {
+                            select: { id: true, correctAnswer: true }
+                        }
+                    }
+                }
+            },
+            orderBy: { startedAt: "desc" }
+        })
+
+        const completedList = []
+        const liveList = []
+
+        for (const att of attempts) {
+            const totalQuestions = att.exam.questions.length
+            const answersMap = JSON.parse(att.answers || "{}")
+
+            if (att.completedAt) {
+                // Completed attempt grading
+                let correctCount = 0
+                att.exam.questions.forEach(q => {
+                    const studentAns = answersMap[q.id]
+                    if (studentAns && studentAns.trim().toUpperCase() === q.correctAnswer.trim().toUpperCase()) {
+                        correctCount++
+                    }
+                })
+                completedList.push({
+                    id: att.id,
+                    studentName: att.student.name,
+                    rollNo: att.student.rollNo,
+                    score: att.score,
+                    marks: `${correctCount} / ${totalQuestions}`,
+                    warnings: att.warnings,
+                    startedAt: att.startedAt,
+                    completedAt: att.completedAt
+                })
+            } else {
+                // Live writing attempt monitoring
+                const answeredCount = Object.keys(answersMap).length
+                liveList.push({
+                    id: att.id,
+                    studentName: att.student.name,
+                    rollNo: att.student.rollNo,
+                    warnings: att.warnings,
+                    startedAt: att.startedAt,
+                    answeredCount,
+                    totalQuestions
+                })
+            }
+        }
+
+        return {
+            success: true,
+            completed: completedList,
+            live: liveList
+        }
+    } catch (e: any) {
+        return { success: false, error: e.message }
+    }
+}
+
+/**
+ * Revokes / Deletes a student's exam attempt to let them re-take/rewrite it.
+ */
+export async function adminResetExamAttemptAction(attemptId: string) {
+    try {
+        const admin = await getAdminUser()
+        if (!admin) return { success: false, error: "Unauthorized" }
+
+        await client.examAttempt.delete({
+            where: { id: attemptId }
+        })
+
+        return { success: true, message: "Student attempt revoked. They are allowed to rewrite the exam." }
+    } catch (e: any) {
+        return { success: false, error: e.message }
+    }
+}
+
+/**
+ * Force-terminates a student's active exam attempt and grades the current answers.
+ */
+export async function adminForceSubmitExamAttemptAction(attemptId: string) {
+    try {
+        const admin = await getAdminUser()
+        if (!admin) return { success: false, error: "Unauthorized" }
+
+        const attempt = await client.examAttempt.findUnique({
+            where: { id: attemptId },
+            include: {
+                exam: {
+                    include: { questions: { select: { id: true, correctAnswer: true } } }
+                }
+            }
+        })
+
+        if (!attempt) return { success: false, error: "Attempt not found" }
+        if (attempt.completedAt) return { success: false, error: "Attempt is already completed" }
+
+        const answersMap = JSON.parse(attempt.answers || "{}")
+        const questions = attempt.exam.questions
+        let correctCount = 0
+
+        questions.forEach(q => {
+            const studentAns = answersMap[q.id]
+            if (studentAns && studentAns.trim().toUpperCase() === q.correctAnswer.trim().toUpperCase()) {
+                correctCount++
+            }
+        })
+
+        const finalScore = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0
+
+        await client.examAttempt.update({
+            where: { id: attemptId },
+            data: {
+                score: finalScore,
+                completedAt: new Date()
+            }
+        })
+
+        return { success: true, message: "Attempt force submitted and graded successfully." }
     } catch (e: any) {
         return { success: false, error: e.message }
     }
