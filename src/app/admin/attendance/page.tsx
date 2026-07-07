@@ -12,7 +12,8 @@ import {
     adminDeclareNoTaskAction,
     adminUpdateAttendanceAction,
     adminDeleteAttendanceAction,
-    adminUploadStudentsAction
+    adminSetAttendanceStatusAction,
+    adminBatchSetAttendanceStatusAction
 } from "@/actions/admin-actions"
 
 export default function AdminAttendancePage() {
@@ -32,8 +33,7 @@ export default function AdminAttendancePage() {
     const [editCheckIn, setEditCheckIn] = useState("")
     const [editCheckOut, setEditCheckOut] = useState("")
 
-    // CSV upload states
-    const [uploading, setUploading] = useState(false)
+
 
     useEffect(() => {
         loadClasses()
@@ -117,27 +117,34 @@ export default function AdminAttendancePage() {
         }
     }
 
-    const handleCsvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files.length > 0) {
-            const file = e.target.files[0]
-            setUploading(true)
-            const reader = new FileReader()
-            reader.onload = async () => {
-                const text = reader.result as string
-                const res = await adminUploadStudentsAction(text)
-                if (res.success) {
-                    toast.success(res.message)
-                    if (res.errors) {
-                        toast.warning(`Upload warnings: ${res.errors}`)
-                    }
-                    loadClasses()
-                    if (selectedClassId) loadAttendanceReport()
-                } else {
-                    toast.error(res.error || "Upload failed")
-                }
-                setUploading(false)
-            }
-            reader.readAsText(file)
+    const handleToggleAttendance = async (studentId: string, markPresent: boolean) => {
+        // Optimistic UI update
+        setReport(prev => prev.map(r => r.studentId === studentId ? { ...r, isPresent: markPresent } : r))
+
+        const res = await adminSetAttendanceStatusAction(studentId, selectedDate, markPresent)
+        if (res.success) {
+            toast.success(res.message || "Attendance status updated.")
+            loadAttendanceReport()
+        } else {
+            toast.error(res.error || "Failed to update attendance status.")
+            loadAttendanceReport()
+        }
+    }
+
+    const handleBatchToggleAttendance = async (markPresent: boolean) => {
+        const studentIds = report.map(r => r.studentId)
+        if (studentIds.length === 0) return
+
+        // Optimistic UI update
+        setReport(prev => prev.map(r => ({ ...r, isPresent: markPresent })))
+
+        const res = await adminBatchSetAttendanceStatusAction(studentIds, selectedDate, markPresent)
+        if (res.success) {
+            toast.success(res.message || "All student attendance statuses updated.")
+            loadAttendanceReport()
+        } else {
+            toast.error(res.error || "Failed to update batch attendance.")
+            loadAttendanceReport()
         }
     }
 
@@ -169,30 +176,7 @@ export default function AdminAttendancePage() {
                 </div>
             </div>
 
-            {/* CSV File Upload Section */}
-            <GlassCard className="p-6 border border-themeGrey">
-                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                    <div>
-                        <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                            <UploadCloud size={16} /> Bulk Upload Student Profiles
-                        </h3>
-                        <p className="text-xs text-themeTextGrey mt-1">Upload a CSV of student profiles to assign them automatically to classes and departments.</p>
-                        <p className="text-[10px] text-zinc-500 font-mono mt-1">CSV Format: RollNumber, Name, Department, ClassName, TempPassword (optional)</p>
-                    </div>
-                    <div className="relative border border-dashed border-themeGrey rounded-xl bg-black/30 px-5 py-3 hover:bg-black/50 transition-all cursor-pointer">
-                        <input
-                            type="file"
-                            accept=".csv"
-                            onChange={handleCsvUpload}
-                            disabled={uploading}
-                            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                        />
-                        <span className="text-xs font-semibold text-white">
-                            {uploading ? "Uploading..." : "Select Student CSV"}
-                        </span>
-                    </div>
-                </div>
-            </GlassCard>
+
 
             {/* Filters Bar */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end bg-zinc-950/40 p-5 rounded-2xl border border-themeGrey/40">
@@ -260,7 +244,31 @@ export default function AdminAttendancePage() {
                                     <th className="p-4">Department</th>
                                     <th className="p-4">Total Check-In Hours</th>
                                     <th className="p-4">Daily Task Status</th>
-                                    <th className="p-4">Computed Attendance</th>
+                                    <th className="p-4 w-64">
+                                        <div className="flex flex-col gap-1.5">
+                                            <span>Attendance Status</span>
+                                            <div className="flex items-center gap-4 text-[10px] normal-case font-semibold">
+                                                <label className="flex items-center gap-1 cursor-pointer hover:text-white select-none">
+                                                    <input 
+                                                        type="checkbox"
+                                                        checked={report.length > 0 && report.every(r => r.isPresent)}
+                                                        onChange={(e) => handleBatchToggleAttendance(e.target.checked)}
+                                                        className="rounded border-zinc-700 bg-zinc-900 text-indigo-600 focus:ring-0 focus:ring-offset-0 w-3 h-3 cursor-pointer"
+                                                    />
+                                                    All Present
+                                                </label>
+                                                <label className="flex items-center gap-1 cursor-pointer hover:text-white select-none">
+                                                    <input 
+                                                        type="checkbox"
+                                                        checked={report.length > 0 && report.every(r => !r.isPresent)}
+                                                        onChange={(e) => handleBatchToggleAttendance(!e.target.checked)}
+                                                        className="rounded border-zinc-700 bg-zinc-900 text-indigo-600 focus:ring-0 focus:ring-offset-0 w-3 h-3 cursor-pointer"
+                                                    />
+                                                    All Absent
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </th>
                                     <th className="p-4">Logs & Actions</th>
                                 </tr>
                             </thead>
@@ -292,15 +300,26 @@ export default function AdminAttendancePage() {
                                             </span>
                                         </td>
                                         <td className="p-4">
-                                            {row.isPresent ? (
-                                                <span className="text-emerald-400 font-bold flex items-center gap-1">
-                                                    <CheckCircle size={14} /> Present
-                                                </span>
-                                            ) : (
-                                                <span className="text-rose-400 font-bold flex items-center gap-1">
-                                                    <AlertTriangle size={14} /> Absent
-                                                </span>
-                                            )}
+                                            <div className="flex items-center gap-6">
+                                                <label className="flex items-center gap-2 cursor-pointer select-none">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={row.isPresent}
+                                                        onChange={() => handleToggleAttendance(row.studentId, true)}
+                                                        className="rounded-full border-zinc-700 bg-zinc-900 text-emerald-500 focus:ring-0 focus:ring-offset-0 w-4 h-4 cursor-pointer"
+                                                    />
+                                                    <span className={row.isPresent ? "text-emerald-400 font-bold" : "text-zinc-500 font-medium"}>Present</span>
+                                                </label>
+                                                <label className="flex items-center gap-2 cursor-pointer select-none">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={!row.isPresent}
+                                                        onChange={() => handleToggleAttendance(row.studentId, false)}
+                                                        className="rounded-full border-zinc-700 bg-zinc-900 text-rose-500 focus:ring-0 focus:ring-offset-0 w-4 h-4 cursor-pointer"
+                                                    />
+                                                    <span className={!row.isPresent ? "text-rose-400 font-bold" : "text-zinc-500 font-medium"}>Absent</span>
+                                                </label>
+                                            </div>
                                         </td>
                                         <td className="p-4">
                                             <div className="space-y-2">

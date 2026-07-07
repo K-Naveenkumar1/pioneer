@@ -61,65 +61,76 @@ export async function adminBatchCreateStudentsAction(
             return { success: false, error: "Empty student list" }
         }
 
-        const results = await client.$transaction(async (tx) => {
-            const createdStudents = []
-            const skippedStudents = []
+        // 1. Clean the list and filter out invalid rows
+        const cleanedList = studentsList.map(item => ({
+            name: item.name?.toString().trim(),
+            rollNo: item.rollNo?.toString().trim(),
+            className: item.className?.toString().trim()
+        })).filter(item => item.name && item.rollNo)
 
-            for (const item of studentsList) {
-                const cleanName = item.name?.toString().trim()
-                const cleanRoll = item.rollNo?.toString().trim()
-                const cleanClass = item.className?.toString().trim()
+        if (cleanedList.length === 0) {
+            return { success: false, error: "No valid student rows to import." }
+        }
 
-                if (!cleanName || !cleanRoll) {
-                    continue
-                }
-
-                // Check if student already exists
-                const existing = await tx.student.findUnique({
-                    where: { rollNo: cleanRoll }
-                })
-
-                if (existing) {
-                    skippedStudents.push(cleanRoll)
-                    continue
-                }
-
-                let classId: string | null = null
-                if (cleanClass) {
-                    // Find or create class
-                    let cls = await tx.class.findUnique({
-                        where: { name: cleanClass }
-                    })
-                    if (!cls) {
-                        cls = await tx.class.create({
-                            data: { name: cleanClass }
-                        })
-                    }
-                    classId = cls.id
-                }
-
-                await tx.student.create({
-                    data: {
-                        name: cleanName,
-                        rollNo: cleanRoll,
-                        password: hashPassword(cleanRoll), // default password is rollNo
-                        isFirstLogin: true,
-                        classId: classId
-                    }
-                })
-                createdStudents.push(cleanRoll)
-            }
-
-            return { createdStudents, skippedStudents }
+        // 2. Fetch all existing student roll numbers to avoid duplicates
+        const existingStudents = await client.student.findMany({
+            select: { rollNo: true }
         })
+        const existingRolls = new Set(existingStudents.map(s => s.rollNo))
+
+        // 3. Extract unique class names and ensure they exist
+        const uniqueClasses = Array.from(new Set(
+            cleanedList.map(s => s.className).filter((c): c is string => !!c)
+        ))
+
+        const classMap: Record<string, string> = {}
+        for (const clsName of uniqueClasses) {
+            let cls = await client.class.findUnique({
+                where: { name: clsName }
+            })
+            if (!cls) {
+                cls = await client.class.create({
+                    data: { name: clsName }
+                })
+            }
+            classMap[clsName] = cls.id
+        }
+
+        // 4. Filter list for new students only
+        const studentsToInsert = cleanedList.filter(s => !existingRolls.has(s.rollNo))
+        const skippedCount = cleanedList.length - studentsToInsert.length
+
+        // 5. Insert students in parallel chunks to optimize performance
+        const CHUNK_SIZE = 50
+        let createdCount = 0
+
+        for (let i = 0; i < studentsToInsert.length; i += CHUNK_SIZE) {
+            const chunk = studentsToInsert.slice(i, i + CHUNK_SIZE)
+            await Promise.all(
+                chunk.map(async (s) => {
+                    const classId = s.className ? classMap[s.className] : null
+                    await client.student.create({
+                        data: {
+                            name: s.name,
+                            rollNo: s.rollNo,
+                            password: hashPassword(s.rollNo), // default password is rollNo
+                            isFirstLogin: true,
+                            classId: classId
+                        }
+                    })
+                })
+            )
+            createdCount += chunk.length
+        }
 
         return { 
             success: true, 
-            message: `Successfully registered ${results.createdStudents.length} students. Skipped ${results.skippedStudents.length} duplicates.`,
-            createdCount: results.createdStudents.length,
-            skippedCount: results.skippedStudents.length
+            message: `Successfully registered ${createdCount} students. Skipped ${skippedCount} duplicate roll numbers.`,
+            createdCount,
+            skippedCount
         }
     } catch (e: any) {
+        console.error("Batch import error:", e)
         return { success: false, error: e.message || "Failed to batch import students" }
     }
 }
@@ -379,8 +390,24 @@ export async function parseDocxQuestionsAction(base64Data: string) {
                 continue
             }
 
-            // If it is a new question starting with a number (e.g. "16. What is...")
-            const newQMatch = line.match(/^(?:Question\s+)?\d+[\.\):-]\s*(.*)$/i)
+            // If we already have Option A populated, and this line doesn't match an option or answer,
+            // then we should start a new question to prevent merging multiple questions together.
+            if (currentQ && currentQ.optionA && !optMatch && !ansMatch) {
+                questions.push(currentQ)
+                currentQ = {
+                    questionText: line,
+                    optionA: "",
+                    optionB: "",
+                    optionC: "",
+                    optionD: "",
+                    correctAnswer: ""
+                }
+                expectingNewQuestion = false
+                continue
+            }
+
+            // If it is a new question starting with a number (e.g. "16. What is...", "[16] What...", "(16) What...")
+            const newQMatch = line.match(/^(?:Question\s+)?(?:\[\d+\]|\(?\d+\)[\.\):-]?|\d+[\.\):-])\s*(.*)$/i)
             if (newQMatch) {
                 if (currentQ) {
                     questions.push(currentQ)
@@ -404,8 +431,8 @@ export async function parseDocxQuestionsAction(base64Data: string) {
                     questions.push(currentQ)
                 }
 
-                // Strip leading numbers if they exist (e.g. "1. What is" -> "What is")
-                const cleanedText = line.replace(/^(?:Question\s+)?\d+[\.\):-]\s*/i, "").trim()
+                // Strip leading numbers if they exist
+                const cleanedText = line.replace(/^(?:Question\s+)?(?:\[\d+\]|\(?\d+\)[\.\):-]?|\d+[\.\):-])\s*/i, "").trim()
 
                 currentQ = {
                     questionText: cleanedText,
@@ -897,5 +924,113 @@ export async function adminDeleteExamAction(examId: string) {
         return { success: true, message: "Exam and all related student attempts deleted successfully." }
     } catch (e: any) {
         return { success: false, error: e.message }
+    }
+}
+
+/**
+ * Manually marks a student present (creates/updates default 8h log) or absent (deletes logs).
+ */
+export async function adminSetAttendanceStatusAction(studentId: string, date: string, isPresent: boolean) {
+    try {
+        const admin = await getAdminUser()
+        if (!admin) return { success: false, error: "Unauthorized" }
+
+        // Update student checkin access permission (Present = Allowed, Absent = Blocked)
+        await client.student.update({
+            where: { id: studentId },
+            data: { isAllowedInClass: isPresent }
+        })
+
+        if (isPresent) {
+            const existing = await client.attendance.findFirst({
+                where: { studentId, date }
+            })
+
+            if (!existing) {
+                await client.attendance.create({
+                    data: {
+                        studentId,
+                        date,
+                        checkIn: new Date(date + "T09:00:00"),
+                        checkOut: new Date(date + "T17:00:00"),
+                        type: "CLASS"
+                    }
+                })
+            } else {
+                await client.attendance.update({
+                    where: { id: existing.id },
+                    data: {
+                        checkIn: new Date(date + "T09:00:00"),
+                        checkOut: new Date(date + "T17:00:00")
+                    }
+                })
+            }
+        } else {
+            await client.attendance.deleteMany({
+                where: { studentId, date }
+            })
+        }
+
+        return { success: true, message: "Attendance status updated successfully." }
+    } catch (e: any) {
+        return { success: false, error: e.message || "Failed to update attendance status" }
+    }
+}
+
+/**
+ * Manually marks multiple students present or absent at once.
+ */
+export async function adminBatchSetAttendanceStatusAction(
+    studentIds: string[],
+    date: string,
+    isPresent: boolean
+) {
+    try {
+        const admin = await getAdminUser()
+        if (!admin) return { success: false, error: "Unauthorized" }
+
+        // Update all students' checkin access permissions (Present = Allowed, Absent = Blocked)
+        await client.student.updateMany({
+            where: { id: { in: studentIds } },
+            data: { isAllowedInClass: isPresent }
+        })
+
+        if (isPresent) {
+            for (const studentId of studentIds) {
+                const existing = await client.attendance.findFirst({
+                    where: { studentId, date }
+                })
+                if (!existing) {
+                    await client.attendance.create({
+                        data: {
+                            studentId,
+                            date,
+                            checkIn: new Date(date + "T09:00:00"),
+                            checkOut: new Date(date + "T17:00:00"),
+                            type: "CLASS"
+                        }
+                    })
+                } else {
+                    await client.attendance.update({
+                        where: { id: existing.id },
+                        data: {
+                            checkIn: new Date(date + "T09:00:00"),
+                            checkOut: new Date(date + "T17:00:00")
+                        }
+                    })
+                }
+            }
+        } else {
+            await client.attendance.deleteMany({
+                where: {
+                    studentId: { in: studentIds },
+                    date
+                }
+            })
+        }
+
+        return { success: true, message: "Attendance statuses updated successfully." }
+    } catch (e: any) {
+        return { success: false, error: e.message || "Failed to update attendance status" }
     }
 }

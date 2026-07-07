@@ -1,10 +1,8 @@
 "use client"
 
-import { AnimatePresence, motion } from "framer-motion"
-import gsap from "gsap"
 import { Eye, EyeOff } from "lucide-react"
 import { useRouter } from "next/navigation"
-import React, { useEffect, useRef, useState, useTransition } from "react"
+import React, { useState, useTransition } from "react"
 import { toast } from "sonner"
 
 import { checkRollNoAction, loginAction, studentFirstResetAction } from "@/actions/custom-auth"
@@ -23,24 +21,12 @@ export default function LoginPage() {
     // First Time Password Reset states
     const [isFirstLogin, setIsFirstLogin] = useState(false)
     const [rollNo, setRollNo] = useState("")
-    const [tempPassword, setTempPassword] = useState("")
+    const [tempPassword, setTempPassword] = useState<string | null>("")
     const [newPassword, setNewPassword] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
     const [showNewPassword, setShowNewPassword] = useState(false)
 
-    // GSAP Refs
-    const cardRef = useRef<HTMLDivElement>(null)
 
-    useEffect(() => {
-        // Soft card scale in animation
-        if (cardRef.current) {
-            gsap.fromTo(
-                cardRef.current,
-                { scale: 0.95, opacity: 0 },
-                { scale: 1, opacity: 1, duration: 0.8, ease: "power3.out" }
-            )
-        }
-    }, [])
 
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault()
@@ -52,7 +38,14 @@ export default function LoginPage() {
             startTransition(async () => {
                 const res = await checkRollNoAction(identity)
                 if (res.exists) {
-                    setShowPasswordStep(true)
+                    if (res.isFirstLogin) {
+                        setRollNo(identity)
+                        setTempPassword(null)
+                        setIsFirstLogin(true)
+                        toast.info("First-time login detected. Please create a password for your account.")
+                    } else {
+                        setShowPasswordStep(true)
+                    }
                 } else {
                     toast.error("Roll number not found. Please try again.")
                 }
@@ -126,17 +119,9 @@ export default function LoginPage() {
                 className="w-[350px] h-[350px] opacity-50 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-10"
                 container="z-10 w-full max-w-[400px] flex flex-col relative"
             >
-                <div ref={cardRef} className="w-full bg-[#09090b] border border-zinc-900 rounded-[24px] p-8 shadow-2xl min-h-[380px] flex flex-col justify-center relative">
-                <AnimatePresence mode="wait">
+                <div className="w-full bg-[#09090b] border border-zinc-900 rounded-[24px] p-8 shadow-2xl min-h-[380px] flex flex-col justify-center relative">
                     {!isFirstLogin ? (
-                        <motion.div
-                            key="login-form"
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            transition={{ duration: 0.2 }}
-                            className="w-full"
-                        >
+                        <div className="w-full">
                             <div className="flex flex-col items-center mb-4">
                                 <h2 className="text-[22px] font-bold text-white text-center mb-1 tracking-tight">
                                     {showPasswordStep ? "Enter Password" : "Sign in with Roll Number"}
@@ -211,16 +196,9 @@ export default function LoginPage() {
                                     }
                                 </Button>
                             </form>
-                        </motion.div>
+                        </div>
                     ) : (
-                        <motion.div
-                            key="reset-form"
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            transition={{ duration: 0.2 }}
-                            className="flex flex-col items-center w-full"
-                        >
+                        <div className="flex flex-col items-center w-full">
                             <h2 className="text-[22px] font-bold text-white text-center mb-1 tracking-tight">
                                 Set Your Password
                             </h2>
@@ -278,9 +256,8 @@ export default function LoginPage() {
                                     </Button>
                                 </div>
                             </form>
-                        </motion.div>
+                        </div>
                     )}
-                </AnimatePresence>
                 </div>
             </BackdropGradient>
 

@@ -68,14 +68,22 @@ export async function loginAction(role: "student" | "admin", identity: string, p
 /**
  * Resets the password for a student logging in for the first time.
  */
-export async function studentFirstResetAction(rollNo: string, tempPassword: string, newPassword: string) {
+export async function studentFirstResetAction(rollNo: string, tempPassword: string | null, newPassword: string) {
     try {
         const student = await client.student.findUnique({
             where: { rollNo: rollNo.trim() },
         })
 
-        if (!student || !verifyPassword(tempPassword, student.password)) {
-            return { success: false, error: "Authentication failed. Could not verify temporary password." }
+        if (!student) {
+            return { success: false, error: "Student not found" }
+        }
+
+        // If not first login, verify tempPassword
+        if (!student.isFirstLogin) {
+            const passToVerify = tempPassword || ""
+            if (!verifyPassword(passToVerify, student.password)) {
+                return { success: false, error: "Authentication failed. Could not verify temporary password." }
+            }
         }
 
         const updatedStudent = await client.student.update({
@@ -155,9 +163,9 @@ export async function checkRollNoAction(rollNo: string) {
     try {
         const student = await client.student.findUnique({
             where: { rollNo: rollNo.trim() },
-            select: { id: true }
+            select: { id: true, isFirstLogin: true }
         })
-        return { exists: !!student }
+        return { exists: !!student, isFirstLogin: student?.isFirstLogin || false }
     } catch (error) {
         console.error("Check roll number error:", error)
         return { exists: false, error: "Database error occurred" }

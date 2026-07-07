@@ -21,24 +21,101 @@ import {
 import { Button } from "@/components/ui/button"
 
 const FlipDigit = ({ val }: { val: string }) => {
+    const [currentVal, setCurrentVal] = useState(val)
+    const [previousVal, setPreviousVal] = useState(val)
+
+    useEffect(() => {
+        if (val !== currentVal) {
+            setPreviousVal(currentVal)
+            setCurrentVal(val)
+        }
+    }, [val, currentVal])
+
     return (
-        <div className="relative w-10 h-16 md:w-14 md:h-20 bg-[#1c1c1e] border border-zinc-805/85 rounded-xl flex items-center justify-center select-none shadow-[inset_0_1px_3px_rgba(255,255,255,0.05),0_4px_6px_-1px_rgba(0,0,0,0.5)]">
-            <span className="text-3xl md:text-5xl font-black font-mono text-zinc-200">
-                {val}
-            </span>
-            {/* Divider line across the center */}
-            <div className="absolute inset-x-0 top-1/2 h-[1px] bg-black/60" />
+        <div className="relative w-10 h-16 md:w-14 md:h-20 bg-[#1c1c1e] border border-zinc-800/80 rounded-xl select-none shadow-[0_6px_10px_rgba(0,0,0,0.5)] [perspective:400px] [transform-style:preserve-3d]">
+            {/* Top Half (Static) */}
+            <div className="absolute inset-x-0 top-0 h-1/2 overflow-hidden bg-[#1c1c1e] rounded-t-xl border-b border-black/40">
+                <div className="absolute top-0 inset-x-0 h-[200%] flex items-center justify-center">
+                    <span className="text-3xl md:text-5xl font-black font-mono text-zinc-200 leading-none">
+                        {currentVal}
+                    </span>
+                </div>
+            </div>
+
+            {/* Bottom Half (Static) */}
+            <div className="absolute inset-x-0 bottom-0 h-1/2 overflow-hidden bg-[#171719] rounded-b-xl border-t border-white/5">
+                <div className="absolute bottom-0 inset-x-0 h-[200%] flex items-center justify-center">
+                    <span className="text-3xl md:text-5xl font-black font-mono text-zinc-200 leading-none">
+                        {currentVal}
+                    </span>
+                </div>
+            </div>
+
+            {/* Flipping Top Card (folds down) */}
+            {currentVal !== previousVal && (
+                <motion.div
+                    key={`top-${currentVal}`}
+                    initial={{ rotateX: 0 }}
+                    animate={{ rotateX: -90 }}
+                    transition={{ duration: 0.18, ease: "easeIn" }}
+                    className="absolute inset-x-0 top-0 h-1/2 overflow-hidden bg-[#1c1c1e] rounded-t-xl border-b border-black/40 z-20"
+                    style={{ transformOrigin: "bottom", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", transformStyle: "preserve-3d" }}
+                >
+                    <div className="absolute top-0 inset-x-0 h-[200%] flex items-center justify-center">
+                        <span className="text-3xl md:text-5xl font-black font-mono text-zinc-200 leading-none">
+                            {previousVal}
+                        </span>
+                    </div>
+                    {/* Shadow overlay */}
+                    <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 0.8 }}
+                        transition={{ duration: 0.18 }}
+                        className="absolute inset-0 bg-black pointer-events-none"
+                    />
+                </motion.div>
+            )}
+
+            {/* Flipping Bottom Card (falls down) */}
+            {currentVal !== previousVal && (
+                <motion.div
+                    key={`bottom-${currentVal}`}
+                    initial={{ rotateX: 90 }}
+                    animate={{ rotateX: 0 }}
+                    transition={{ delay: 0.15, duration: 0.35, type: "spring", stiffness: 100, damping: 12 }}
+                    className="absolute inset-x-0 bottom-0 h-1/2 overflow-hidden bg-[#171719] rounded-b-xl border-t border-white/5 z-20"
+                    style={{ transformOrigin: "top", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", transformStyle: "preserve-3d" }}
+                >
+                    <div className="absolute bottom-0 inset-x-0 h-[200%] flex items-center justify-center">
+                        <span className="text-3xl md:text-5xl font-black font-mono text-zinc-200 leading-none">
+                            {currentVal}
+                        </span>
+                    </div>
+                    {/* Highlight/shading overlay */}
+                    <motion.div 
+                        initial={{ opacity: 0.8 }}
+                        animate={{ opacity: 0 }}
+                        transition={{ delay: 0.15, duration: 0.35 }}
+                        className="absolute inset-0 bg-black pointer-events-none"
+                    />
+                </motion.div>
+            )}
+
+            {/* Reflection shine and borders */}
+            <div className="absolute inset-0 rounded-xl pointer-events-none border border-white/[0.04] shadow-[inset_0_1px_3px_rgba(255,255,255,0.06)]" />
+            
+            {/* The horizontal split line */}
+            <div className="absolute inset-x-0 top-1/2 h-[1px] bg-black/80 z-30 shadow-sm pointer-events-none" />
         </div>
     )
 }
 
 const FlipSeparator = () => {
     return (
-        <div className="relative w-6 h-16 md:w-8 md:h-20 bg-[#1c1c1e] border border-zinc-805/85 rounded-xl flex items-center justify-center select-none shadow-[inset_0_1px_3px_rgba(255,255,255,0.05),0_4px_6px_-1px_rgba(0,0,0,0.5)]">
-            <span className="text-2xl md:text-4xl font-bold font-mono text-zinc-400">
+        <div className="flex flex-col justify-center items-center h-16 md:h-20 px-1.5 select-none">
+            <span className="text-2xl md:text-4xl font-black font-mono text-zinc-600 animate-pulse leading-none">
                 :
             </span>
-            <div className="absolute inset-x-0 top-1/2 h-[1px] bg-black/60" />
         </div>
     )
 }
