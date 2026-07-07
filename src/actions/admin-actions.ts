@@ -482,7 +482,8 @@ export async function adminCreateExamAction(
         optionC: string, 
         optionD: string, 
         correctAnswer: string 
-    }[]
+    }[],
+    examCode: string
 ) {
     try {
         const admin = await getAdminUser()
@@ -496,26 +497,23 @@ export async function adminCreateExamAction(
             const exam = await tx.exam.create({
                 data: {
                     title: title.trim(),
-                    duration: Number(duration)
+                    duration: Number(duration),
+                    examCode: examCode.trim() || null
                 }
             })
 
-            // Batch insert questions
-            await Promise.all(
-                questions.map(q => 
-                    tx.examQuestion.create({
-                        data: {
-                            examId: exam.id,
-                            questionText: q.questionText.trim(),
-                            optionA: q.optionA.trim(),
-                            optionB: q.optionB.trim(),
-                            optionC: q.optionC.trim(),
-                            optionD: q.optionD.trim(),
-                            correctAnswer: q.correctAnswer.trim().toUpperCase()
-                        }
-                    })
-                )
-            )
+            // Batch insert questions in a single fast query
+            await tx.examQuestion.createMany({
+                data: questions.map(q => ({
+                    examId: exam.id,
+                    questionText: q.questionText.trim(),
+                    optionA: q.optionA.trim(),
+                    optionB: q.optionB.trim(),
+                    optionC: q.optionC.trim(),
+                    optionD: q.optionD.trim(),
+                    correctAnswer: q.correctAnswer.trim().toUpperCase()
+                }))
+            })
 
             return exam
         })
@@ -1034,3 +1032,137 @@ export async function adminBatchSetAttendanceStatusAction(
         return { success: false, error: e.message || "Failed to update attendance status" }
     }
 }
+
+/**
+ * Retrieves the full details of a specific exam including all its questions.
+ */
+export async function adminGetExamDetailsAction(examId: string) {
+    try {
+        const admin = await getAdminUser()
+        if (!admin) return { success: false, error: "Unauthorized" }
+
+        const exam = await client.exam.findUnique({
+            where: { id: examId },
+            include: {
+                questions: true
+            }
+        })
+
+        if (!exam) return { success: false, error: "Exam not found" }
+
+        return { success: true, exam }
+    } catch (e: any) {
+        return { success: false, error: e.message }
+    }
+}
+
+/**
+ * Updates an existing exam title, duration, passcode, and aligns its MCQ questions list.
+ */
+export async function adminUpdateExamAction(
+    examId: string,
+    title: string,
+    duration: number,
+    examCode: string,
+    questions: {
+        id?: string
+        questionText: string
+        optionA: string
+        optionB: string
+        optionC: string
+        optionD: string
+        correctAnswer: string
+    }[]
+) {
+    try {
+        const admin = await getAdminUser()
+        if (!admin) return { success: false, error: "Unauthorized" }
+
+        await client.$transaction(async (tx) => {
+            // Update parent Exam record
+            await tx.exam.update({
+                where: { id: examId },
+                data: {
+                    title: title.trim(),
+                    duration: Number(duration),
+                    examCode: examCode.trim() || null
+                }
+            })
+
+            // Retrieve current questions stored for this exam
+            const existingQuestions = await tx.examQuestion.findMany({
+                where: { examId },
+                select: { id: true }
+            })
+            const existingIds = existingQuestions.map(q => q.id)
+
+            // Filter incoming questions that already exist
+            const incomingIds = questions.filter(q => q.id).map(q => q.id!)
+
+            // 1. Delete questions that were removed in the edit screen
+            const idsToDelete = existingIds.filter(id => !incomingIds.includes(id))
+            if (idsToDelete.length > 0) {
+                await tx.examQuestion.deleteMany({
+                    where: { id: { in: idsToDelete } }
+                })
+            }
+
+            // 2. Insert new questions and update existing ones in place
+            for (const q of questions) {
+                if (q.id && existingIds.includes(q.id)) {
+                    await tx.examQuestion.update({
+                        where: { id: q.id },
+                        data: {
+                            questionText: q.questionText.trim(),
+                            optionA: q.optionA.trim(),
+                            optionB: q.optionB.trim(),
+                            optionC: q.optionC.trim(),
+                            optionD: q.optionD.trim(),
+                            correctAnswer: q.correctAnswer.trim().toUpperCase()
+                        }
+                    })
+                } else {
+                    await tx.examQuestion.create({
+                        data: {
+                            examId,
+                            questionText: q.questionText.trim(),
+                            optionA: q.optionA.trim(),
+                            optionB: q.optionB.trim(),
+                            optionC: q.optionC.trim(),
+                            optionD: q.optionD.trim(),
+                            correctAnswer: q.correctAnswer.trim().toUpperCase()
+                        }
+                    })
+                }
+            }
+        })
+
+        return { success: true, message: "Exam updated successfully." }
+    } catch (e: any) {
+        return { success: false, error: e.message }
+    }
+}
+
+/**
+ * Checks if No Task status is declared for a class and a specific date.
+ */
+export async function adminCheckNoTaskAction(date: string, classId: string) {
+    try {
+        const admin = await getAdminUser()
+        if (!admin) return { success: false, error: "Unauthorized" }
+
+        const existing = await client.noTaskDeclaration.findUnique({
+            where: {
+                date_classId: {
+                    date,
+                    classId
+                }
+            }
+        })
+
+        return { success: true, declared: !!existing }
+    } catch (e: any) {
+        return { success: false, error: e.message }
+    }
+}
+

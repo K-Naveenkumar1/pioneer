@@ -216,6 +216,34 @@ export default function LockdownExamPage() {
         return () => clearInterval(timer)
     }, [started, completed])
 
+    // 3b. Dynamic background polling to update exam duration automatically if modified by admin
+    useEffect(() => {
+        if (!started || completed) return
+
+        const pollTimer = setInterval(async () => {
+            const res = await getExamSessionDetails(attemptId)
+            if (res.success && typeof res.duration === "number") {
+                if (res.duration !== durationMinutes) {
+                    setDurationMinutes(res.duration)
+                    const startTime = res.startedAt ? new Date(res.startedAt).getTime() : (startedAt ? startedAt.getTime() : new Date().getTime())
+                    const durationMs = res.duration * 60 * 1000
+                    const now = new Date().getTime()
+                    const timeLeftSecs = Math.max(0, Math.floor((startTime + durationMs - now) / 1000))
+                    
+                    setSecondsLeft(timeLeftSecs)
+                    toast.info(`The exam duration has been adjusted by the instructor to ${res.duration} minutes.`)
+                    
+                    if (timeLeftSecs <= 0) {
+                        toast.warning("The new exam duration has expired. Submitting answers.")
+                        handleAutoSubmit()
+                    }
+                }
+            }
+        }, 8000)
+
+        return () => clearInterval(pollTimer)
+    }, [started, completed, attemptId, durationMinutes, startedAt])
+
     // 4. Trigger Warning & Check termination limits
     const triggerWarning = async (reason: string) => {
         if (completed) return

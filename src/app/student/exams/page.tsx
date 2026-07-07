@@ -23,6 +23,7 @@ export default function StudentExamsPage() {
     const [loading, setLoading] = useState(true)
     const [isPending, startTransition] = useTransition()
     const [showLobby, setShowLobby] = useState<any | null>(null)
+    const [examCodeInput, setExamCodeInput] = useState("")
 
     useEffect(() => {
         loadExams()
@@ -41,16 +42,18 @@ export default function StudentExamsPage() {
 
     const handleStartExam = (exam: any) => {
         setShowLobby(exam)
+        setExamCodeInput("")
     }
 
     const confirmStartExam = () => {
         if (!showLobby) return
 
         startTransition(async () => {
-            const res = await startExamAttemptAction(showLobby.id)
+            const res = await startExamAttemptAction(showLobby.id, examCodeInput)
             if (res.success && res.attemptId) {
                 toast.success("Exam session started! Entering lockdown...")
                 setShowLobby(null)
+                setExamCodeInput("")
                 // Redirect to the lockdown page
                 router.push(`/student/exams/${res.attemptId}`)
             } else {
@@ -173,9 +176,27 @@ export default function StudentExamsPage() {
                                 </ul>
                             </div>
 
+                            {showLobby.examCode && (
+                                <div className="space-y-2 border-t border-themeGrey/40 pt-4">
+                                    <label className="block text-xs font-semibold text-themeTextGrey uppercase">
+                                        Enter Exam Code
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="e.g. EXAM123 (provided by instructor)"
+                                        value={examCodeInput}
+                                        onChange={(e) => setExamCodeInput(e.target.value)}
+                                        className="w-full px-4 py-3 bg-black/40 border border-themeGrey rounded-xl text-white placeholder-themeTextGrey focus:outline-none focus:ring-2 focus:ring-white/20 transition-all text-sm font-medium"
+                                    />
+                                </div>
+                            )}
+
                             <div className="flex gap-4">
                                 <Button
-                                    onClick={() => setShowLobby(null)}
+                                    onClick={() => {
+                                        setShowLobby(null)
+                                        setExamCodeInput("")
+                                    }}
                                     variant="outline"
                                     className="flex-1 rounded-xl border border-themeGrey hover:bg-themeGrey py-5 text-white"
                                 >
@@ -183,7 +204,7 @@ export default function StudentExamsPage() {
                                 </Button>
                                 <Button
                                     onClick={confirmStartExam}
-                                    disabled={isPending}
+                                    disabled={isPending || (showLobby.examCode && !examCodeInput.trim())}
                                     className="flex-1 rounded-xl bg-white hover:bg-zinc-200 py-5 text-black font-semibold"
                                 >
                                     {isPending ? "Configuring..." : "Agree & Start"}

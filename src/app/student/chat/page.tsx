@@ -174,12 +174,10 @@ export default function StudentChatPage() {
                                     <div className={`flex w-full ${isMe ? "justify-end" : "justify-start"}`}>
                                         <div className={`flex flex-col max-w-[75%] ${isMe ? "items-end" : "items-start"}`}>
                                             {/* Sender Label */}
-                                            {!isMe && (
-                                                <span className="text-[10px] text-zinc-400 font-semibold mb-1 flex items-center gap-1">
-                                                    <User size={10} className="text-zinc-500" />
-                                                    {msg.student.name} <span className="text-zinc-600 font-mono">({msg.student.rollNo})</span>
-                                                </span>
-                                            )}
+                                            <span className="text-[10px] text-zinc-400 font-semibold mb-1 flex items-center gap-1">
+                                                <User size={10} className="text-zinc-500" />
+                                                {msg.student.name} <span className="text-zinc-600 font-mono">({msg.student.rollNo}){isMe && " (You)"}</span>
+                                            </span>
 
                                             {/* Chat Bubble */}
                                             <div className={`px-4 py-3 rounded-2xl break-words whitespace-pre-wrap text-sm leading-relaxed ${

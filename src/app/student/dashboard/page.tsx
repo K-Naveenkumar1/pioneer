@@ -1,6 +1,5 @@
 "use client"
 
-import gsap from "gsap"
 import {
     TrendingDown,
     TrendingUp,
@@ -11,7 +10,7 @@ import {
     Users,
     Award
 } from "lucide-react"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis } from "recharts"
 
@@ -62,8 +61,7 @@ export default function StudentDashboard() {
     const [sessions, setSessions] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
 
-    // GSAP Refs
-    const statsContainerRef = useRef<HTMLDivElement>(null)
+
 
     useEffect(() => {
         fetchDashboardData()
@@ -72,122 +70,108 @@ export default function StudentDashboard() {
     const fetchDashboardData = async () => {
         setLoading(true)
         
-        // Task statistics
-        const taskRes = await getStudentTasks()
-        const completedTasks = (taskRes.success && taskRes.tasks) 
-            ? taskRes.tasks.filter((t: any) => t.status === "APPROVED").length 
-            : 0
-        const totalTasks = (taskRes.success && taskRes.tasks) 
-            ? taskRes.tasks.length 
-            : 0
-        if (taskRes.success) {
-            setTasks(taskRes.tasks || [])
-        }
+        try {
+            const [taskRes, examRes, metricsRes, profileRes, sessionsRes] = await Promise.all([
+                getStudentTasks(),
+                getStudentExams(),
+                getAttendanceMetrics(),
+                getStudentProfileDetails(),
+                getStudentAttendanceSessionsAction()
+            ])
 
-        // Exam statistics
-        const examRes = await getStudentExams()
-        const attemptedExams = (examRes.success && examRes.exams)
-            ? examRes.exams.filter((e: any) => e.attempted).length
-            : 0
-        const totalExams = (examRes.success && examRes.exams)
-            ? examRes.exams.length
-            : 0
-        if (examRes.success) {
-            setExams(examRes.exams || [])
-        }
-
-        setStats({
-            pendingTasks: (taskRes.success && taskRes.tasks) ? taskRes.tasks.filter((t: any) => t.status === "PENDING" || t.status === "REJECTED").length : 0,
-            availableExams: (examRes.success && examRes.exams) ? examRes.exams.filter((e: any) => !e.attempted).length : 0,
-            completedTasks,
-            totalTasks,
-            attemptedExams,
-            totalExams
-        })
-
-        const metricsRes = await getAttendanceMetrics()
-        if (metricsRes.success) {
-            setMetrics({
-                percentage: metricsRes.percentage || 0,
-                daysAttended: metricsRes.daysAttended || 0,
-                totalClassDays: metricsRes.totalClassDays || 0
-            })
-        }
-
-        const profileRes = await getStudentProfileDetails()
-        if (profileRes.success) {
-            setProfile(profileRes.profile)
-        }
-
-        // Fetch attendance sessions and calculate check-in hours
-        const sessionsRes = await getStudentAttendanceSessionsAction()
-        let hoursSum = 0
-        if (sessionsRes.success && sessionsRes.sessions) {
-            setSessions(sessionsRes.sessions)
-            sessionsRes.sessions.forEach((s: any) => {
-                if (s.checkIn && s.checkOut) {
-                    const diffMs = new Date(s.checkOut).getTime() - new Date(s.checkIn).getTime()
-                    hoursSum += diffMs / (1000 * 60 * 60)
-                }
-            })
-        }
-        setTotalHours(hoursSum.toFixed(1))
-
-        setLoading(false)
-
-        // GSAP Stats entrance after state load
-        setTimeout(() => {
-            if (statsContainerRef.current) {
-                gsap.fromTo(
-                    statsContainerRef.current.children,
-                    { opacity: 0, y: 20 },
-                    { opacity: 1, y: 0, duration: 0.6, stagger: 0.1, ease: "power2.out" }
-                )
+            // Task statistics
+            const completedTasks = (taskRes.success && taskRes.tasks) 
+                ? taskRes.tasks.filter((t: any) => t.status === "APPROVED").length 
+                : 0
+            const totalTasks = (taskRes.success && taskRes.tasks) 
+                ? taskRes.tasks.length 
+                : 0
+            if (taskRes.success) {
+                setTasks(taskRes.tasks || [])
             }
-        }, 50)
+
+            // Exam statistics
+            const attemptedExams = (examRes.success && examRes.exams)
+                ? examRes.exams.filter((e: any) => e.attempted).length
+                : 0
+            const totalExams = (examRes.success && examRes.exams)
+                ? examRes.exams.length
+                : 0
+            if (examRes.success) {
+                setExams(examRes.exams || [])
+            }
+
+            setStats({
+                pendingTasks: (taskRes.success && taskRes.tasks) ? taskRes.tasks.filter((t: any) => t.status === "PENDING" || t.status === "REJECTED").length : 0,
+                availableExams: (examRes.success && examRes.exams) ? examRes.exams.filter((e: any) => !e.attempted).length : 0,
+                completedTasks,
+                totalTasks,
+                attemptedExams,
+                totalExams
+            })
+
+            if (metricsRes.success) {
+                setMetrics({
+                    percentage: metricsRes.percentage || 0,
+                    daysAttended: metricsRes.daysAttended || 0,
+                    totalClassDays: metricsRes.totalClassDays || 0
+                })
+            }
+
+            if (profileRes.success) {
+                setProfile(profileRes.profile)
+            }
+
+            // Fetch attendance sessions and calculate check-in hours
+            let hoursSum = 0
+            if (sessionsRes.success && sessionsRes.sessions) {
+                setSessions(sessionsRes.sessions)
+                sessionsRes.sessions.forEach((s: any) => {
+                    if (s.checkIn && s.checkOut) {
+                        const diffMs = new Date(s.checkOut).getTime() - new Date(s.checkIn).getTime()
+                        hoursSum += diffMs / (1000 * 60 * 60)
+                    }
+                })
+            }
+            setTotalHours(hoursSum.toFixed(1))
+        } catch (error) {
+            console.error("Error loading dashboard data:", error)
+        } finally {
+            setLoading(false)
+        }
     }
 
     // Dynamic hourly chart data builder based on actual attendance sessions
     const getChartData = () => {
-        if (!sessions || sessions.length === 0) {
-            return [
-                { date: "01", hours: 2.0 },
-                { date: "05", hours: 4.5 },
-                { date: "10", hours: 3.0 },
-                { date: "15", hours: 6.8 },
-                { date: "20", hours: 5.0 },
-                { date: "25", hours: 2.5 },
-                { date: "30", hours: 4.0 },
-            ]
-        }
-
         // Group by day of month to show a clean progress spread
         const dayBuckets: { [key: string]: number } = {
             "01": 0, "05": 0, "10": 0, "15": 0, "20": 0, "25": 0, "30": 0
         }
 
-        sessions.forEach((s: any) => {
-            if (s.checkIn) {
-                const dateObj = new Date(s.checkIn)
-                const dayNum = dateObj.getDate()
-                let bucket = "01"
-                if (dayNum > 27) bucket = "30"
-                else if (dayNum > 22) bucket = "25"
-                else if (dayNum > 17) bucket = "20"
-                else if (dayNum > 12) bucket = "15"
-                else if (dayNum > 7) bucket = "10"
-                else if (dayNum > 3) bucket = "05"
+        if (sessions && sessions.length > 0) {
+            sessions.forEach((s: any) => {
+                if (s.checkIn) {
+                    const dateObj = new Date(s.checkIn)
+                    const dayNum = dateObj.getDate()
+                    let bucket = "01"
+                    if (dayNum > 27) bucket = "30"
+                    else if (dayNum > 22) bucket = "25"
+                    else if (dayNum > 17) bucket = "20"
+                    else if (dayNum > 12) bucket = "15"
+                    else if (dayNum > 7) bucket = "10"
+                    else if (dayNum > 3) bucket = "05"
 
-                if (s.checkOut) {
-                    const diffMs = new Date(s.checkOut).getTime() - dateObj.getTime()
-                    dayBuckets[bucket] += diffMs / (1000 * 60 * 60)
+                    if (s.checkOut) {
+                        const diffMs = new Date(s.checkOut).getTime() - dateObj.getTime()
+                        dayBuckets[bucket] += diffMs / (1000 * 60 * 60)
+                    }
                 }
-            }
-        })
+            })
+        }
 
         return Object.keys(dayBuckets).map(key => ({
             date: key,
-            hours: parseFloat(dayBuckets[key].toFixed(1)) || parseFloat((Math.random() * 5 + 1).toFixed(1))
+            hours: parseFloat(dayBuckets[key].toFixed(1))
         }))
     }
 
@@ -231,7 +215,7 @@ export default function StudentDashboard() {
             </div>
 
             {/* Row of 4 Stats Cards */}
-            <div ref={statsContainerRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {/* Attendance rate */}
                 <div className="bg-[#121212] border border-zinc-800/80 rounded-2xl p-6 flex flex-col justify-between min-h-[130px] shadow-lg hover:border-zinc-700/80 transition-all duration-300">
                     <div className="flex items-center justify-between">

@@ -323,6 +323,7 @@ export async function getStudentExams() {
                 id: exam.id,
                 title: exam.title,
                 duration: exam.duration,
+                examCode: exam.examCode, // Include exam code
                 totalQuestions: exam._count.questions,
                 attempted: !!attempt,
                 score: attempt ? attempt.score : null,
@@ -339,10 +340,22 @@ export async function getStudentExams() {
 /**
  * Starts an exam attempt.
  */
-export async function startExamAttemptAction(examId: string) {
+export async function startExamAttemptAction(examId: string, inputCode: string) {
     try {
         const student = await getStudentUser()
         if (!student) return { success: false, error: "Unauthorized" }
+
+        const exam = await client.exam.findUnique({
+            where: { id: examId }
+        })
+
+        if (!exam) return { success: false, error: "Exam not found" }
+
+        if (exam.examCode && exam.examCode.trim() !== "") {
+            if (!inputCode || inputCode.trim() !== exam.examCode.trim()) {
+                return { success: false, error: "Incorrect exam code. Access denied." }
+            }
+        }
 
         // Check if student already completed this exam
         const existingAttempt = await client.examAttempt.findFirst({

@@ -22,7 +22,10 @@ import { Button } from "@/components/ui/button"
 import { 
     adminCreateTaskAction, 
     adminGetTasksAndSubmissions, 
-    adminReviewSubmissionAction 
+    adminReviewSubmissionAction,
+    adminGetClassesAction,
+    adminDeclareNoTaskAction,
+    adminCheckNoTaskAction
 } from "@/actions/admin-actions"
 
 export default function AdminTasksPage() {
@@ -35,9 +38,53 @@ export default function AdminTasksPage() {
     const [title, setTitle] = useState("")
     const [description, setDescription] = useState("")
 
+    // No Task declaration states
+    const [classes, setClasses] = useState<any[]>([])
+    const [selectedClassId, setSelectedClassId] = useState("")
+    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0])
+    const [hasNoTask, setHasNoTask] = useState(false)
+
     useEffect(() => {
         loadTasks()
+        loadClasses()
     }, [])
+
+    useEffect(() => {
+        if (selectedClassId && selectedDate) {
+            checkNoTaskStatus()
+        }
+    }, [selectedClassId, selectedDate])
+
+    const loadClasses = async () => {
+        const res = await adminGetClassesAction()
+        if (res.success) {
+            setClasses(res.classes || [])
+            if (res.classes && res.classes.length > 0) {
+                setSelectedClassId(res.classes[0].id)
+            }
+        }
+    }
+
+    const checkNoTaskStatus = async () => {
+        const res = await adminCheckNoTaskAction(selectedDate, selectedClassId)
+        if (res.success) {
+            setHasNoTask(res.declared ?? false)
+        }
+    }
+
+    const handleDeclareNoTask = async () => {
+        if (!selectedClassId) {
+            toast.error("Please select a class first.")
+            return
+        }
+        const res = await adminDeclareNoTaskAction(selectedDate, selectedClassId)
+        if (res.success) {
+            toast.success(res.message)
+            checkNoTaskStatus()
+        } else {
+            toast.error(res.error || "Failed to toggle no-task declaration.")
+        }
+    }
 
     const loadTasks = async () => {
         setLoading(true)
@@ -171,6 +218,57 @@ export default function AdminTasksPage() {
                             </Button>
                         </form>
                     </GlassCard>
+
+                    {/* Declare No Task Card */}
+                    <div className="pt-4 space-y-6">
+                        <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                            <Calendar size={18} /> Declare No Task
+                        </h3>
+                        <GlassCard className="p-6 border border-themeGrey space-y-4">
+                            <div>
+                                <label className="block text-xs font-semibold text-themeTextGrey uppercase mb-2">
+                                    Select Class/Batch
+                                </label>
+                                <select
+                                    value={selectedClassId}
+                                    onChange={(e) => setSelectedClassId(e.target.value)}
+                                    className="w-full px-4 py-3 bg-black/40 border border-themeGrey rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-white/20 transition-all text-sm font-medium"
+                                >
+                                    {classes.map((cls) => (
+                                        <option key={cls.id} value={cls.id} className="bg-zinc-950 text-white">
+                                            {cls.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-semibold text-themeTextGrey uppercase mb-2">
+                                    Select Date
+                                </label>
+                                <input
+                                    type="date"
+                                    value={selectedDate}
+                                    onChange={(e) => setSelectedDate(e.target.value)}
+                                    className="w-full px-4 py-3 bg-black/40 border border-themeGrey rounded-xl text-white placeholder-themeTextGrey focus:outline-none focus:ring-2 focus:ring-white/20 transition-all text-sm font-medium"
+                                />
+                            </div>
+
+                            <Button
+                                onClick={handleDeclareNoTask}
+                                className={`w-full py-5 font-bold rounded-xl transition-all ${
+                                    hasNoTask 
+                                        ? "bg-amber-500 hover:bg-amber-600 text-black" 
+                                        : "bg-[#161616] border border-themeGrey hover:bg-zinc-900 text-white"
+                                }`}
+                            >
+                                {hasNoTask ? "⛔ Declare Task Status (Restore)" : "✅ Declare No Task for Today"}
+                            </Button>
+                            <p className="text-[10px] text-themeTextGrey leading-relaxed text-center">
+                                Toggling this will declare that this class/batch does not have any tasks on this date, modifying attendance active hours compliance rules.
+                            </p>
+                        </GlassCard>
+                    </div>
                 </div>
 
                 {/* Submissions List Column */}

@@ -1,15 +1,22 @@
 "use client"
 
-import React, { useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 
 export default function MobileBlocker() {
+    const [isMobile, setIsMobile] = useState(false)
     const [mounted, setMounted] = useState(false)
 
     useEffect(() => {
         setMounted(true)
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 1024)
+        }
+        handleResize()
+        window.addEventListener("resize", handleResize)
+        return () => window.removeEventListener("resize", handleResize)
     }, [])
 
-    if (!mounted) {
+    if (!mounted || !isMobile) {
         return null
     }
 
@@ -43,7 +50,7 @@ export default function MobileBlocker() {
                 {/* Text Content */}
                 <div className="space-y-3">
                     {/* Main title styled with the website's custom text-gradiant */}
-                    <h1 className="text-xl font-bold tracking-tight uppercase sm:text-2xl text-gradiant">
+                    <h1 className="text-xl font-bold tracking-tight uppercase sm:text-2xl text-gradiant inline-flex items-center">
                         Desktop Required
                     </h1>
                     <p className="text-sm leading-relaxed text-zinc-400">

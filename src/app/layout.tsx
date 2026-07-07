@@ -33,9 +33,7 @@ export default function RootLayout({
                     >
                         <ReduxProvider>
                             <ReactQueryProvider>
-                                <div className="block lg:hidden">
-                                    <MobileBlocker />
-                                </div>
+                                <MobileBlocker />
                                 <div className="hidden lg:block min-h-screen">
                                     {children}
                                 </div>

@@ -254,6 +254,7 @@ model Exam {
   id        String         @id @default(uuid())
   title     String
   duration  Int            // in minutes
+  examCode  String?        // Code required to enter the exam
   createdAt DateTime       @default(now())
   questions ExamQuestion[]
   attempts  ExamAttempt[]
