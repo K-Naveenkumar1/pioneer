@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button"
 import {
     adminGetClassesAction,
     adminGetAttendanceReportAction,
-    adminDeclareNoTaskAction,
     adminUpdateAttendanceAction,
     adminDeleteAttendanceAction,
     adminSetAttendanceStatusAction,
@@ -25,7 +24,6 @@ export default function AdminAttendancePage() {
         return new Date(d.getTime() - (offset*60*1000)).toISOString().split('T')[0]
     })
     const [report, setReport] = useState<any[]>([])
-    const [hasNoTask, setHasNoTask] = useState(false)
     const [loading, setLoading] = useState(true)
 
     // Editing attendance states
@@ -64,25 +62,10 @@ export default function AdminAttendancePage() {
         const res = await adminGetAttendanceReportAction(selectedDate, selectedClassId)
         if (res.success) {
             setReport(res.report || [])
-            setHasNoTask(res.hasNoTaskDecl || false)
         } else {
             toast.error(res.error || "Failed to load attendance report")
         }
         setLoading(false)
-    }
-
-    const handleDeclareNoTask = async () => {
-        if (!selectedClassId) {
-            toast.error("Please select a class first.")
-            return
-        }
-        const res = await adminDeclareNoTaskAction(selectedDate, selectedClassId)
-        if (res.success) {
-            toast.success(res.message)
-            loadAttendanceReport()
-        } else {
-            toast.error(res.error || "Failed to declare task status")
-        }
     }
 
     const handleStartEditAttendance = (log: any) => {
@@ -206,19 +189,7 @@ export default function AdminAttendancePage() {
                     />
                 </div>
 
-                <div>
-                    <Button
-                        onClick={handleDeclareNoTask}
-                        variant={hasNoTask ? "secondary" : "outline"}
-                        className={`w-full py-6 font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 ${
-                            hasNoTask 
-                                ? "bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20"
-                                : "border border-themeGrey text-zinc-400 hover:text-white hover:bg-zinc-900/50"
-                        }`}
-                    >
-                        {hasNoTask ? "Declared: No Task Required" : "Declare 'No Task' for Today"}
-                    </Button>
-                </div>
+
             </div>
 
             {/* Attendance List */}

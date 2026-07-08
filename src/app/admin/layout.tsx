@@ -8,7 +8,10 @@ import {
     CheckSquare, 
     BookOpen, 
     Calendar, 
-    Shield
+    Shield,
+    Trophy,
+    MessageSquare,
+    Keyboard
 } from "lucide-react"
 import AdminLogoutButton from "./_components/logout-button"
 
@@ -83,6 +86,33 @@ export default async function AdminLayout({ children }: Props) {
                             <>
                                 <Calendar size={18} />
                                 Attendance Logs
+                            </>
+                        </Link>
+                        <Link 
+                            href="/admin/leaderboard" 
+                            className="flex items-center gap-3.5 px-4 py-3 rounded-xl hover:bg-themeGrey/50 transition-all text-sm font-medium text-themeTextGrey hover:text-white"
+                        >
+                            <>
+                                <Trophy size={18} />
+                                Leaderboard
+                            </>
+                        </Link>
+                        <Link 
+                            href="/admin/chat" 
+                            className="flex items-center gap-3.5 px-4 py-3 rounded-xl hover:bg-themeGrey/50 transition-all text-sm font-medium text-themeTextGrey hover:text-white"
+                        >
+                            <>
+                                <MessageSquare size={18} />
+                                Doubts Chat
+                            </>
+                        </Link>
+                        <Link 
+                            href="/admin/typing-game" 
+                            className="flex items-center gap-3.5 px-4 py-3 rounded-xl hover:bg-themeGrey/50 transition-all text-sm font-medium text-themeTextGrey hover:text-white"
+                        >
+                            <>
+                                <Keyboard size={18} />
+                                Conduct Typing
                             </>
                         </Link>
                     </nav>

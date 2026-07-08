@@ -431,7 +431,7 @@ export async function submitExamAttemptAction(attemptId: string, answers: Record
 
         questions.forEach(q => {
             const studentAnswer = answers[q.id]
-            if (studentAnswer && studentAnswer.trim().toUpperCase() === q.correctAnswer.trim().toUpperCase()) {
+            if (studentAnswer && q.correctAnswer && studentAnswer.trim().toUpperCase() === q.correctAnswer.trim().toUpperCase()) {
                 correctCount++
             }
         })

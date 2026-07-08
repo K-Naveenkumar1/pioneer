@@ -1121,7 +1121,7 @@ export async function adminUpdateExamAction(
                             existing.optionB !== q.optionB.trim() ||
                             existing.optionC !== q.optionC.trim() ||
                             existing.optionD !== q.optionD.trim() ||
-                            existing.correctAnswer.toUpperCase() !== q.correctAnswer.trim().toUpperCase()
+                            (existing.correctAnswer?.toUpperCase() ?? "") !== q.correctAnswer.trim().toUpperCase()
 
                         if (!hasChanged) return null // No changes, skip update query!
                     }
@@ -1503,6 +1503,114 @@ export async function adminGetTypingLeaderboardAction(sessionId: string) {
         return { success: true, runs }
     } catch (e: any) {
         return { success: false, error: e.message }
+    }
+}
+
+/**
+ * Retrieves the ranked leaderboard of students in the specified class for admin viewing.
+ */
+export async function adminGetLeaderboardAction(classId: string) {
+    try {
+        const admin = await getAdminUser()
+        if (!admin) return { success: false, error: "Unauthorized" }
+
+        if (!classId || classId.trim() === "") {
+            return { success: false, error: "Please select a valid class." }
+        }
+
+        const classmates = await client.student.findMany({
+            where: { classId },
+            select: {
+                id: true,
+                name: true,
+                rollNo: true,
+                submissions: {
+                    include: { task: true }
+                },
+                attempts: {
+                    where: { completedAt: { not: null } },
+                    select: { score: true, startedAt: true, examId: true }
+                }
+            }
+        })
+
+        const targetClass = await client.class.findUnique({
+            where: { id: classId },
+            select: { name: true }
+        })
+
+        const allTasks = await client.task.findMany({
+            select: { id: true, createdAt: true }
+        })
+
+        const taskDates: { [dateStr: string]: string[] } = {}
+        allTasks.forEach(t => {
+            const d = new Date(t.createdAt)
+            const offset = d.getTimezoneOffset()
+            const dateStr = new Date(d.getTime() - (offset*60*1000)).toISOString().split('T')[0]
+            if (!taskDates[dateStr]) taskDates[dateStr] = []
+            taskDates[dateStr].push(t.id)
+        })
+
+        const noTasks = await client.noTaskDeclaration.findMany({
+            where: { classId },
+            select: { date: true }
+        })
+        const noTaskDates = new Set(noTasks.map(nt => nt.date))
+
+        const leaderboard = classmates.map(c => {
+            const approvedSubmissions = c.submissions.filter(s => s.status === "APPROVED")
+            const completedTasksCount = approvedSubmissions.length
+
+            let examScoreSum = 0
+            c.attempts.forEach(attempt => {
+                const d = new Date(attempt.startedAt)
+                const offset = d.getTimezoneOffset()
+                const attemptDate = new Date(d.getTime() - (offset*60*1000)).toISOString().split('T')[0]
+
+                const tasksForDate = taskDates[attemptDate] || []
+
+                let isAllowed = false
+                if (tasksForDate.length === 0 || noTaskDates.has(attemptDate)) {
+                    isAllowed = true
+                } else {
+                    const completedTasksForDate = approvedSubmissions.filter(s => tasksForDate.includes(s.taskId))
+                    if (completedTasksForDate.length > 0) {
+                        isAllowed = true
+                    }
+                }
+
+                if (isAllowed) {
+                    examScoreSum += attempt.score
+                }
+            })
+
+            const totalScore = (completedTasksCount * 10) + examScoreSum
+
+            return {
+                id: c.id,
+                name: c.name,
+                rollNo: c.rollNo,
+                tasksCompleted: completedTasksCount,
+                examScoreSum: examScoreSum,
+                totalScore: totalScore
+            }
+        })
+
+        leaderboard.sort((a, b) => {
+            if (b.totalScore !== a.totalScore) {
+                return b.totalScore - a.totalScore
+            }
+            return a.name.localeCompare(b.name)
+        })
+
+        return { 
+            success: true, 
+            leaderboard, 
+            className: targetClass?.name || "Classroom" 
+        }
+    } catch (e: any) {
+        return { success: false, error: e.message || "Failed to fetch leaderboard" }
     }
 }
 

@@ -17,7 +17,8 @@ import {
     X,
     Activity,
     Download,
-    RefreshCw
+    RefreshCw,
+    Code
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -32,7 +33,8 @@ import {
     adminUpdateExamAction,
     adminGetExamSubmissionsAction,
     adminResetExamAttemptAction,
-    adminForceSubmitExamAttemptAction
+    adminForceSubmitExamAttemptAction,
+    adminCreateCodingExamAction
 } from "@/actions/admin-actions"
 
 export default function AdminExamsPage() {
@@ -43,6 +45,10 @@ export default function AdminExamsPage() {
 
     // Tab control
     const [activeTab, setActiveTab] = useState<"creator" | "submissions">("creator")
+
+    // Creator Type Toggle
+    const [examType, setExamType] = useState<"MCQ" | "CODING">("MCQ")
+    const [codingQuestions, setCodingQuestions] = useState<any[]>([])
 
     // Exams list states
     const [exams, setExams] = useState<any[]>([])
@@ -257,6 +263,113 @@ export default function AdminExamsPage() {
         })
     }
 
+    // Coding Exam helpers
+    const handleAddCodingQuestion = () => {
+        setCodingQuestions(prev => [
+            ...prev,
+            {
+                title: `Challenge #${prev.length + 1}`,
+                questionText: "",
+                constraints: "",
+                inputFormat: "",
+                outputFormat: "",
+                sampleInput: "",
+                sampleOutput: "",
+                testCases: []
+            }
+        ])
+    }
+
+    const handleRemoveCodingQuestion = (qIdx: number) => {
+        setCodingQuestions(prev => prev.filter((_, i) => i !== qIdx))
+    }
+
+    const handleCodingQuestionChange = (qIdx: number, field: string, value: any) => {
+        setCodingQuestions(prev => prev.map((q, i) => i === qIdx ? { ...q, [field]: value } : q))
+    }
+
+    const handleAddTestCase = (qIdx: number) => {
+        setCodingQuestions(prev => prev.map((q, i) => {
+            if (i !== qIdx) return q
+            return {
+                ...q,
+                testCases: [...(q.testCases || []), { input: "", output: "", isSample: false }]
+            }
+        }))
+    }
+
+    const handleRemoveTestCase = (qIdx: number, tcIdx: number) => {
+        setCodingQuestions(prev => prev.map((q, i) => {
+            if (i !== qIdx) return q
+            return {
+                ...q,
+                testCases: q.testCases.filter((_: any, t: number) => t !== tcIdx)
+            }
+        }))
+    }
+
+    const handleTestCaseChange = (qIdx: number, tcIdx: number, field: string, value: any) => {
+        setCodingQuestions(prev => prev.map((q, i) => {
+            if (i !== qIdx) return q
+            const updatedTcs = q.testCases.map((tc: any, t: number) => t === tcIdx ? { ...tc, [field]: value } : tc)
+            return { ...q, testCases: updatedTcs }
+        }))
+    }
+
+    const handlePublishCodingExam = () => {
+        if (!title.trim()) {
+            toast.error("Please provide an exam title.")
+            return
+        }
+        if (duration <= 0) {
+            toast.error("Exam duration must be at least 1 minute.")
+            return
+        }
+        if (codingQuestions.length === 0) {
+            toast.error("Please add at least one coding question.")
+            return
+        }
+
+        // Validate
+        for (let i = 0; i < codingQuestions.length; i++) {
+            const q = codingQuestions[i]
+            if (!q.title.trim() || !q.questionText.trim()) {
+                toast.error(`Question #${i + 1} is missing title or description.`)
+                return
+            }
+            if (!q.testCases || q.testCases.length === 0) {
+                toast.error(`Question #${i + 1} must have at least one testcase.`)
+                return
+            }
+        }
+
+        // Format
+        const formatted = codingQuestions.map(q => ({
+            title: q.title,
+            questionText: q.questionText,
+            constraints: q.constraints,
+            inputFormat: q.inputFormat,
+            outputFormat: q.outputFormat,
+            sampleInput: q.sampleInput,
+            sampleOutput: q.sampleOutput,
+            testCases: JSON.stringify(q.testCases)
+        }))
+
+        startTransition(async () => {
+            const res = await adminCreateCodingExamAction(title, duration, examCode, formatted)
+            if (res.success) {
+                toast.success(res.message || "Coding Exam published successfully!")
+                setTitle("")
+                setDuration(60)
+                setExamCode("")
+                setCodingQuestions([])
+                loadExams()
+            } else {
+                toast.error(res.error || "Failed to publish coding exam.")
+            }
+        })
+    }
+
     const handleStartEditExam = async (examId: string) => {
         try {
             const res = await adminGetExamDetailsAction(examId)
@@ -374,13 +487,40 @@ export default function AdminExamsPage() {
                 </button>
             </div>
 
+            {/* Mode selection toggle */}
+            {activeTab === "creator" && (
+                <div className="flex gap-4 p-4 bg-zinc-950 border border-themeGrey/60 rounded-2xl items-center shrink-0">
+                    <span className="text-xs font-bold text-themeTextGrey uppercase">Exam Creation Mode:</span>
+                    <button
+                        onClick={() => setExamType("MCQ")}
+                        className={`px-4 py-2 text-xs font-bold rounded-xl border transition-all ${
+                            examType === "MCQ"
+                                ? "bg-white text-black border-white"
+                                : "bg-zinc-900/60 border-zinc-800/80 text-zinc-400 hover:border-zinc-700"
+                        }`}
+                    >
+                        MCQ Exam (Docx Upload)
+                    </button>
+                    <button
+                        onClick={() => setExamType("CODING")}
+                        className={`px-4 py-2 text-xs font-bold rounded-xl border transition-all ${
+                            examType === "CODING"
+                                ? "bg-white text-black border-white"
+                                : "bg-zinc-900/60 border-zinc-800/80 text-zinc-400 hover:border-zinc-700"
+                        }`}
+                    >
+                        Coding Exam (Manual Builder)
+                    </button>
+                </div>
+            )}
+
             {activeTab === "creator" ? (
                 /* Split layout */
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Form & Upload Column */}
+                    {/* Form & Setup Column */}
                     <div className="space-y-6">
                         <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                            Exam Details & Upload
+                            {examType === "MCQ" ? "MCQ Exam Settings" : "Coding Exam Settings"}
                         </h3>
                         <GlassCard className="p-6 border border-themeGrey space-y-6">
                             {/* Title */}
@@ -425,74 +565,87 @@ export default function AdminExamsPage() {
                                 </label>
                                 <input
                                     type="text"
-                                    placeholder="e.g. CS101-MID (leave blank for no code)"
+                                    placeholder="e.g. CS101-MID"
                                     value={examCode}
                                     onChange={(e) => setExamCode(e.target.value)}
                                     className="w-full px-4 py-3 bg-black/40 border border-themeGrey rounded-xl text-white placeholder-themeTextGrey focus:outline-none focus:ring-2 focus:ring-white/20 transition-all text-sm"
                                 />
                             </div>
 
-                            {/* Word File Upload Box */}
-                            <div>
-                                <div className="flex justify-between items-center mb-2">
-                                    <label className="block text-xs font-semibold text-themeTextGrey uppercase">
-                                        Upload Questions Word Document (.docx)
-                                    </label>
-                                    <a 
-                                        href="/api/sample-mcq" 
-                                        className="text-[10px] text-zinc-400 hover:text-white underline transition-all font-medium"
-                                    >
-                                        Download Sample (.docx)
-                                    </a>
-                                </div>
-                                <div className="border border-dashed border-themeGrey rounded-2xl bg-black/30 p-6 text-center hover:bg-black/50 transition-all relative cursor-pointer">
-                                    <input
-                                        type="file"
-                                        accept=".docx"
-                                        onChange={handleFileChange}
-                                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                                    />
-                                    <div className="space-y-2">
-                                        <UploadCloud size={28} className="mx-auto text-themeTextGrey" />
-                                        <div className="text-xs text-themeTextWhite font-semibold">
-                                            {fileSelected ? fileSelected.name : "Select Word Document (.docx)"}
+                            {examType === "MCQ" ? (
+                                <>
+                                    {/* Word File Upload Box */}
+                                    <div>
+                                        <div className="flex justify-between items-center mb-2">
+                                            <label className="block text-xs font-semibold text-themeTextGrey uppercase">
+                                                Upload MCQ Word Document (.docx)
+                                            </label>
+                                            <a 
+                                                href="/api/sample-mcq" 
+                                                className="text-[10px] text-zinc-400 hover:text-white underline transition-all font-medium"
+                                            >
+                                                Download Sample (.docx)
+                                            </a>
                                         </div>
-                                        <div className="text-[10px] text-themeTextGrey">
-                                            Supports files up to 10MB
+                                        <div className="border border-dashed border-themeGrey rounded-2xl bg-black/30 p-6 text-center hover:bg-black/50 transition-all relative cursor-pointer">
+                                            <input
+                                                type="file"
+                                                accept=".docx"
+                                                onChange={handleFileChange}
+                                                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                            />
+                                            <div className="space-y-2">
+                                                <UploadCloud size={28} className="mx-auto text-themeTextGrey" />
+                                                <div className="text-xs text-themeTextWhite font-semibold">
+                                                    {fileSelected ? fileSelected.name : "Select Word Document (.docx)"}
+                                                </div>
+                                                <div className="text-[10px] text-themeTextGrey">
+                                                    Supports files up to 10MB
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
 
-                            {/* Parse Trigger */}
-                            {fileSelected && (
-                                <Button
-                                    onClick={handleParseDocument}
-                                    disabled={parsing}
-                                    variant="outline"
-                                    className="w-full py-5 border border-themeGrey hover:bg-themeGrey/50 text-white font-semibold rounded-xl flex items-center justify-center gap-1.5"
-                                >
-                                    {parsing ? (
-                                        <>
-                                            <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
-                                            Parsing File...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <FileText size={16} /> Parse Questions Document
-                                        </>
+                                    {/* Parse Trigger */}
+                                    {fileSelected && (
+                                        <Button
+                                            onClick={handleParseDocument}
+                                            disabled={parsing}
+                                            variant="outline"
+                                            className="w-full py-5 border border-themeGrey hover:bg-themeGrey/50 text-white font-semibold rounded-xl flex items-center justify-center gap-1.5"
+                                        >
+                                            {parsing ? (
+                                                <>
+                                                    <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
+                                                    Parsing File...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <FileText size={16} /> Parse Questions Document
+                                                </>
+                                            )}
+                                        </Button>
                                     )}
+
+                                    {/* MCQ Publish Trigger */}
+                                    <Button
+                                        onClick={handlePublishExam}
+                                        disabled={isPending || parsedQuestions.length === 0}
+                                        className="w-full py-5 bg-white hover:bg-zinc-200 text-black font-bold rounded-xl"
+                                    >
+                                        {isPending ? "Publishing..." : "Confirm & Publish MCQ Exam"}
+                                    </Button>
+                                </>
+                            ) : (
+                                /* Coding Publish Trigger */
+                                <Button
+                                    onClick={handlePublishCodingExam}
+                                    disabled={isPending || codingQuestions.length === 0}
+                                    className="w-full py-5 bg-white hover:bg-zinc-200 text-black font-bold rounded-xl"
+                                >
+                                    {isPending ? "Publishing..." : "Confirm & Publish Coding Exam"}
                                 </Button>
                             )}
-
-                            {/* Publish Trigger */}
-                            <Button
-                                onClick={handlePublishExam}
-                                disabled={isPending || parsedQuestions.length === 0}
-                                className="w-full py-5 bg-white hover:bg-zinc-200 text-black font-bold rounded-xl"
-                            >
-                                {isPending ? "Publishing..." : "Confirm & Publish Exam"}
-                            </Button>
                         </GlassCard>
 
                         {/* Active Exams List */}
@@ -512,26 +665,31 @@ export default function AdminExamsPage() {
                                 <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
                                     {exams.map((ex: any) => (
                                         <GlassCard key={ex.id} className="p-4 border border-themeGrey/40 flex items-center justify-between hover:border-zinc-700 transition-all">
-                                            <div>
-                                                <h4 className="font-bold text-sm text-white">{ex.title}</h4>
-                                                <p className="text-xs text-themeTextGrey mt-0.5">
-                                                    Duration: {ex.duration} mins | Questions: {ex.questions?.length || 0} {ex.examCode && `| Code: ${ex.examCode}`}
-                                                </p>
+                                            <div className="overflow-hidden mr-2">
+                                                <h4 className="font-bold text-sm text-white truncate">{ex.title}</h4>
+                                                <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                                    <span className="text-[9px] bg-white/10 text-zinc-300 font-bold px-1.5 py-0.5 rounded">
+                                                        {ex.type || "MCQ"}
+                                                    </span>
+                                                    <span className="text-[10px] text-themeTextGrey">
+                                                        {ex.duration}m | Qs: {ex.questions?.length || 0}
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex items-center gap-1.5 shrink-0">
                                                 <button
                                                     onClick={() => handleStartEditExam(ex.id)}
                                                     className="p-2 bg-zinc-900 border border-zinc-800 rounded-xl text-zinc-400 hover:text-white hover:border-zinc-700 transition-all flex items-center justify-center"
                                                     title="Edit Exam"
                                                 >
-                                                    <Pencil size={14} />
+                                                    <Pencil size={13} />
                                                 </button>
                                                 <button
                                                     onClick={() => handleDeleteExam(ex.id)}
                                                     className="p-2 bg-zinc-900 border border-zinc-800 rounded-xl text-zinc-400 hover:text-red-400 hover:border-red-500/30 transition-all flex items-center justify-center"
                                                     title="Delete Exam"
                                                 >
-                                                    <Trash2 size={14} />
+                                                    <Trash2 size={13} />
                                                 </button>
                                             </div>
                                         </GlassCard>
@@ -541,61 +699,233 @@ export default function AdminExamsPage() {
                         </div>
                     </div>
 
-                    {/* Parsing Results Preview Column */}
+                    {/* Right column view: MCQ Preview vs Coding Questions manual builder */}
                     <div className="lg:col-span-2 space-y-6">
-                        <div className="flex justify-between items-center">
-                            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                <Eye size={18} /> Questions Preview Grid
-                            </h3>
-                            {parseReport && (
-                                <div className="flex gap-3 text-[10px] font-semibold text-themeTextGrey">
-                                    <span>Parsed: <span className="text-white font-bold">{parseReport.totalParsed}</span></span>
-                                    <span>Valid: <span className="text-emerald-400 font-bold">{parseReport.validCount}</span></span>
-                                    {parseReport.invalidCount > 0 && <span>Invalid: <span className="text-red-400 font-bold">{parseReport.invalidCount}</span></span>}
+                        {examType === "MCQ" ? (
+                            <>
+                                <div className="flex justify-between items-center">
+                                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                        <Eye size={18} /> MCQ Questions Preview
+                                    </h3>
+                                    {parseReport && (
+                                        <div className="flex gap-3 text-[10px] font-semibold text-themeTextGrey">
+                                            <span>Parsed: <span className="text-white font-bold">{parseReport.totalParsed}</span></span>
+                                            <span>Valid: <span className="text-emerald-400 font-bold">{parseReport.validCount}</span></span>
+                                        </div>
+                                    )}
                                 </div>
-                            )}
-                        </div>
 
-                        {parsedQuestions.length === 0 ? (
-                            <GlassCard className="p-8 text-center text-themeTextGrey text-sm border border-themeGrey">
-                                Upload and parse a `.docx` file to display questions preview.
-                            </GlassCard>
-                        ) : (
-                            <div className="space-y-4 max-h-[600px] overflow-y-auto pr-1">
-                                {parsedQuestions.map((q, idx) => (
-                                    <GlassCard 
-                                        key={idx} 
-                                        className="p-5 border border-themeGrey/40 space-y-4 hover:border-zinc-700 transition-all relative group"
-                                    >
-                                        <div className="flex justify-between items-start gap-4">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-xs font-semibold text-themeTextGrey uppercase tracking-wider bg-zinc-900 border border-themeGrey px-2.5 py-0.5 rounded-md">
-                                                    Question {idx + 1}
-                                                </span>
-                                                <span className="text-xs font-bold text-emerald-400 bg-emerald-400/5 px-2 py-0.5 rounded-md">
-                                                    Ans: {q.correctAnswer}
-                                                </span>
-                                            </div>
-
-                                            <button
-                                                onClick={() => handleDeleteQuestion(idx)}
-                                                className="text-themeTextGrey hover:text-red-400 transition-all opacity-0 group-hover:opacity-100"
-                                                title="Delete Question"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </div>
-
-                                        <h4 className="font-bold text-sm text-white">{q.questionText}</h4>
-
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 text-xs text-themeTextGrey border-t border-themeGrey/30 pt-3">
-                                            <p className={q.correctAnswer === "A" ? "text-emerald-400 font-semibold" : ""}>A) {q.optionA}</p>
-                                            <p className={q.correctAnswer === "B" ? "text-emerald-400 font-semibold" : ""}>B) {q.optionB}</p>
-                                            <p className={q.correctAnswer === "C" ? "text-emerald-400 font-semibold" : ""}>C) {q.optionC}</p>
-                                            <p className={q.correctAnswer === "D" ? "text-emerald-400 font-semibold" : ""}>D) {q.optionD}</p>
-                                        </div>
+                                {parsedQuestions.length === 0 ? (
+                                    <GlassCard className="p-8 text-center text-themeTextGrey text-sm border border-themeGrey">
+                                        Upload and parse a `.docx` file to display MCQ questions.
                                     </GlassCard>
-                                ))}
+                                ) : (
+                                    <div className="space-y-4 max-h-[600px] overflow-y-auto pr-1">
+                                        {parsedQuestions.map((q, idx) => (
+                                            <GlassCard 
+                                                key={idx} 
+                                                className="p-5 border border-themeGrey/40 space-y-4 hover:border-zinc-700 transition-all relative group"
+                                            >
+                                                <div className="flex justify-between items-start gap-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs font-semibold text-themeTextGrey uppercase tracking-wider bg-zinc-900 border border-themeGrey px-2.5 py-0.5 rounded-md">
+                                                            Question {idx + 1}
+                                                        </span>
+                                                        <span className="text-xs font-bold text-emerald-400 bg-emerald-400/5 px-2 py-0.5 rounded-md">
+                                                            Ans: {q.correctAnswer}
+                                                        </span>
+                                                    </div>
+
+                                                    <button
+                                                        onClick={() => handleDeleteQuestion(idx)}
+                                                        className="text-themeTextGrey hover:text-red-400 transition-all opacity-0 group-hover:opacity-100"
+                                                        title="Delete Question"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
+
+                                                <h4 className="font-bold text-sm text-white">{q.questionText}</h4>
+
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 text-xs text-themeTextGrey border-t border-themeGrey/30 pt-3">
+                                                    <p className={q.correctAnswer === "A" ? "text-emerald-400 font-semibold" : ""}>A) {q.optionA}</p>
+                                                    <p className={q.correctAnswer === "B" ? "text-emerald-400 font-semibold" : ""}>B) {q.optionB}</p>
+                                                    <p className={q.correctAnswer === "C" ? "text-emerald-400 font-semibold" : ""}>C) {q.optionC}</p>
+                                                    <p className={q.correctAnswer === "D" ? "text-emerald-400 font-semibold" : ""}>D) {q.optionD}</p>
+                                                </div>
+                                            </GlassCard>
+                                        ))}
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            /* Coding questions builder */
+                            <div className="space-y-6">
+                                <div className="flex justify-between items-center">
+                                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                        <Code size={18} /> Coding Tasks Builder
+                                    </h3>
+                                    <Button
+                                        onClick={handleAddCodingQuestion}
+                                        className="bg-white hover:bg-zinc-200 text-black text-xs font-bold rounded-xl flex items-center gap-1 px-4 py-2"
+                                    >
+                                        <Plus size={14} /> Add Coding Task
+                                    </Button>
+                                </div>
+
+                                {codingQuestions.length === 0 ? (
+                                    <GlassCard className="p-8 text-center text-themeTextGrey text-sm border border-themeGrey">
+                                        No coding tasks created yet. Click "Add Coding Task" above to add challenges.
+                                    </GlassCard>
+                                ) : (
+                                    <div className="space-y-6 max-h-[600px] overflow-y-auto pr-1">
+                                        {codingQuestions.map((q, qIdx) => (
+                                            <GlassCard key={qIdx} className="p-6 border border-themeGrey/50 space-y-4">
+                                                <div className="flex justify-between items-center border-b border-themeGrey/40 pb-3">
+                                                    <span className="text-xs font-bold text-themeTextWhite uppercase">
+                                                        Task #{qIdx + 1} Settings
+                                                    </span>
+                                                    <button
+                                                        onClick={() => handleRemoveCodingQuestion(qIdx)}
+                                                        className="text-xs text-red-400 hover:text-red-500 font-semibold flex items-center gap-1"
+                                                    >
+                                                        <Trash2 size={14} /> Remove Task
+                                                    </button>
+                                                </div>
+
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="block text-[10px] font-semibold text-themeTextGrey uppercase mb-1.5">Question Title</label>
+                                                        <input
+                                                            type="text"
+                                                            value={q.title}
+                                                            onChange={(e) => handleCodingQuestionChange(qIdx, "title", e.target.value)}
+                                                            className="w-full px-3 py-2 bg-black/40 border border-themeGrey rounded-lg text-white text-xs"
+                                                            placeholder="e.g. Reverse a String"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-[10px] font-semibold text-themeTextGrey uppercase mb-1.5">Constraints (Optional)</label>
+                                                        <input
+                                                            type="text"
+                                                            value={q.constraints}
+                                                            onChange={(e) => handleCodingQuestionChange(qIdx, "constraints", e.target.value)}
+                                                            className="w-full px-3 py-2 bg-black/40 border border-themeGrey rounded-lg text-white text-xs"
+                                                            placeholder="e.g. 1 <= N <= 10^5"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-[10px] font-semibold text-themeTextGrey uppercase mb-1.5">Problem Description</label>
+                                                    <textarea
+                                                        value={q.questionText}
+                                                        onChange={(e) => handleCodingQuestionChange(qIdx, "questionText", e.target.value)}
+                                                        className="w-full min-h-[80px] p-3 bg-black/40 border border-themeGrey rounded-lg text-white text-xs resize-none"
+                                                        placeholder="Write full question prompt, instructions, and constraints here..."
+                                                    />
+                                                </div>
+
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="block text-[10px] font-semibold text-themeTextGrey uppercase mb-1.5">Input Format</label>
+                                                        <input
+                                                            type="text"
+                                                            value={q.inputFormat}
+                                                            onChange={(e) => handleCodingQuestionChange(qIdx, "inputFormat", e.target.value)}
+                                                            className="w-full px-3 py-2 bg-black/40 border border-themeGrey rounded-lg text-white text-xs"
+                                                            placeholder="e.g. A single line containing integer N"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-[10px] font-semibold text-themeTextGrey uppercase mb-1.5">Output Format</label>
+                                                        <input
+                                                            type="text"
+                                                            value={q.outputFormat}
+                                                            onChange={(e) => handleCodingQuestionChange(qIdx, "outputFormat", e.target.value)}
+                                                            className="w-full px-3 py-2 bg-black/40 border border-themeGrey rounded-lg text-white text-xs"
+                                                            placeholder="e.g. Output the reversed string"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="block text-[10px] font-semibold text-themeTextGrey uppercase mb-1.5">Sample Input</label>
+                                                        <textarea
+                                                            value={q.sampleInput}
+                                                            onChange={(e) => handleCodingQuestionChange(qIdx, "sampleInput", e.target.value)}
+                                                            className="w-full min-h-[50px] p-3 bg-black/40 border border-themeGrey rounded-lg text-white text-xs font-mono"
+                                                            placeholder="Sample Input value"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-[10px] font-semibold text-themeTextGrey uppercase mb-1.5">Sample Output</label>
+                                                        <textarea
+                                                            value={q.sampleOutput}
+                                                            onChange={(e) => handleCodingQuestionChange(qIdx, "sampleOutput", e.target.value)}
+                                                            className="w-full min-h-[50px] p-3 bg-black/40 border border-themeGrey rounded-lg text-white text-xs font-mono"
+                                                            placeholder="Expected Sample Output value"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                {/* Test Cases Builder */}
+                                                <div className="space-y-3 pt-2">
+                                                    <div className="flex justify-between items-center border-t border-themeGrey/30 pt-3">
+                                                        <span className="text-[10px] font-bold text-themeTextGrey uppercase">Test Cases List ({q.testCases?.length || 0})</span>
+                                                        <button
+                                                            onClick={() => handleAddTestCase(qIdx)}
+                                                            className="text-[10px] text-white hover:underline flex items-center gap-1 font-semibold"
+                                                        >
+                                                            <Plus size={12} /> Add Test Case
+                                                        </button>
+                                                    </div>
+
+                                                    {q.testCases?.map((tc: any, tcIdx: number) => (
+                                                        <div key={tcIdx} className="grid grid-cols-1 md:grid-cols-3 gap-2.5 p-3 bg-black/40 border border-themeGrey/40 rounded-xl items-center">
+                                                            <div>
+                                                                <input
+                                                                    type="text"
+                                                                    value={tc.input}
+                                                                    onChange={(e) => handleTestCaseChange(qIdx, tcIdx, "input", e.target.value)}
+                                                                    placeholder="Input"
+                                                                    className="w-full px-2.5 py-1.5 bg-zinc-950 border border-zinc-800 rounded text-[11px] font-mono"
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <input
+                                                                    type="text"
+                                                                    value={tc.output}
+                                                                    onChange={(e) => handleTestCaseChange(qIdx, tcIdx, "output", e.target.value)}
+                                                                    placeholder="Expected Output"
+                                                                    className="w-full px-2.5 py-1.5 bg-zinc-950 border border-zinc-800 rounded text-[11px] font-mono"
+                                                                />
+                                                            </div>
+                                                            <div className="flex justify-between items-center gap-2">
+                                                                <label className="flex items-center gap-1 cursor-pointer">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={tc.isSample}
+                                                                        onChange={(e) => handleTestCaseChange(qIdx, tcIdx, "isSample", e.target.checked)}
+                                                                        className="rounded border-zinc-800 bg-zinc-950 text-white"
+                                                                    />
+                                                                    <span className="text-[10px] text-zinc-400">Sample?</span>
+                                                                </label>
+                                                                <button
+                                                                    onClick={() => handleRemoveTestCase(qIdx, tcIdx)}
+                                                                    className="text-red-400 hover:text-red-500"
+                                                                >
+                                                                    <Trash2 size={14} />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </GlassCard>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
