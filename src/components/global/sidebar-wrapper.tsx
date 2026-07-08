@@ -6,12 +6,12 @@ import { usePathname } from "next/navigation"
 export default function SidebarWrapper({ children }: { children: React.ReactNode }) {
     const pathname = usePathname()
     
-    // Check if in lockdown exam (e.g. /student/exams/some-id)
-    const isLockdownExam = pathname?.includes("/student/exams/") && pathname !== "/student/exams"
-    // Check if in code practice
-    const isCodePractice = pathname === "/student/practice"
+    const isLockdownExam = 
+        (pathname?.includes("/student/exams/") && pathname !== "/student/exams") ||
+        (pathname?.includes("/student/coding-exam/") && pathname !== "/student/coding-exam") ||
+        pathname === "/student/typing-game"
     
-    if (isLockdownExam || isCodePractice) {
+    if (isLockdownExam) {
         return null
     }
     

@@ -52,7 +52,8 @@ export default function StudentLayoutClient({ student, children }: Props) {
         if (pathname.includes("/student/notes")) return "Digital Notes"
         if (pathname.includes("/student/tasks")) return "Tasks"
         if (pathname.includes("/student/exams")) return "Exams"
-        if (pathname.includes("/student/practice")) return "Code Practice"
+        if (pathname.includes("/student/coding-exam")) return "Coding Exam"
+        if (pathname.includes("/student/typing-game")) return "Typing Game"
         return "Workspace"
     }
 

@@ -1,12 +1,14 @@
 "use server"
 
 import { client } from "@/lib/prisma"
-import { getStudentUser } from "@/actions/custom-auth"
+import { getStudentUser, getAdminUser } from "@/actions/custom-auth"
 
 export async function getStudentChatMessagesAction() {
     try {
+        // Authorize either student or admin
         const student = await getStudentUser()
-        if (!student) {
+        const admin = await getAdminUser()
+        if (!student && !admin) {
             return { success: false, error: "Unauthorized" }
         }
 
@@ -46,7 +48,8 @@ export async function sendStudentChatMessageAction(message: string) {
         const newMessage = await client.studentMessage.create({
             data: {
                 message: message.trim(),
-                studentId: student.id
+                studentId: student.id,
+                isAdmin: false
             },
             include: {
                 student: {
@@ -61,6 +64,33 @@ export async function sendStudentChatMessageAction(message: string) {
         return { success: true, message: newMessage }
     } catch (error: any) {
         console.error("Send student chat message error:", error)
+        return { success: false, error: error?.message || "Failed to send message" }
+    }
+}
+
+export async function adminSendChatMessageAction(message: string) {
+    try {
+        const admin = await getAdminUser()
+        if (!admin) {
+            return { success: false, error: "Unauthorized" }
+        }
+
+        if (!message.trim()) {
+            return { success: false, error: "Message cannot be empty" }
+        }
+
+        const newMessage = await client.studentMessage.create({
+            data: {
+                message: message.trim(),
+                studentId: null,
+                isAdmin: true,
+                adminName: admin.username
+            }
+        })
+
+        return { success: true, message: newMessage }
+    } catch (error: any) {
+        console.error("Admin send chat message error:", error)
         return { success: false, error: error?.message || "Failed to send message" }
     }
 }

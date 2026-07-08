@@ -1203,7 +1203,8 @@ export async function adminGetExamSubmissionsAction(examId: string) {
                     select: { name: true, rollNo: true }
                 },
                 exam: {
-                    include: {
+                    select: {
+                        type: true,
                         questions: {
                             select: { id: true, correctAnswer: true }
                         }
@@ -1218,30 +1219,53 @@ export async function adminGetExamSubmissionsAction(examId: string) {
 
         for (const att of attempts) {
             const totalQuestions = att.exam.questions.length
-            const answersMap = JSON.parse(att.answers || "{}")
+            const isCoding = att.exam.type === "CODING"
 
             if (att.completedAt) {
-                // Completed attempt grading
-                let correctCount = 0
-                att.exam.questions.forEach(q => {
-                    const studentAns = answersMap[q.id]
-                    if (studentAns && studentAns.trim().toUpperCase() === q.correctAnswer.trim().toUpperCase()) {
-                        correctCount++
-                    }
-                })
+                let displayMarks = ""
+                if (isCoding) {
+                    const codingSubmissionsMap = JSON.parse(att.codingSubmissions || "{}")
+                    let totalMarks = 0
+                    att.exam.questions.forEach(q => {
+                        const sub = codingSubmissionsMap[q.id]
+                        if (sub) {
+                            totalMarks += sub.marks || 0
+                        }
+                    })
+                    displayMarks = `${totalMarks} pts / ${totalQuestions * 100} pts`
+                } else {
+                    const answersMap = JSON.parse(att.answers || "{}")
+                    let correctCount = 0
+                    att.exam.questions.forEach(q => {
+                        const studentAns = answersMap[q.id]
+                        if (studentAns && q.correctAnswer && studentAns.trim().toUpperCase() === q.correctAnswer.trim().toUpperCase()) {
+                            correctCount++
+                        }
+                    })
+                    displayMarks = `${correctCount} / ${totalQuestions}`
+                }
+
                 completedList.push({
                     id: att.id,
                     studentName: att.student.name,
                     rollNo: att.student.rollNo,
                     score: att.score,
-                    marks: `${correctCount} / ${totalQuestions}`,
+                    marks: displayMarks,
                     warnings: att.warnings,
                     startedAt: att.startedAt,
                     completedAt: att.completedAt
                 })
             } else {
                 // Live writing attempt monitoring
-                const answeredCount = Object.keys(answersMap).length
+                let answeredCount = 0
+                if (isCoding) {
+                    const codingSubmissionsMap = JSON.parse(att.codingSubmissions || "{}")
+                    answeredCount = Object.keys(codingSubmissionsMap).length
+                } else {
+                    const answersMap = JSON.parse(att.answers || "{}")
+                    answeredCount = Object.keys(answersMap).length
+                }
+
                 liveList.push({
                     id: att.id,
                     studentName: att.student.name,
@@ -1294,7 +1318,10 @@ export async function adminForceSubmitExamAttemptAction(attemptId: string) {
             where: { id: attemptId },
             include: {
                 exam: {
-                    include: { questions: { select: { id: true, correctAnswer: true } } }
+                    select: {
+                        type: true,
+                        questions: { select: { id: true, correctAnswer: true } }
+                    }
                 }
             }
         })
@@ -1302,18 +1329,29 @@ export async function adminForceSubmitExamAttemptAction(attemptId: string) {
         if (!attempt) return { success: false, error: "Attempt not found" }
         if (attempt.completedAt) return { success: false, error: "Attempt is already completed" }
 
-        const answersMap = JSON.parse(attempt.answers || "{}")
         const questions = attempt.exam.questions
-        let correctCount = 0
+        let finalScore = 0
 
-        questions.forEach(q => {
-            const studentAns = answersMap[q.id]
-            if (studentAns && studentAns.trim().toUpperCase() === q.correctAnswer.trim().toUpperCase()) {
-                correctCount++
-            }
-        })
-
-        const finalScore = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0
+        if (attempt.exam.type === "CODING") {
+            const codingSubmissionsMap = JSON.parse(attempt.codingSubmissions || "{}")
+            let earned = 0
+            const total = questions.length * 100
+            questions.forEach(q => {
+                const sub = codingSubmissionsMap[q.id]
+                if (sub) earned += sub.marks || 0
+            })
+            finalScore = total > 0 ? Math.round((earned / total) * 100) : 0
+        } else {
+            const answersMap = JSON.parse(attempt.answers || "{}")
+            let correctCount = 0
+            questions.forEach(q => {
+                const studentAns = answersMap[q.id]
+                if (studentAns && q.correctAnswer && studentAns.trim().toUpperCase() === q.correctAnswer.trim().toUpperCase()) {
+                    correctCount++
+                }
+            })
+            finalScore = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0
+        }
 
         await client.examAttempt.update({
             where: { id: attemptId },
@@ -1324,6 +1362,145 @@ export async function adminForceSubmitExamAttemptAction(attemptId: string) {
         })
 
         return { success: true, message: "Attempt force submitted and graded successfully." }
+    } catch (e: any) {
+        return { success: false, error: e.message }
+    }
+}
+
+/**
+ * Creates and publishes a coding exam.
+ */
+export async function adminCreateCodingExamAction(
+    title: string,
+    duration: number,
+    examCode: string,
+    questions: {
+        title: string,
+        questionText: string,
+        constraints: string,
+        inputFormat: string,
+        outputFormat: string,
+        sampleInput: string,
+        sampleOutput: string,
+        testCases: string // JSON representation
+    }[]
+) {
+    try {
+        const admin = await getAdminUser()
+        if (!admin) return { success: false, error: "Unauthorized" }
+
+        if (!title.trim() || duration <= 0 || questions.length === 0) {
+            return { success: false, error: "Invalid exam details or empty questions list" }
+        }
+
+        const newExam = await client.$transaction(async (tx) => {
+            const exam = await tx.exam.create({
+                data: {
+                    title: title.trim(),
+                    type: "CODING",
+                    duration: Number(duration),
+                    examCode: examCode.trim() || null
+                }
+            })
+
+            // Batch insert questions
+            await tx.examQuestion.createMany({
+                data: questions.map(q => ({
+                    examId: exam.id,
+                    title: q.title.trim(),
+                    questionText: q.questionText.trim(),
+                    constraints: q.constraints.trim(),
+                    inputFormat: q.inputFormat.trim(),
+                    outputFormat: q.outputFormat.trim(),
+                    sampleInput: q.sampleInput.trim(),
+                    sampleOutput: q.sampleOutput.trim(),
+                    testCases: q.testCases.trim()
+                }))
+            })
+
+            return exam
+        })
+
+        return { success: true, message: "Coding Exam created successfully!", examId: newExam.id }
+    } catch (e: any) {
+        return { success: false, error: e.message || "Failed to create coding exam" }
+    }
+}
+
+/**
+ * Starts a new Typing Game session and disables previous ones.
+ */
+export async function adminStartTypingSessionAction(passage: string) {
+    try {
+        const admin = await getAdminUser()
+        if (!admin) return { success: false, error: "Unauthorized" }
+
+        if (!passage.trim()) {
+            return { success: false, error: "Passage cannot be empty" }
+        }
+
+        await client.typingGameSession.updateMany({
+            where: { isActive: true },
+            data: { isActive: false }
+        })
+
+        const session = await client.typingGameSession.create({
+            data: {
+                isActive: true,
+                passage: passage.trim()
+            }
+        })
+
+        return { success: true, sessionId: session.id, message: "Typing game session started!" }
+    } catch (e: any) {
+        return { success: false, error: e.message }
+    }
+}
+
+/**
+ * Ends a Typing Game session.
+ */
+export async function adminEndTypingSessionAction(sessionId: string) {
+    try {
+        const admin = await getAdminUser()
+        if (!admin) return { success: false, error: "Unauthorized" }
+
+        await client.typingGameSession.update({
+            where: { id: sessionId },
+            data: { isActive: false }
+        })
+
+        return { success: true, message: "Typing game session ended." }
+    } catch (e: any) {
+        return { success: false, error: e.message }
+    }
+}
+
+/**
+ * Returns all runs for the specified Typing Game session, sorted by progress and WPM.
+ */
+export async function adminGetTypingLeaderboardAction(sessionId: string) {
+    try {
+        const admin = await getAdminUser()
+        if (!admin) return { success: false, error: "Unauthorized" }
+
+        const runs = await client.typingGameRun.findMany({
+            where: { sessionId },
+            include: {
+                student: {
+                    select: {
+                        name: true,
+                        rollNo: true
+                    }
+                }
+            },
+            orderBy: [
+                { progressPercentage: "desc" },
+                { wpm: "desc" }
+            ]
+        })
+
+        return { success: true, runs }
     } catch (e: any) {
         return { success: false, error: e.message }
     }

@@ -34,7 +34,8 @@ import {
   LogOut,
   MessageSquare,
   MoreVertical,
-  Trophy
+  Trophy,
+  Keyboard
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
@@ -95,9 +96,14 @@ const data = {
           icon: BookOpen,
         },
         {
-          title: "Code Practice",
-          url: "/student/practice",
+          title: "Coding Exam",
+          url: "/student/coding-exam",
           icon: Code,
+        },
+        {
+          title: "Typing Game",
+          url: "/student/typing-game",
+          icon: Keyboard,
         },
       ],
     },

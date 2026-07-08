@@ -197,6 +197,7 @@ model Student {
   attempts     ExamAttempt[]
   notes        Note[]
   messages     StudentMessage[]
+  typingRuns   TypingGameRun[]
   classId      String?
   class        Class?           @relation(fields: [classId], references: [id], onDelete: SetNull)
 }
@@ -253,6 +254,7 @@ model TaskSubmission {
 model Exam {
   id        String         @id @default(uuid())
   title     String
+  type      String         @default("MCQ") // "MCQ" or "CODING"
   duration  Int            // in minutes
   examCode  String?        // Code required to enter the exam
   createdAt DateTime       @default(now())
@@ -261,28 +263,38 @@ model Exam {
 }
 
 model ExamQuestion {
-  id            String @id @default(uuid())
+  id            String  @id @default(uuid())
   examId        String
-  exam          Exam   @relation(fields: [examId], references: [id], onDelete: Cascade)
-  questionText  String @db.Text
-  optionA       String @db.Text
-  optionB       String @db.Text
-  optionC       String @db.Text
-  optionD       String @db.Text
-  correctAnswer String // A, B, C, or D
+  exam          Exam    @relation(fields: [examId], references: [id], onDelete: Cascade)
+  questionText  String  @db.Text
+  optionA       String? @db.Text
+  optionB       String? @db.Text
+  optionC       String? @db.Text
+  optionD       String? @db.Text
+  correctAnswer String? // A, B, C, or D
+
+  // Coding Exam Fields
+  title         String?
+  constraints   String? @db.Text
+  inputFormat   String? @db.Text
+  outputFormat  String? @db.Text
+  sampleInput   String? @db.Text
+  sampleOutput  String? @db.Text
+  testCases     String? @db.Text // JSON string representing: Array<{ input: string, output: string, points: number, isSample: boolean }>
 }
 
 model ExamAttempt {
-  id          String    @id @default(uuid())
-  examId      String
-  exam        Exam      @relation(fields: [examId], references: [id], onDelete: Cascade)
-  studentId   String
-  student     Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  score       Int
-  answers     String    @db.Text // JSON string of selected answers
-  warnings    Int       @default(0)
-  startedAt   DateTime  @default(now())
-  completedAt DateTime?
+  id                String    @id @default(uuid())
+  examId            String
+  exam              Exam      @relation(fields: [examId], references: [id], onDelete: Cascade)
+  studentId         String
+  student           Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  score             Int
+  answers           String    @db.Text // JSON string of selected MCQ answers
+  codingSubmissions String?   @db.Text // JSON string of coding submissions: { [questionId]: { code: string, languageId: number, score: number, testCaseResults: any[] } }
+  warnings          Int       @default(0)
+  startedAt         DateTime  @default(now())
+  completedAt       DateTime?
 }
 
 model NoTaskDeclaration {
@@ -299,7 +311,30 @@ model StudentMessage {
   id        String   @id @default(uuid())
   message   String   @db.Text
   createdAt DateTime @default(now())
-  studentId String
-  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  studentId String?
+  student   Student? @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  isAdmin   Boolean  @default(false)
+  adminName String?
+}
+
+model TypingGameSession {
+  id        String   @id @default(uuid())
+  isActive  Boolean  @default(false)
+  passage   String   @db.Text
+  createdAt DateTime @default(now())
+  runs      TypingGameRun[]
+}
+
+model TypingGameRun {
+  id                 String   @id @default(uuid())
+  sessionId          String
+  session            TypingGameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  studentId          String
+  student            Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  wpm                Float    @default(0)
+  accuracy           Float    @default(0)
+  progressPercentage Float    @default(0) // 0 to 100
+  isCompleted        Boolean  @default(false)
+  completedAt        DateTime?
 }
 

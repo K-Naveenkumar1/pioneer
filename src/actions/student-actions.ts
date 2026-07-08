@@ -299,12 +299,18 @@ export async function submitTaskAction(taskId: string, content: string) {
 /**
  * Fetches all exams and their completion status.
  */
-export async function getStudentExams() {
+export async function getStudentExams(type?: string) {
     try {
         const student = await getStudentUser()
         if (!student) return { success: false, error: "Unauthorized" }
 
+        const whereClause: any = {}
+        if (type) {
+            whereClause.type = type
+        }
+
         const exams = await client.exam.findMany({
+            where: whereClause,
             include: {
                 _count: {
                     select: { questions: true }
@@ -322,6 +328,7 @@ export async function getStudentExams() {
             return {
                 id: exam.id,
                 title: exam.title,
+                type: exam.type,
                 duration: exam.duration,
                 examCode: exam.examCode, // Include exam code
                 totalQuestions: exam._count.questions,
@@ -464,7 +471,10 @@ export async function getExamSessionDetails(attemptId: string) {
             where: { id: attemptId },
             include: {
                 exam: {
-                    include: {
+                    select: {
+                        title: true,
+                        duration: true,
+                        type: true,
                         questions: {
                             select: {
                                 id: true,
@@ -472,7 +482,13 @@ export async function getExamSessionDetails(attemptId: string) {
                                 optionA: true,
                                 optionB: true,
                                 optionC: true,
-                                optionD: true
+                                optionD: true,
+                                title: true,
+                                constraints: true,
+                                inputFormat: true,
+                                outputFormat: true,
+                                sampleInput: true,
+                                sampleOutput: true
                             }
                         }
                     }
@@ -491,10 +507,12 @@ export async function getExamSessionDetails(attemptId: string) {
         return {
             success: true,
             examTitle: attempt.exam.title,
+            examType: attempt.exam.type,
             duration: attempt.exam.duration,
             questions: attempt.exam.questions,
             startedAt: attempt.startedAt,
-            warnings: attempt.warnings
+            warnings: attempt.warnings,
+            codingSubmissions: attempt.codingSubmissions
         }
     } catch (e: any) {
         return { success: false, error: e.message }
@@ -796,5 +814,253 @@ export async function getStudentAttendanceSessionsAction() {
         return { success: true, sessions }
     } catch (e: any) {
         return { success: false, error: e.message || "Failed to fetch sessions" }
+    }
+}
+
+/**
+ * Compiles student code and runs all test cases to score a coding exam question.
+ */
+export async function gradeCodingQuestionAction(
+    attemptId: string,
+    questionId: string,
+    code: string,
+    languageId: number
+) {
+    try {
+        const student = await getStudentUser()
+        if (!student) return { success: false, error: "Unauthorized" }
+
+        const attempt = await client.examAttempt.findUnique({
+            where: { id: attemptId },
+            include: {
+                exam: {
+                    include: {
+                        questions: {
+                            where: { id: questionId }
+                        }
+                    }
+                }
+            }
+        })
+
+        if (!attempt) return { success: false, error: "Attempt not found" }
+        if (attempt.completedAt) return { success: false, error: "Exam is already completed" }
+
+        const question = attempt.exam.questions[0]
+        if (!question) return { success: false, error: "Question not found" }
+
+        let testCases: any[] = []
+        try {
+            testCases = JSON.parse(question.testCases || "[]")
+        } catch (err) {
+            console.error("Failed to parse test cases:", err)
+        }
+
+        if (testCases.length === 0) {
+            testCases = [{ input: "", output: "", points: 100, isSample: true }]
+        }
+
+        // Run all test cases in parallel
+        const results = await Promise.all(
+            testCases.map(async (tc, index) => {
+                try {
+                    const response = await fetch("https://ce.judge0.com/submissions?wait=true", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            source_code: code,
+                            language_id: languageId,
+                            stdin: tc.input
+                        })
+                    })
+
+                    const result = await response.json()
+                    
+                    const stdout = (result.stdout || "").trim()
+                    const expected = (tc.output || "").trim()
+                    const passed = stdout === expected && !result.stderr && !result.compile_output
+
+                    return {
+                        index,
+                        isSample: tc.isSample || false,
+                        passed,
+                        status: result.status?.description || (passed ? "Accepted" : "Wrong Answer"),
+                        compile_output: result.compile_output,
+                        stderr: result.stderr,
+                        stdout: result.stdout
+                    }
+                } catch (e: any) {
+                    return {
+                        index,
+                        isSample: tc.isSample || false,
+                        passed: false,
+                        status: "Runtime Error",
+                        stderr: e.message
+                    }
+                }
+            })
+        )
+
+        const passedCount = results.filter(r => r.passed).length
+        const questionScore = Math.round((passedCount / testCases.length) * 100)
+
+        const submissionsMap = JSON.parse(attempt.codingSubmissions || "{}")
+        submissionsMap[questionId] = {
+            code,
+            languageId,
+            marks: questionScore,
+            testCaseResults: results.map(r => ({
+                index: r.index,
+                isSample: r.isSample,
+                passed: r.passed,
+                status: r.status
+            }))
+        }
+
+        // Update coding submissions maps in db
+        await client.examAttempt.update({
+            where: { id: attemptId },
+            data: {
+                codingSubmissions: JSON.stringify(submissionsMap)
+            }
+        })
+
+        return { success: true, results, score: questionScore }
+    } catch (e: any) {
+        return { success: false, error: e.message }
+    }
+}
+
+/**
+ * Finalizes the coding exam attempt and updates the final aggregate score.
+ */
+export async function submitCodingExamAction(attemptId: string) {
+    try {
+        const student = await getStudentUser()
+        if (!student) return { success: false, error: "Unauthorized" }
+
+        const attempt = await client.examAttempt.findUnique({
+            where: { id: attemptId },
+            include: {
+                exam: {
+                    include: { questions: true }
+                }
+            }
+        })
+
+        if (!attempt) return { success: false, error: "Attempt not found" }
+        if (attempt.completedAt) return { success: true, score: attempt.score, message: "Exam already completed" }
+
+        const submissionsMap = JSON.parse(attempt.codingSubmissions || "{}")
+        let totalMarks = 0
+        const questions = attempt.exam.questions
+
+        questions.forEach(q => {
+            const sub = submissionsMap[q.id]
+            if (sub) {
+                totalMarks += sub.marks || 0
+            }
+        })
+
+        // Final score percentage
+        const finalScore = questions.length > 0 ? Math.round((totalMarks / (questions.length * 100)) * 100) : 0
+
+        await client.examAttempt.update({
+            where: { id: attemptId },
+            data: {
+                score: finalScore,
+                completedAt: new Date()
+            }
+        })
+
+        return { success: true, score: finalScore }
+    } catch (e: any) {
+        return { success: false, error: e.message }
+    }
+}
+
+/**
+ * Fetches the active typing session if available.
+ */
+export async function studentGetActiveTypingSessionAction() {
+    try {
+        const student = await getStudentUser()
+        if (!student) return { success: false, error: "Unauthorized" }
+
+        const session = await client.typingGameSession.findFirst({
+            where: { isActive: true },
+            orderBy: { createdAt: "desc" }
+        })
+
+        return { success: true, session }
+    } catch (e: any) {
+        return { success: false, error: e.message }
+    }
+}
+
+/**
+ * Starts a student run for the active typing session.
+ */
+export async function studentStartTypingRunAction(sessionId: string) {
+    try {
+        const student = await getStudentUser()
+        if (!student) return { success: false, error: "Unauthorized" }
+
+        const existingRun = await client.typingGameRun.findFirst({
+            where: {
+                sessionId,
+                studentId: student.id
+            }
+        })
+
+        if (existingRun) {
+            return { success: true, runId: existingRun.id }
+        }
+
+        const run = await client.typingGameRun.create({
+            data: {
+                sessionId,
+                studentId: student.id,
+                wpm: 0,
+                accuracy: 0,
+                progressPercentage: 0,
+                isCompleted: false
+            }
+        })
+
+        return { success: true, runId: run.id }
+    } catch (e: any) {
+        return { success: false, error: e.message }
+    }
+}
+
+/**
+ * Updates a student's real-time typing run metrics.
+ */
+export async function studentUpdateTypingProgressAction(
+    runId: string,
+    wpm: number,
+    accuracy: number,
+    progressPercentage: number,
+    isCompleted: boolean
+) {
+    try {
+        const student = await getStudentUser()
+        if (!student) return { success: false, error: "Unauthorized" }
+
+        const updatedRun = await client.typingGameRun.update({
+            where: { id: runId },
+            data: {
+                wpm: Number(wpm),
+                accuracy: Number(accuracy),
+                progressPercentage: Number(progressPercentage),
+                isCompleted,
+                completedAt: isCompleted ? new Date() : undefined
+            }
+        })
+
+        return { success: true, run: updatedRun }
+    } catch (e: any) {
+        return { success: false, error: e.message }
     }
 }
