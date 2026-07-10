@@ -8,8 +8,7 @@ export default function SidebarWrapper({ children }: { children: React.ReactNode
     
     const isLockdownExam = 
         (pathname?.includes("/student/exams/") && pathname !== "/student/exams") ||
-        (pathname?.includes("/student/coding-exam/") && pathname !== "/student/coding-exam") ||
-        pathname === "/student/typing-game"
+        (pathname?.includes("/student/coding-exam/") && pathname !== "/student/coding-exam")
     
     if (isLockdownExam) {
         return null

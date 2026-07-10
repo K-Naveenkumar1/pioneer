@@ -15,11 +15,7 @@ import Link from "next/link"
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis } from "recharts"
 
 import {
-    getAttendanceMetrics,
-    getStudentAttendanceSessionsAction,
-    getStudentExams,
-    getStudentProfileDetails,
-    getStudentTasks
+    getDashboardDataAction,
 } from "@/actions/student-actions"
 
 // Premium simplified World Map vector SVG path for class stands card
@@ -69,70 +65,38 @@ export default function StudentDashboard() {
 
     const fetchDashboardData = async () => {
         setLoading(true)
-        
         try {
-            const [taskRes, examRes, metricsRes, profileRes, sessionsRes] = await Promise.all([
-                getStudentTasks(),
-                getStudentExams(),
-                getAttendanceMetrics(),
-                getStudentProfileDetails(),
-                getStudentAttendanceSessionsAction()
-            ])
+            const res = await getDashboardDataAction()
+            if (!res.success) return
 
-            // Task statistics
-            const completedTasks = (taskRes.success && taskRes.tasks) 
-                ? taskRes.tasks.filter((t: any) => t.status === "APPROVED").length 
-                : 0
-            const totalTasks = (taskRes.success && taskRes.tasks) 
-                ? taskRes.tasks.length 
-                : 0
-            if (taskRes.success) {
-                setTasks(taskRes.tasks || [])
-            }
+            const { tasks: taskList, exams: examList, sessions: sessionList, metrics, profile: profileData } = res as any
 
-            // Exam statistics
-            const attemptedExams = (examRes.success && examRes.exams)
-                ? examRes.exams.filter((e: any) => e.attempted).length
-                : 0
-            const totalExams = (examRes.success && examRes.exams)
-                ? examRes.exams.length
-                : 0
-            if (examRes.success) {
-                setExams(examRes.exams || [])
-            }
+            setTasks(taskList || [])
+            setExams(examList || [])
+            setSessions(sessionList || [])
 
+            if (profileData) setProfile(profileData)
+            if (metrics) setMetrics({ percentage: metrics.percentage || 0, daysAttended: metrics.daysAttended || 0, totalClassDays: metrics.totalClassDays || 0 })
+
+            const completedTasks = (taskList || []).filter((t: any) => t.status === "APPROVED").length
+            const totalTasks = (taskList || []).length
+            const attemptedExams = (examList || []).filter((e: any) => e.attempted).length
+            const totalExams = (examList || []).length
             setStats({
-                pendingTasks: (taskRes.success && taskRes.tasks) ? taskRes.tasks.filter((t: any) => t.status === "PENDING" || t.status === "REJECTED").length : 0,
-                availableExams: (examRes.success && examRes.exams) ? examRes.exams.filter((e: any) => !e.attempted).length : 0,
+                pendingTasks: (taskList || []).filter((t: any) => t.status === "PENDING" || t.status === "REJECTED").length,
+                availableExams: (examList || []).filter((e: any) => !e.attempted).length,
                 completedTasks,
                 totalTasks,
                 attemptedExams,
                 totalExams
             })
 
-            if (metricsRes.success) {
-                setMetrics({
-                    percentage: metricsRes.percentage || 0,
-                    daysAttended: metricsRes.daysAttended || 0,
-                    totalClassDays: metricsRes.totalClassDays || 0
-                })
-            }
-
-            if (profileRes.success) {
-                setProfile(profileRes.profile)
-            }
-
-            // Fetch attendance sessions and calculate check-in hours
             let hoursSum = 0
-            if (sessionsRes.success && sessionsRes.sessions) {
-                setSessions(sessionsRes.sessions)
-                sessionsRes.sessions.forEach((s: any) => {
-                    if (s.checkIn && s.checkOut) {
-                        const diffMs = new Date(s.checkOut).getTime() - new Date(s.checkIn).getTime()
-                        hoursSum += diffMs / (1000 * 60 * 60)
-                    }
-                })
-            }
+            ;(sessionList || []).forEach((s: any) => {
+                if (s.checkIn && s.checkOut) {
+                    hoursSum += (new Date(s.checkOut).getTime() - new Date(s.checkIn).getTime()) / (1000 * 60 * 60)
+                }
+            })
             setTotalHours(hoursSum.toFixed(1))
         } catch (error) {
             console.error("Error loading dashboard data:", error)
@@ -140,6 +104,7 @@ export default function StudentDashboard() {
             setLoading(false)
         }
     }
+
 
     // Dynamic hourly chart data builder based on actual attendance sessions
     const getChartData = () => {

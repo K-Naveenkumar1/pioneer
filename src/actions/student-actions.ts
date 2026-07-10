@@ -76,22 +76,21 @@ export async function getAttendanceMetrics() {
         const student = await getStudentUser()
         if (!student) return { success: false, error: "Unauthorized" }
 
-        // Count distinct days attended
-        const distinctStudentSessions = await client.attendance.findMany({
-            where: { studentId: student.id },
-            select: { date: true },
-            distinct: ["date"]
-        })
+        // Run both queries in parallel
+        const [distinctStudentSessions, distinctSystemDays] = await Promise.all([
+            client.attendance.findMany({
+                where: { studentId: student.id },
+                select: { date: true },
+                distinct: ["date"]
+            }),
+            client.attendance.findMany({
+                select: { date: true },
+                distinct: ["date"]
+            })
+        ])
+
         const daysAttended = distinctStudentSessions.length
-
-        // Count distinct class days across the system
-        const distinctSystemDays = await client.attendance.findMany({
-            select: { date: true },
-            distinct: ["date"]
-        })
         const totalClassDays = distinctSystemDays.length
-
-        // Assume at least 1 class day if system is empty to prevent division by zero
         const percentage = totalClassDays > 0 ? Math.round((daysAttended / totalClassDays) * 100) : 0
 
         return {
@@ -102,6 +101,98 @@ export async function getAttendanceMetrics() {
         }
     } catch (e: any) {
         return { success: false, error: e.message || "Failed to calculate metrics" }
+    }
+}
+
+/**
+ * Fetches all data needed for the student dashboard in a single server action call.
+ * Replaces 5 separate action calls with one — all queries run in parallel.
+ */
+export async function getDashboardDataAction() {
+    try {
+        const student = await getStudentUser()
+        if (!student) return { success: false, error: "Unauthorized" }
+
+        // Run all queries in parallel in one DB call set
+        const [
+            dbStudent,
+            tasks,
+            submissions,
+            exams,
+            attempts,
+            distinctStudentSessions,
+            distinctSystemDays,
+            sessions
+        ] = await Promise.all([
+            client.student.findUnique({
+                where: { id: student.id },
+                select: { id: true, name: true, rollNo: true, department: true, classId: true }
+            }),
+            client.task.findMany({ orderBy: { createdAt: "desc" }, take: 10 }),
+            client.taskSubmission.findMany({ where: { studentId: student.id } }),
+            client.exam.findMany({
+                where: { type: { not: "CODING" } },
+                include: { _count: { select: { questions: true } } },
+                orderBy: { createdAt: "desc" },
+                take: 10
+            }),
+            client.examAttempt.findMany({ where: { studentId: student.id } }),
+            client.attendance.findMany({
+                where: { studentId: student.id },
+                select: { date: true },
+                distinct: ["date"]
+            }),
+            client.attendance.findMany({
+                select: { date: true },
+                distinct: ["date"]
+            }),
+            client.attendance.findMany({
+                where: { studentId: student.id },
+                orderBy: { checkIn: "asc" }
+            })
+        ])
+
+        // Task stats
+        const tasksWithStatus = tasks.map(task => {
+            const submission = submissions.find(s => s.taskId === task.id)
+            return {
+                ...task,
+                status: submission ? submission.status : "PENDING",
+                submittedContent: submission ? submission.content : null,
+                submittedAt: submission ? submission.submittedAt : null
+            }
+        })
+
+        // Exam stats
+        const examsWithStatus = exams.map(exam => {
+            const attempt = attempts.find(a => a.examId === exam.id && a.completedAt !== null)
+            return {
+                id: exam.id,
+                title: exam.title,
+                type: exam.type,
+                duration: exam.duration,
+                totalQuestions: exam._count.questions,
+                attempted: !!attempt,
+                score: attempt ? attempt.score : null,
+                completedAt: attempt ? attempt.completedAt : null
+            }
+        })
+
+        // Attendance metrics
+        const daysAttended = distinctStudentSessions.length
+        const totalClassDays = distinctSystemDays.length
+        const attendancePercentage = totalClassDays > 0 ? Math.round((daysAttended / totalClassDays) * 100) : 0
+
+        return {
+            success: true,
+            profile: dbStudent,
+            tasks: tasksWithStatus,
+            exams: examsWithStatus,
+            sessions,
+            metrics: { daysAttended, totalClassDays, percentage: attendancePercentage }
+        }
+    } catch (e: any) {
+        return { success: false, error: e.message }
     }
 }
 
@@ -178,7 +269,8 @@ export async function getStudentTasks() {
         if (!student) return { success: false, error: "Unauthorized" }
 
         const dbStudent = await client.student.findUnique({
-            where: { id: student.id }
+            where: { id: student.id },
+            select: { isAllowedInClass: true, isAssignedWFH: true }
         })
 
         if (!dbStudent) return { success: false, error: "Student profile not found" }
@@ -194,31 +286,26 @@ export async function getStudentTasks() {
             }
         }
 
-        const tasks = await client.task.findMany({
-            orderBy: { createdAt: "desc" }
-        })
-
-        const submissions = await client.taskSubmission.findMany({
-            where: { studentId: student.id }
-        })
-
-        const activeAttendance = await client.attendance.findFirst({
-            where: { studentId: student.id, checkOut: null }
-        })
+        // Run all queries in parallel for faster response
+        const [tasks, submissions, activeAttendance] = await Promise.all([
+            client.task.findMany({ orderBy: { createdAt: "desc" } }),
+            client.taskSubmission.findMany({ where: { studentId: student.id } }),
+            client.attendance.findFirst({ where: { studentId: student.id, checkOut: null } })
+        ])
 
         const tasksWithStatus = tasks.map(task => {
             const submission = submissions.find(s => s.taskId === task.id)
             return {
                 ...task,
-                status: submission ? submission.status : "PENDING", // PENDING, APPROVED, REJECTED
+                status: submission ? submission.status : "PENDING",
                 submittedContent: submission ? submission.content : null,
                 submittedAt: submission ? submission.submittedAt : null
             }
         })
 
-        return { 
-            success: true, 
-            tasks: tasksWithStatus, 
+        return {
+            success: true,
+            tasks: tasksWithStatus,
             isCheckedIn: !!activeAttendance,
             isBlockedFromTasks: false
         }
@@ -226,6 +313,7 @@ export async function getStudentTasks() {
         return { success: false, error: e.message }
     }
 }
+
 
 /**
  * Submits a completed task. Enforces that the student must be checked in.
