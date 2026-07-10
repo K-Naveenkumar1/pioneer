@@ -1,7 +1,7 @@
 "use server"
 
 import { client } from "@/lib/prisma"
-import { getSessionCookie, setSessionCookie, deleteSessionCookie } from "@/lib/session"
+import { getSessionCookie, setSessionCookie, deleteSessionCookie, isNextDynamicServerError } from "@/lib/session"
 import { hashPassword, verifyPassword } from "@/lib/hash"
 
 /**
@@ -127,10 +127,25 @@ export async function logoutAction(role: "student" | "admin") {
 export async function getAdminUser() {
     try {
         const session = await getSessionCookie("admin_session")
-        if (!session || session.role !== "admin" || !session.id) return null
+        if (!session) {
+            console.log("[custom-auth:getAdminUser] No admin_session cookie found or decryption failed")
+            return null
+        }
+        if (session.role !== "admin") {
+            console.warn(`[custom-auth:getAdminUser] Session role mismatch. Expected admin, got: ${session.role}`)
+            return null
+        }
+        if (!session.id) {
+            console.warn("[custom-auth:getAdminUser] Session missing admin ID")
+            return null
+        }
         // Trust the encrypted session cookie — avoid a redundant DB call on every page.
         return { id: session.id as string, username: session.username as string }
-    } catch (e) {
+    } catch (e: any) {
+        if (isNextDynamicServerError(e)) {
+            throw e
+        }
+        console.error(`[custom-auth:getAdminUser] Unexpected exception: ${e.message}`)
         return null
     }
 }
@@ -142,7 +157,18 @@ export async function getAdminUser() {
 export async function getStudentUser() {
     try {
         const session = await getSessionCookie("student_session")
-        if (!session || session.role !== "student" || !session.id) return null
+        if (!session) {
+            console.log("[custom-auth:getStudentUser] No student_session cookie found or decryption failed")
+            return null
+        }
+        if (session.role !== "student") {
+            console.warn(`[custom-auth:getStudentUser] Session role mismatch. Expected student, got: ${session.role}`)
+            return null
+        }
+        if (!session.id) {
+            console.warn("[custom-auth:getStudentUser] Session missing student ID")
+            return null
+        }
         // Trust the encrypted session cookie — avoid a redundant DB call on every page.
         return {
             id: session.id as string,
@@ -150,7 +176,11 @@ export async function getStudentUser() {
             name: session.name as string,
             isFirstLogin: false
         }
-    } catch (e) {
+    } catch (e: any) {
+        if (isNextDynamicServerError(e)) {
+            throw e
+        }
+        console.error(`[custom-auth:getStudentUser] Unexpected exception: ${e.message}`)
         return null
     }
 }
