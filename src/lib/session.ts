@@ -1,4 +1,4 @@
-import { cookies } from "next/headers"
+import { cookies, headers } from "next/headers"
 import crypto from "crypto"
 
 // We use a fallback secret if SESSION_SECRET is not set in env
@@ -35,12 +35,23 @@ export function decrypt(encryptedText: string): string | null {
 
 export async function setSessionCookie(name: string, data: any, expiresDays = 7) {
     const cookieStore = await cookies()
+    let isSecure = process.env.NODE_ENV === "production"
+    try {
+        const headersList = await headers()
+        const xForwardedProto = headersList.get("x-forwarded-proto")
+        if (xForwardedProto) {
+            isSecure = xForwardedProto === "https"
+        }
+    } catch (e) {
+        // Fallback to NODE_ENV
+    }
+
     const serialized = JSON.stringify(data)
     const encrypted = encrypt(serialized)
     
     cookieStore.set(name, encrypted, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure: isSecure,
         sameSite: "lax",
         maxAge: 60 * 60 * 24 * expiresDays, // days
         path: "/",
