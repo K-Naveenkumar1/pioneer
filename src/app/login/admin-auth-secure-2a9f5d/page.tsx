@@ -71,7 +71,7 @@ export default function AdminLoginPage() {
             const res = await loginAction("admin", identity, password)
             if (res.success) {
                 toast.success("Successfully logged in as Admin!")
-                router.push(res.redirect || "/admin/dashboard")
+                window.location.href = res.redirect || "/admin/dashboard"
             } else {
                 toast.error(res.error || "Invalid admin credentials")
             }

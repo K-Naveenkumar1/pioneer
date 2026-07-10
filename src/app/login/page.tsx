@@ -68,7 +68,7 @@ export default function LoginPage() {
                     toast.info("First-time login detected. Please create a new password.")
                 } else {
                     toast.success("Successfully logged in!")
-                    router.push(res.redirect || "/")
+                    window.location.href = res.redirect || "/student/dashboard"
                 }
             } else {
                 toast.error(res.error || "Invalid credentials")
@@ -95,7 +95,7 @@ export default function LoginPage() {
             const res = await studentFirstResetAction(rollNo, tempPassword, newPassword)
             if (res.success) {
                 toast.success("Password set successfully! Logged in.")
-                router.push(res.redirect || "/student/dashboard")
+                window.location.href = res.redirect || "/student/dashboard"
             } else {
                 toast.error(res.error || "Failed to set password")
             }
