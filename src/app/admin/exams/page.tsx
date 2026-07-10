@@ -34,13 +34,17 @@ import {
     adminGetExamSubmissionsAction,
     adminResetExamAttemptAction,
     adminForceSubmitExamAttemptAction,
-    adminCreateCodingExamAction
+    adminCreateCodingExamAction,
+    adminGetClassesAction
 } from "@/actions/admin-actions"
 
 export default function AdminExamsPage() {
     const [title, setTitle] = useState("")
     const [duration, setDuration] = useState(60)
     const [examCode, setExamCode] = useState("")
+    const [classes, setClasses] = useState<any[]>([])
+    const [classId, setClassId] = useState("")
+    const [editClassId, setEditClassId] = useState("")
     const [isPending, startTransition] = useTransition()
 
     // Tab control
@@ -142,7 +146,15 @@ export default function AdminExamsPage() {
 
     useEffect(() => {
         loadExams()
+        loadClasses()
     }, [])
+
+    const loadClasses = async () => {
+        const res = await adminGetClassesAction()
+        if (res.success) {
+            setClasses(res.classes || [])
+        }
+    }
 
     const loadExams = async () => {
         setLoadingExams(true)
@@ -246,13 +258,14 @@ export default function AdminExamsPage() {
         }
 
         startTransition(async () => {
-            const res = await adminCreateExamAction(title, duration, parsedQuestions, examCode)
+            const res = await adminCreateExamAction(title, duration, parsedQuestions, examCode, classId)
             if (res.success) {
                 toast.success(res.message || "Exam created successfully!")
                 // Reset form
                 setTitle("")
                 setDuration(60)
                 setExamCode("")
+                setClassId("")
                 setFileSelected(null)
                 setParsedQuestions([])
                 setParseReport(null)
@@ -356,12 +369,13 @@ export default function AdminExamsPage() {
         }))
 
         startTransition(async () => {
-            const res = await adminCreateCodingExamAction(title, duration, examCode, formatted)
+            const res = await adminCreateCodingExamAction(title, duration, examCode, formatted, classId)
             if (res.success) {
                 toast.success(res.message || "Coding Exam published successfully!")
                 setTitle("")
                 setDuration(60)
                 setExamCode("")
+                setClassId("")
                 setCodingQuestions([])
                 loadExams()
             } else {
@@ -379,6 +393,7 @@ export default function AdminExamsPage() {
                 setEditDuration(res.exam.duration)
                 setEditExamCode(res.exam.examCode || "")
                 setEditQuestions(res.exam.questions || [])
+                setEditClassId(res.exam.classId || "")
             } else {
                 toast.error(res.error || "Failed to fetch exam details.")
             }
@@ -403,11 +418,12 @@ export default function AdminExamsPage() {
 
         setSavingEdit(true)
         startTransition(async () => {
-            const res = await adminUpdateExamAction(editingExamId!, editTitle, editDuration, editExamCode, editQuestions)
+            const res = await adminUpdateExamAction(editingExamId!, editTitle, editDuration, editExamCode, editQuestions, editClassId)
             setSavingEdit(false)
             if (res.success) {
                 toast.success(res.message || "Exam updated successfully.")
                 setEditingExamId(null)
+                setEditClassId("")
                 loadExams()
             } else {
                 toast.error(res.error || "Failed to update exam.")
@@ -572,6 +588,25 @@ export default function AdminExamsPage() {
                                 />
                             </div>
 
+                            {/* Target Class Selector */}
+                            <div>
+                                <label className="block text-xs font-semibold text-themeTextGrey uppercase mb-2">
+                                    Target Class / Batch (Optional)
+                                </label>
+                                <select
+                                    value={classId}
+                                    onChange={(e) => setClassId(e.target.value)}
+                                    className="w-full px-4 py-3 bg-black/40 border border-themeGrey rounded-xl text-white placeholder-themeTextGrey focus:outline-none focus:ring-2 focus:ring-white/20 transition-all text-sm font-medium"
+                                >
+                                    <option value="" className="bg-zinc-950 text-white">All Classes (Global)</option>
+                                    {classes.map(cls => (
+                                        <option key={cls.id} value={cls.id} className="bg-zinc-950 text-white">
+                                            {cls.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
                             {examType === "MCQ" ? (
                                 <>
                                     {/* Word File Upload Box */}
@@ -674,6 +709,11 @@ export default function AdminExamsPage() {
                                                     <span className="text-[10px] text-themeTextGrey">
                                                         {ex.duration}m | Qs: {ex.questions?.length || 0}
                                                     </span>
+                                                    {ex.class?.name && (
+                                                        <span className="text-[10px] text-emerald-400 font-semibold bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                                                            {ex.class.name}
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-1.5 shrink-0">
@@ -1166,6 +1206,23 @@ export default function AdminExamsPage() {
                                             onChange={(e) => setEditExamCode(e.target.value)}
                                             className="w-full px-4 py-3 bg-black/40 border border-themeGrey rounded-xl text-white placeholder-themeTextGrey focus:outline-none focus:ring-2 focus:ring-white/20 transition-all text-sm font-medium"
                                         />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-themeTextGrey uppercase mb-2">
+                                            Target Class / Batch (Optional)
+                                        </label>
+                                        <select
+                                            value={editClassId}
+                                            onChange={(e) => setEditClassId(e.target.value)}
+                                            className="w-full px-4 py-3 bg-black/40 border border-themeGrey rounded-xl text-white placeholder-themeTextGrey focus:outline-none focus:ring-2 focus:ring-white/20 transition-all text-sm font-medium"
+                                        >
+                                            <option value="" className="bg-zinc-950 text-white">All Classes (Global)</option>
+                                            {classes.map(cls => (
+                                                <option key={cls.id} value={cls.id} className="bg-zinc-950 text-white">
+                                                    {cls.name}
+                                                </option>
+                                            ))}
+                                        </select>
                                     </div>
 
                                     <Button

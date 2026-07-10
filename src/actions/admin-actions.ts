@@ -484,7 +484,8 @@ export async function adminCreateExamAction(
         optionD: string, 
         correctAnswer: string 
     }[],
-    examCode: string
+    examCode: string,
+    classId?: string | null
 ) {
     try {
         const admin = await getAdminUser()
@@ -499,7 +500,8 @@ export async function adminCreateExamAction(
                 data: {
                     title: title.trim(),
                     duration: Number(duration),
-                    examCode: examCode.trim() || null
+                    examCode: examCode.trim() || null,
+                    classId: classId && classId.trim() !== "" ? classId.trim() : null
                 }
             })
 
@@ -900,6 +902,9 @@ export async function adminGetExamsListAction() {
             include: {
                 questions: {
                     select: { id: true }
+                },
+                class: {
+                    select: { id: true, name: true }
                 }
             },
             orderBy: { createdAt: "desc" }
@@ -1076,7 +1081,8 @@ export async function adminUpdateExamAction(
         optionC: string
         optionD: string
         correctAnswer: string
-    }[]
+    }[],
+    classId?: string | null
 ) {
     try {
         const admin = await getAdminUser()
@@ -1089,7 +1095,8 @@ export async function adminUpdateExamAction(
                 data: {
                     title: title.trim(),
                     duration: Number(duration),
-                    examCode: examCode.trim() || null
+                    examCode: examCode.trim() || null,
+                    classId: classId && classId.trim() !== "" ? classId.trim() : null
                 }
             })
 
@@ -1196,8 +1203,19 @@ export async function adminGetExamSubmissionsAction(examId: string) {
         const admin = await getAdminUser()
         if (!admin) return { success: false, error: "Unauthorized" }
 
+        const exam = await client.exam.findUnique({
+            where: { id: examId },
+            select: { classId: true }
+        })
+        if (!exam) return { success: false, error: "Exam not found" }
+
+        const attemptsWhere: any = { examId }
+        if (exam.classId) {
+            attemptsWhere.student = { classId: exam.classId }
+        }
+
         const attempts = await client.examAttempt.findMany({
-            where: { examId },
+            where: attemptsWhere,
             include: {
                 student: {
                     select: { name: true, rollNo: true }
@@ -1383,7 +1401,8 @@ export async function adminCreateCodingExamAction(
         sampleInput: string,
         sampleOutput: string,
         testCases: string // JSON representation
-    }[]
+    }[],
+    classId?: string | null
 ) {
     try {
         const admin = await getAdminUser()
@@ -1399,7 +1418,8 @@ export async function adminCreateCodingExamAction(
                     title: title.trim(),
                     type: "CODING",
                     duration: Number(duration),
-                    examCode: examCode.trim() || null
+                    examCode: examCode.trim() || null,
+                    classId: classId && classId.trim() !== "" ? classId.trim() : null
                 }
             })
 

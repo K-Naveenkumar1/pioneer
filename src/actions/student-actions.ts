@@ -392,10 +392,23 @@ export async function getStudentExams(type?: string) {
         const student = await getStudentUser()
         if (!student) return { success: false, error: "Unauthorized" }
 
+        // Fetch student classId from database
+        const studentRecord = await client.student.findUnique({
+            where: { id: student.id },
+            select: { classId: true }
+        })
+        const studentClassId = studentRecord?.classId
+
         const whereClause: any = {}
         if (type) {
             whereClause.type = type
         }
+
+        // Only show exams belonging to student's class, or global exams
+        whereClause.OR = [
+            { classId: studentClassId },
+            { classId: null }
+        ]
 
         const exams = await client.exam.findMany({
             where: whereClause,
@@ -445,6 +458,17 @@ export async function startExamAttemptAction(examId: string, inputCode: string) 
         })
 
         if (!exam) return { success: false, error: "Exam not found" }
+
+        // Enforce class level security
+        if (exam.classId) {
+            const studentRecord = await client.student.findUnique({
+                where: { id: student.id },
+                select: { classId: true }
+            })
+            if (!studentRecord || studentRecord.classId !== exam.classId) {
+                return { success: false, error: "Access denied. You are not registered for this exam's class." }
+            }
+        }
 
         if (exam.examCode && exam.examCode.trim() !== "") {
             if (!inputCode || inputCode.trim() !== exam.examCode.trim()) {
