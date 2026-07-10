@@ -47,7 +47,7 @@ export default function LoginPage() {
                         setShowPasswordStep(true)
                     }
                 } else {
-                    toast.error("Roll number not found. Please try again.")
+                    toast.error(res.error || "Roll number not found. Please try again.")
                 }
             })
             return
