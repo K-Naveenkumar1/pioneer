@@ -3,7 +3,7 @@
 import { client } from "@/lib/prisma"
 import { getSessionCookie, setSessionCookie, deleteSessionCookie } from "@/lib/session"
 import { hashPassword, verifyPassword } from "@/lib/hash"
-import { redirect, isRedirectError } from "next/navigation"
+import { redirect } from "next/navigation"
 
 /**
  * Handles unified student and admin logins.
@@ -61,7 +61,7 @@ export async function loginAction(role: "student" | "admin", identity: string, p
             redirect("/student/dashboard")
         }
     } catch (error: any) {
-        if (isRedirectError(error)) {
+        if (error && typeof error === "object" && "digest" in error && typeof error.digest === "string" && error.digest.startsWith("NEXT_REDIRECT")) {
             throw error
         }
         console.error("Login error:", error)
@@ -107,7 +107,7 @@ export async function studentFirstResetAction(rollNo: string, tempPassword: stri
 
         redirect("/student/dashboard")
     } catch (error: any) {
-        if (isRedirectError(error)) {
+        if (error && typeof error === "object" && "digest" in error && typeof error.digest === "string" && error.digest.startsWith("NEXT_REDIRECT")) {
             throw error
         }
         console.error("Password reset error:", error)
