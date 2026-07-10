@@ -640,12 +640,36 @@ export async function getExamSessionDetails(attemptId: string) {
             return { success: false, error: "Exam is already completed and graded." }
         }
 
+        let questions = attempt.exam.questions
+        if (attempt.exam.type === "MCQ" && questions.length > 0) {
+            // Seeded shuffle using attemptId (UUID)
+            let h = 2166136261 >>> 0
+            for (let i = 0; i < attemptId.length; i++) {
+                h = Math.imul(h ^ attemptId.charCodeAt(i), 16777619)
+            }
+            const random = () => {
+                let t = (h += 0x6d2b79f5)
+                t = Math.imul(t ^ (t >>> 15), t | 1)
+                t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
+                return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+            }
+
+            const shuffled = [...questions]
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(random() * (i + 1))
+                const temp = shuffled[i]
+                shuffled[i] = shuffled[j]
+                shuffled[j] = temp
+            }
+            questions = shuffled
+        }
+
         return {
             success: true,
             examTitle: attempt.exam.title,
             examType: attempt.exam.type,
             duration: attempt.exam.duration,
-            questions: attempt.exam.questions,
+            questions,
             startedAt: attempt.startedAt,
             warnings: attempt.warnings,
             codingSubmissions: attempt.codingSubmissions
