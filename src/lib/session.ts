@@ -40,7 +40,7 @@ export async function setSessionCookie(name: string, data: any, expiresDays = 7)
     
     cookieStore.set(name, encrypted, {
         httpOnly: true,
-        secure: false,
+        secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
         maxAge: 60 * 60 * 24 * expiresDays, // days
         path: "/",

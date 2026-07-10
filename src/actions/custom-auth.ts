@@ -3,7 +3,6 @@
 import { client } from "@/lib/prisma"
 import { getSessionCookie, setSessionCookie, deleteSessionCookie } from "@/lib/session"
 import { hashPassword, verifyPassword } from "@/lib/hash"
-import { redirect } from "next/navigation"
 
 /**
  * Handles unified student and admin logins.
@@ -36,7 +35,7 @@ export async function loginAction(role: "student" | "admin", identity: string, p
                 role: "admin",
             })
 
-            redirect("/admin/dashboard")
+            return { success: true, redirect: "/admin/dashboard" }
         } else {
             // Student Login
             const student = await client.student.findUnique({
@@ -58,12 +57,9 @@ export async function loginAction(role: "student" | "admin", identity: string, p
                 role: "student",
             })
 
-            redirect("/student/dashboard")
+            return { success: true, redirect: "/student/dashboard" }
         }
     } catch (error: any) {
-        if (error && typeof error === "object" && "digest" in error && typeof error.digest === "string" && error.digest.startsWith("NEXT_REDIRECT")) {
-            throw error
-        }
         console.error("Login error:", error)
         return { success: false, error: error?.message || "Something went wrong" }
     }
@@ -105,11 +101,8 @@ export async function studentFirstResetAction(rollNo: string, tempPassword: stri
             role: "student",
         })
 
-        redirect("/student/dashboard")
+        return { success: true, redirect: "/student/dashboard" }
     } catch (error: any) {
-        if (error && typeof error === "object" && "digest" in error && typeof error.digest === "string" && error.digest.startsWith("NEXT_REDIRECT")) {
-            throw error
-        }
         console.error("Password reset error:", error)
         return { success: false, error: error?.message || "Failed to update password" }
     }

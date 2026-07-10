@@ -76,9 +76,8 @@ export async function GET() {
         })
 
         const buffer = await Packer.toBuffer(doc)
-        const uint8Array = new Uint8Array(buffer)
 
-        return new NextResponse(uint8Array, {
+        return new NextResponse(buffer, {
             headers: {
                 "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                 "Content-Disposition": "attachment; filename=sample-mcq.docx"
