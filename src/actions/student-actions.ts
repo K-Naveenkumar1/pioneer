@@ -459,6 +459,30 @@ export async function submitExamAttemptAction(attemptId: string, answers: Record
 }
 
 /**
+ * Lightweight action to get the exam session duration and startedAt timestamp.
+ * Avoids loading all questions and choices, reducing DB workload significantly.
+ */
+export async function getExamSessionDuration(attemptId: string) {
+    try {
+        const attempt = await client.examAttempt.findUnique({
+            where: { id: attemptId },
+            select: {
+                startedAt: true,
+                exam: {
+                    select: {
+                        duration: true
+                    }
+                }
+            }
+        })
+        if (!attempt) return { success: false, error: "Attempt not found" }
+        return { success: true, duration: attempt.exam.duration, startedAt: attempt.startedAt }
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+/**
  * Returns complete exam details (questions) for the current student inside the exam lobby.
  * Ensures the student has an active incomplete attempt before disclosing questions.
  */
@@ -768,7 +792,7 @@ export async function getStudentLeaderboardAction() {
                 }
             })
 
-            const totalScore = (completedTasksCount * 10) + examScoreSum
+            const totalScore = completedTasksCount * 10
 
             return {
                 id: c.id,

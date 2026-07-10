@@ -200,6 +200,8 @@ model Student {
   typingRuns   TypingGameRun[]
   classId      String?
   class        Class?           @relation(fields: [classId], references: [id], onDelete: SetNull)
+
+  @@index([classId])
 }
 
 model Class {
@@ -207,6 +209,7 @@ model Class {
   name               String    @unique
   students           Student[]
   noTaskDeclarations NoTaskDeclaration[]
+  exams              Exam[]
   createdAt          DateTime  @default(now())
 }
 
@@ -230,6 +233,8 @@ model Attendance {
   checkOut  DateTime?
   date      String    // yyyy-mm-dd format
   type      String    @default("CLASS") // CLASS or WFH
+
+  @@index([studentId])
 }
 
 model Task {
@@ -249,6 +254,9 @@ model TaskSubmission {
   content     String   @db.Text
   submittedAt DateTime @default(now())
   status      String   @default("PENDING") // PENDING, APPROVED, REJECTED
+
+  @@index([taskId])
+  @@index([studentId])
 }
 
 model Exam {
@@ -257,9 +265,13 @@ model Exam {
   type      String         @default("MCQ") // "MCQ" or "CODING"
   duration  Int            // in minutes
   examCode  String?        // Code required to enter the exam
+  classId   String?
+  class     Class?         @relation(fields: [classId], references: [id], onDelete: SetNull)
   createdAt DateTime       @default(now())
   questions ExamQuestion[]
   attempts  ExamAttempt[]
+
+  @@index([classId])
 }
 
 model ExamQuestion {
@@ -281,6 +293,8 @@ model ExamQuestion {
   sampleInput   String? @db.Text
   sampleOutput  String? @db.Text
   testCases     String? @db.Text // JSON string representing: Array<{ input: string, output: string, points: number, isSample: boolean }>
+
+  @@index([examId])
 }
 
 model ExamAttempt {
@@ -295,6 +309,9 @@ model ExamAttempt {
   warnings          Int       @default(0)
   startedAt         DateTime  @default(now())
   completedAt       DateTime?
+
+  @@index([examId])
+  @@index([studentId])
 }
 
 model NoTaskDeclaration {
@@ -315,12 +332,15 @@ model StudentMessage {
   student   Student? @relation(fields: [studentId], references: [id], onDelete: Cascade)
   isAdmin   Boolean  @default(false)
   adminName String?
+
+  @@index([studentId])
 }
 
 model TypingGameSession {
   id        String   @id @default(uuid())
   isActive  Boolean  @default(false)
   passage   String   @db.Text
+  timeLimit Int      @default(60) // time limit in seconds
   createdAt DateTime @default(now())
   runs      TypingGameRun[]
 }
@@ -336,5 +356,8 @@ model TypingGameRun {
   progressPercentage Float    @default(0) // 0 to 100
   isCompleted        Boolean  @default(false)
   completedAt        DateTime?
+
+  @@index([sessionId])
+  @@index([studentId])
 }
 

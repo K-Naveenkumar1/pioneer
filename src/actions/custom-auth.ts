@@ -122,17 +122,14 @@ export async function logoutAction(role: "student" | "admin") {
 
 /**
  * Gets currently logged in admin user.
+ * Returns session data directly from the encrypted cookie — no extra DB round-trip.
  */
 export async function getAdminUser() {
     try {
         const session = await getSessionCookie("admin_session")
-        if (!session || session.role !== "admin") return null
-        
-        const admin = await client.admin.findUnique({
-            where: { id: session.id },
-            select: { id: true, username: true }
-        })
-        return admin
+        if (!session || session.role !== "admin" || !session.id) return null
+        // Trust the encrypted session cookie — avoid a redundant DB call on every page.
+        return { id: session.id as string, username: session.username as string }
     } catch (e) {
         return null
     }
@@ -140,17 +137,19 @@ export async function getAdminUser() {
 
 /**
  * Gets currently logged in student user.
+ * Returns session data directly from the encrypted cookie — no extra DB round-trip.
  */
 export async function getStudentUser() {
     try {
         const session = await getSessionCookie("student_session")
-        if (!session || session.role !== "student") return null
-
-        const student = await client.student.findUnique({
-            where: { id: session.id },
-            select: { id: true, rollNo: true, name: true, isFirstLogin: true }
-        })
-        return student
+        if (!session || session.role !== "student" || !session.id) return null
+        // Trust the encrypted session cookie — avoid a redundant DB call on every page.
+        return {
+            id: session.id as string,
+            rollNo: session.rollNo as string,
+            name: session.name as string,
+            isFirstLogin: false
+        }
     } catch (e) {
         return null
     }

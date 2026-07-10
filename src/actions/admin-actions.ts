@@ -1427,10 +1427,7 @@ export async function adminCreateCodingExamAction(
     }
 }
 
-/**
- * Starts a new Typing Game session and disables previous ones.
- */
-export async function adminStartTypingSessionAction(passage: string) {
+export async function adminStartTypingSessionAction(passage: string, timeLimit: number = 60) {
     try {
         const admin = await getAdminUser()
         if (!admin) return { success: false, error: "Unauthorized" }
@@ -1447,7 +1444,8 @@ export async function adminStartTypingSessionAction(passage: string) {
         const session = await client.typingGameSession.create({
             data: {
                 isActive: true,
-                passage: passage.trim()
+                passage: passage.trim(),
+                timeLimit
             }
         })
 
@@ -1495,8 +1493,8 @@ export async function adminGetTypingLeaderboardAction(sessionId: string) {
                 }
             },
             orderBy: [
-                { progressPercentage: "desc" },
-                { wpm: "desc" }
+                { wpm: "desc" },
+                { progressPercentage: "desc" }
             ]
         })
 
@@ -1585,7 +1583,7 @@ export async function adminGetLeaderboardAction(classId: string) {
                 }
             })
 
-            const totalScore = (completedTasksCount * 10) + examScoreSum
+            const totalScore = completedTasksCount * 10
 
             return {
                 id: c.id,

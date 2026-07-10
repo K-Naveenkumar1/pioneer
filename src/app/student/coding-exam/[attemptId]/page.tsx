@@ -63,6 +63,20 @@ const LANGUAGES = [
         ext: "java", 
         judge0Id: 91, 
         default: `// Java Solution\nimport java.util.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        // Write your code here\n    }\n}` 
+    },
+    { 
+        id: "html", 
+        name: "HTML", 
+        ext: "html", 
+        judge0Id: 43, 
+        default: `<!-- HTML Solution -->\n<!DOCTYPE html>\n<html>\n<head>\n    <title>Title</title>\n</head>\n<body>\n    <h1>Hello, World!</h1>\n</body>\n</html>` 
+    },
+    { 
+        id: "css", 
+        name: "CSS", 
+        ext: "css", 
+        judge0Id: 43, 
+        default: `/* CSS Solution */\nbody {\n    color: powderblue;\n}` 
     }
 ]
 
@@ -101,66 +115,161 @@ export default function LockdownCodingExamPage() {
     const [fullscreenActive, setFullscreenActive] = useState(false)
     const [showSubmitModal, setShowSubmitModal] = useState(false)
 
-    // Refs
+    // Refs & Offline States
     const warningRef = useRef(0)
     const textareaRef = useRef<HTMLTextAreaElement>(null)
+    const lastWarningTimeRef = useRef<number>(0)
+    const [isOnline, setIsOnline] = useState<boolean>(true)
+    const [offlineSubmitting, setOfflineSubmitting] = useState<boolean>(false)
+    const [isOfflinePending, setIsOfflinePending] = useState<boolean>(false)
+
+    // Online/Offline tracking
+    useEffect(() => {
+        if (typeof window === "undefined") return
+        const handleOnline = () => setIsOnline(true)
+        const handleOffline = () => setIsOnline(false)
+        setIsOnline(navigator.onLine)
+        window.addEventListener("online", handleOnline)
+        window.addEventListener("offline", handleOffline)
+        return () => {
+            window.removeEventListener("online", handleOnline)
+            window.removeEventListener("offline", handleOffline)
+        }
+    }, [])
+
+    // Load offline cached details if exists
+    useEffect(() => {
+        if (typeof window !== "undefined" && attemptId) {
+            const cached = localStorage.getItem(`pioneer_offline_coding_exam_${attemptId}`)
+            if (cached) {
+                setIsOfflinePending(true)
+                try {
+                    const parsed = JSON.parse(cached)
+                    setCodes(parsed.codes || {})
+                    setLangs(parsed.langs || {})
+                } catch (e) {}
+            }
+        }
+    }, [attemptId])
+
+    // Auto submit helper for offline sync
+    const syncOfflineCodingExam = async () => {
+        if (!attemptId || !questions.length) return
+        setOfflineSubmitting(true)
+        const cached = localStorage.getItem(`pioneer_offline_coding_exam_${attemptId}`)
+        if (!cached) {
+            setIsOfflinePending(false)
+            setOfflineSubmitting(false)
+            return
+        }
+
+        try {
+            const parsed = JSON.parse(cached)
+            const codesToSubmit = parsed.codes || codes
+            const langsToSubmit = parsed.langs || langs
+
+            // Grade all questions sequentially
+            for (const q of questions) {
+                const code = codesToSubmit[q.id] || ""
+                const savedLangId = langsToSubmit[q.id] || "python"
+                const lang = LANGUAGES.find(l => l.id === savedLangId) || LANGUAGES[1]
+                
+                toast.loading(`Grading question: ${q.title || "Code"}...`, { id: `sync-grading-${q.id}` })
+                try {
+                    await gradeCodingQuestionAction(attemptId, q.id, code, lang.judge0Id)
+                } catch (e) {
+                    console.error(`Failed to grade question ${q.id}:`, e)
+                } finally {
+                    toast.dismiss(`sync-grading-${q.id}`)
+                }
+            }
+
+            // Finalize submission
+            const res = await submitCodingExamAction(attemptId)
+            if (res.success) {
+                toast.success(`Exam submitted successfully! Final Score: ${res.score || 0}`)
+                localStorage.removeItem(`pioneer_offline_coding_exam_${attemptId}`)
+                setCompleted(true)
+                setIsOfflinePending(false)
+                router.push("/student/coding-exam")
+            } else {
+                toast.error(res.error || "Failed to finalize exam.")
+            }
+        } catch (err) {
+            console.error("Error syncing offline coding exam:", err)
+        } finally {
+            setOfflineSubmitting(false)
+        }
+    }
+
+    // Auto sync when back online
+    useEffect(() => {
+        if (isOnline && isOfflinePending && !offlineSubmitting && started) {
+            syncOfflineCodingExam()
+        }
+    }, [isOnline, isOfflinePending])
 
     // 1. Load exam session details on start
     useEffect(() => {
         if (!attemptId) return
 
         async function fetchDetails() {
-            const res = await getExamSessionDetails(attemptId)
-            if (res.success) {
-                setExamTitle(res.examTitle || "")
-                setQuestions(res.questions || [])
-                setDurationMinutes(res.duration || 60)
-                setStartedAt(res.startedAt ? new Date(res.startedAt) : new Date())
-                setWarnings(res.warnings || 0)
-                warningRef.current = res.warnings || 0
+            try {
+                const res = await getExamSessionDetails(attemptId)
+                if (res.success) {
+                    setExamTitle(res.examTitle || "")
+                    setQuestions(res.questions || [])
+                    setDurationMinutes(res.duration || 60)
+                    setStartedAt(res.startedAt ? new Date(res.startedAt) : new Date())
+                    setWarnings(res.warnings || 0)
+                    warningRef.current = res.warnings || 0
 
-                // Restore saved coding submissions if any
-                if (res.codingSubmissions) {
-                    try {
-                        const subsMap = JSON.parse(res.codingSubmissions)
-                        setGradedSubmissions(subsMap)
-                        
-                        // Populate editor codes and languages with restored submissions
-                        const initialCodes: Record<string, string> = {}
-                        const initialLangs: Record<string, string> = {}
-                        res.questions.forEach((q: any) => {
-                            const sub = subsMap[q.id]
-                            if (sub) {
-                                initialCodes[q.id] = sub.code
-                                const lang = LANGUAGES.find(l => l.judge0Id === sub.languageId)
-                                if (lang) {
-                                    initialLangs[q.id] = lang.id
+                    // Restore saved coding submissions if any
+                    if (res.codingSubmissions) {
+                        try {
+                            const subsMap = JSON.parse(res.codingSubmissions)
+                            setGradedSubmissions(subsMap)
+                            
+                            // Populate editor codes and languages with restored submissions
+                            const initialCodes: Record<string, string> = {}
+                            const initialLangs: Record<string, string> = {}
+                            res.questions.forEach((q: any) => {
+                                const sub = subsMap[q.id]
+                                if (sub) {
+                                    initialCodes[q.id] = sub.code
+                                    const lang = LANGUAGES.find(l => l.judge0Id === sub.languageId)
+                                    if (lang) {
+                                        initialLangs[q.id] = lang.id
+                                    }
                                 }
-                            }
-                        })
-                        setCodes(prev => ({ ...prev, ...initialCodes }))
-                        setLangs(prev => ({ ...prev, ...initialLangs }))
-                    } catch (err) {
-                        console.error("Error restoring coding submissions:", err)
+                            })
+                            setCodes(prev => ({ ...prev, ...initialCodes }))
+                            setLangs(prev => ({ ...prev, ...initialLangs }))
+                        } catch (err) {
+                            console.error("Error restoring coding submissions:", err)
+                        }
                     }
+
+                    // Calc remaining time
+                    const startTime = res.startedAt ? new Date(res.startedAt).getTime() : new Date().getTime()
+                    const durationMs = (res.duration || 60) * 60 * 1000
+                    const now = new Date().getTime()
+                    const timeLeftSecs = Math.max(0, Math.floor((startTime + durationMs - now) / 1000))
+                    setSecondsLeft(timeLeftSecs)
+
+                    if (timeLeftSecs <= 0) {
+                        toast.error("Exam duration has already expired.")
+                        handleAutoSubmit()
+                    }
+
+                    setLoading(false)
+                } else {
+                    toast.error(res.error || "Failed to load exam session")
+                    router.push("/student/coding-exam")
                 }
-
-                // Calc remaining time
-                const startTime = res.startedAt ? new Date(res.startedAt).getTime() : new Date().getTime()
-                const durationMs = (res.duration || 60) * 60 * 1000
-                const now = new Date().getTime()
-                const timeLeftSecs = Math.max(0, Math.floor((startTime + durationMs - now) / 1000))
-                setSecondsLeft(timeLeftSecs)
-
-                if (timeLeftSecs <= 0) {
-                    toast.error("Exam duration has already expired.")
-                    handleAutoSubmit()
-                }
-
+            } catch (err) {
+                console.error("Error loading exam details:", err)
                 setLoading(false)
-            } else {
-                toast.error(res.error || "Failed to load exam session")
-                router.push("/student/coding-exam")
             }
         }
 
@@ -226,19 +335,29 @@ export default function LockdownCodingExamPage() {
 
         const handleKeyDown = (e: KeyboardEvent) => {
             const isCtrl = e.ctrlKey || e.metaKey
+            const isAlt = e.altKey
             const key = e.key.toLowerCase()
 
-            // Block select all, copy, paste, cut, PrintScreen, F12, Ctrl+U, Ctrl+Shift+I
+            // Block copy, paste, and cut (without warning)
+            if (isCtrl && (key === 'c' || key === 'v' || key === 'x')) {
+                e.preventDefault()
+                e.stopPropagation()
+                toast.error("Copy, paste, and cut actions are disabled during the exam.")
+                return
+            }
+
+            // Block other shortcuts with warnings (Win Key, Alt shortcuts, F12, Inspect, etc.)
             if (
-                (isCtrl && (key === 'a' || key === 'c' || key === 'v' || key === 'x')) ||
+                isAlt || // Alt combinations
+                (isCtrl && (key === 'a' || key === 'u')) || // Select All, View Source
                 e.key === "PrintScreen" ||
                 e.key === "F12" ||
-                (isCtrl && e.shiftKey && key === 'i') ||
-                (isCtrl && key === 'u')
+                (isCtrl && e.shiftKey && key === 'i') || // Inspect element
+                e.metaKey // Windows / CMD key
             ) {
                 e.preventDefault()
                 e.stopPropagation()
-                toast.error("Unauthorized shortcut blocked by secure exam interface!")
+                triggerWarning(`Unauthorized keyboard shortcut attempted: ${e.key}`)
             }
         }
 
@@ -274,20 +393,31 @@ export default function LockdownCodingExamPage() {
         return () => clearInterval(timer)
     }, [started, completed])
 
-    // 5. Trigger Warning & Check termination limits
+    // 5. Trigger Warning & Check termination limits (Only 1 warning allowed!)
     const triggerWarning = async (reason: string) => {
-        if (completed) return
+        if (completed || isOfflinePending) return
+
+        const now = Date.now()
+        // 2-second cooldown to avoid multiple rapid triggers from single actions (e.g. Alt+Tab)
+        if (now - lastWarningTimeRef.current < 2000) {
+            return
+        }
+        lastWarningTimeRef.current = now
 
         const updatedCount = warningRef.current + 1
         warningRef.current = updatedCount
         setWarnings(updatedCount)
 
-        toast.warning(`LOCKDOWN ALERT: ${reason} (Warning ${updatedCount}/3)`)
+        toast.warning(`LOCKDOWN ALERT: ${reason} (Warning ${updatedCount}/2)`)
 
         // Save warnings count to database
-        await updateExamWarningAction(attemptId, updatedCount)
+        try {
+            await updateExamWarningAction(attemptId, updatedCount)
+        } catch (err) {
+            console.error("Failed to update warning count on server:", err)
+        }
 
-        if (updatedCount >= 3) {
+        if (updatedCount >= 2) {
             toast.error("Exam terminated automatically due to repeated lockdown violations.")
             handleAutoSubmit()
         }
@@ -314,12 +444,36 @@ export default function LockdownCodingExamPage() {
             document.exitFullscreen().catch(() => {})
         }
 
-        const res = await submitCodingExamAction(attemptId)
-        if (res.success) {
-            toast.success("Exam submitted successfully.")
-            router.push("/student/coding-exam")
-        } else {
-            toast.error(res.error || "Failed to finalize exam.")
+        const onlineStatus = navigator.onLine
+        if (!onlineStatus) {
+            localStorage.setItem(`pioneer_offline_coding_exam_${attemptId}`, JSON.stringify({
+                attemptId,
+                codes,
+                langs,
+                timestamp: Date.now()
+            }))
+            setIsOfflinePending(true)
+            toast.warning("You are currently offline. Your exam answers have been saved locally.")
+            return
+        }
+
+        try {
+            const res = await submitCodingExamAction(attemptId)
+            if (res.success) {
+                toast.success("Exam submitted successfully.")
+                router.push("/student/coding-exam")
+            } else {
+                toast.error(res.error || "Failed to finalize exam.")
+            }
+        } catch (err) {
+            console.error("Auto submit failed, caching offline:", err)
+            localStorage.setItem(`pioneer_offline_coding_exam_${attemptId}`, JSON.stringify({
+                attemptId,
+                codes,
+                langs,
+                timestamp: Date.now()
+            }))
+            setIsOfflinePending(true)
         }
     }
 
@@ -456,6 +610,20 @@ export default function LockdownCodingExamPage() {
         setShowSubmitModal(false)
         setLoading(true)
 
+        const onlineStatus = navigator.onLine
+        if (!onlineStatus) {
+            setLoading(false)
+            localStorage.setItem(`pioneer_offline_coding_exam_${attemptId}`, JSON.stringify({
+                attemptId,
+                codes,
+                langs,
+                timestamp: Date.now()
+            }))
+            setIsOfflinePending(true)
+            toast.warning("You are currently offline. Your exam answers have been saved locally.")
+            return
+        }
+
         try {
             const res = await submitCodingExamAction(attemptId)
             if (res.success) {
@@ -471,7 +639,14 @@ export default function LockdownCodingExamPage() {
                 setLoading(false)
             }
         } catch (err) {
-            toast.error("Error submitting exam.")
+            console.error("Submission failed, caching offline:", err)
+            localStorage.setItem(`pioneer_offline_coding_exam_${attemptId}`, JSON.stringify({
+                attemptId,
+                codes,
+                langs,
+                timestamp: Date.now()
+            }))
+            setIsOfflinePending(true)
             setLoading(false)
         }
     }
@@ -498,7 +673,7 @@ export default function LockdownCodingExamPage() {
     if (!started) {
         return (
             <div className="min-h-screen bg-black flex items-center justify-center p-4">
-                <BackdropGradient className="w-[400px] h-[400px] opacity-20" container="absolute" />
+                <BackdropGradient className="w-[400px] h-[400px] opacity-20" container="absolute"><></></BackdropGradient>
                 <GlassCard className="w-full max-w-xl p-8 border border-themeGrey space-y-6 text-center z-10">
                     <div className="flex justify-center text-red-500">
                         <div className="p-4 bg-zinc-900 border border-themeGrey rounded-2xl animate-pulse">
@@ -519,7 +694,7 @@ export default function LockdownCodingExamPage() {
                         <ul className="list-disc pl-4 space-y-2.5">
                             <li>To prevent unauthorized resources, this workspace runs in **Fullscreen Mode**.</li>
                             <li>Switching tabs, minimizing, resizing, or exiting browser focus registers as a violation.</li>
-                            <li>On the **3rd violation**, the session will automatically terminate, finalize, and grade.</li>
+                            <li>On the **2nd violation**, the session will automatically terminate, finalize, and grade.</li>
                             <li>Keyboard shortcuts for copying, pasting, and inspector keys are restricted.</li>
                         </ul>
                     </div>
@@ -539,6 +714,57 @@ export default function LockdownCodingExamPage() {
         return (
             <div className="min-h-screen bg-black flex items-center justify-center">
                 <span className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></span>
+            </div>
+        )
+    }
+
+    if (isOfflinePending) {
+        return (
+            <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
+                <div className="w-full max-w-md p-8 bg-zinc-900/80 border border-amber-500/20 rounded-3xl space-y-6 text-center shadow-2xl backdrop-blur-md">
+                    <div className="space-y-2">
+                        <div className="mx-auto w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-400">
+                            <AlertTriangle size={28} className="animate-pulse" />
+                        </div>
+                        <h2 className="text-2xl font-bold text-white tracking-tight">Offline - Pending Sync</h2>
+                        <p className="text-xs text-zinc-400">
+                            Your coding solutions have been saved locally in your browser. We will grade and submit them to the database as soon as your internet connection is restored.
+                        </p>
+                    </div>
+
+                    <div className="bg-zinc-900/60 p-4 border border-zinc-800/60 rounded-2xl text-left space-y-2">
+                        <div className="flex justify-between items-center text-xs">
+                            <span className="text-zinc-500">Connection Status:</span>
+                            <span className={isOnline ? "text-emerald-400 font-semibold" : "text-rose-400 font-semibold"}>
+                                {isOnline ? "Online" : "Offline"}
+                            </span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs">
+                            <span className="text-zinc-500">Local Cache:</span>
+                            <span className="text-zinc-300">Saved Successfully</span>
+                        </div>
+                    </div>
+
+                    <Button
+                        onClick={syncOfflineCodingExam}
+                        disabled={offlineSubmitting || !isOnline}
+                        className="w-full bg-amber-500 hover:bg-amber-600 disabled:bg-zinc-800 text-black font-semibold rounded-xl py-4 flex items-center justify-center gap-2"
+                    >
+                        {offlineSubmitting ? (
+                            <>
+                                <RefreshCw className="h-4 w-4 animate-spin" />
+                                Syncing & Grading Code...
+                            </>
+                        ) : !isOnline ? (
+                            "Waiting for Connection..."
+                        ) : (
+                            "Sync and Submit Now"
+                        )}
+                    </Button>
+                    <p className="text-[10px] text-zinc-500">
+                        Please do not close this browser tab. Your progress is safe.
+                    </p>
+                </div>
             </div>
         )
     }

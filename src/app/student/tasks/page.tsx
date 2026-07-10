@@ -127,8 +127,31 @@ export default function StudentTasksPage() {
         )
     }
 
+    if (!isCheckedIn) {
+        return (
+            <div className="min-h-[60vh] flex flex-col items-center justify-center text-center p-8">
+                <GlassCard className="max-w-md p-8 border border-themeGrey flex flex-col items-center">
+                    <div className="p-4 bg-zinc-900 border border-themeGrey rounded-full text-amber-400 mb-4 animate-bounce">
+                        <Lock size={36} />
+                    </div>
+                    <h2 className="text-2xl font-bold text-white mb-2">
+                        Task Access Blocked
+                    </h2>
+                    <p className="text-sm text-themeTextGrey max-w-sm mb-6 leading-relaxed">
+                        To view or complete assigned tasks, you must be actively **Checked In** on the dashboard. This ensures your active session hours are logged.
+                    </p>
+                    <Link href="/student/dashboard">
+                        <Button className="bg-white hover:bg-zinc-200 text-black font-semibold rounded-xl px-6 py-4 text-xs">
+                            Go to Dashboard & Check In
+                        </Button>
+                    </Link>
+                </GlassCard>
+            </div>
+        )
+    }
+
     return (
-        <div className="space-y-8 relative">
+        <div className="space-y-8">
             {/* Header */}
             <div>
                 <h1 className="text-3xl font-bold tracking-tight text-white flex items-center gap-2">
@@ -137,28 +160,8 @@ export default function StudentTasksPage() {
                 <p className="text-sm text-themeTextGrey">Complete the tasks assigned to you by the administrator.</p>
             </div>
 
-            {/* Check-In Guard Overlay */}
-            {!isCheckedIn ? (
-                <div className="absolute inset-0 top-20 bg-black/75 backdrop-blur-md z-30 flex flex-col items-center justify-center text-center p-8 rounded-3xl border border-themeGrey">
-                    <div className="p-4 bg-zinc-900 border border-themeGrey rounded-full text-amber-400 mb-4 animate-bounce">
-                        <Lock size={36} />
-                    </div>
-                    <h2 className="text-2xl font-bold text-white mb-2">
-                        Task Access Blocked
-                    </h2>
-                    <p className="text-sm text-themeTextGrey max-w-md mb-6 leading-relaxed">
-                        To view or complete assigned tasks, you must be actively **Checked In** on the dashboard. This ensures your active session hours are logged.
-                    </p>
-                    <Link href="/student/dashboard">
-                        <Button className="bg-white hover:bg-zinc-200 text-black font-semibold rounded-xl px-6 py-5">
-                            Go to Dashboard & Check In
-                        </Button>
-                    </Link>
-                </div>
-            ) : null}
-
-            {/* Main Content (Blurred if not checked in to preview structure behind lock) */}
-            <div className={`space-y-4 transition-all duration-300 ${!isCheckedIn ? "blur-md select-none pointer-events-none" : ""}`}>
+            {/* Main Content */}
+            <div className="space-y-4">
                 {tasks.length === 0 ? (
                     <GlassCard className="p-8 text-center text-themeTextGrey border border-themeGrey">
                         No tasks have been allocated to you yet. You're all caught up!

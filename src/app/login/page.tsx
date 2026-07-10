@@ -108,10 +108,11 @@ export default function LoginPage() {
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-[50%] radial--blur opacity-25 pointer-events-none -z-10" />
 
             {/* Header Brand */}
-            <div className="mb-8 text-center z-10">
-                <h1 className="text-[28px] font-bold text-white tracking-tight select-none">
+            <div className="mb-8 text-center z-10 flex flex-col items-center leading-none">
+                <h1 className="text-[28px] font-bold text-white tracking-tight select-none leading-none">
                     Billionaire.
                 </h1>
+                <p className="text-sm text-zinc-500 font-medium select-none -mt-0.5">created by Naveen</p>
             </div>
 
             {/* Card Container */}

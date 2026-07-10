@@ -1,29 +1,28 @@
 "use client"
 
-import React, { useState, useEffect, useTransition, useRef } from "react"
-import { useRouter, useParams } from "next/navigation"
-import { motion, AnimatePresence } from "framer-motion"
 import confetti from "canvas-confetti"
-import { 
-    Clock, 
-    AlertTriangle, 
-    ChevronLeft, 
-    ChevronRight, 
-    Flag, 
-    CheckSquare, 
-    ShieldAlert, 
+import { AnimatePresence, motion } from "framer-motion"
+import {
+    AlertTriangle,
     Award,
-    CheckCircle2
+    ChevronLeft,
+    ChevronRight,
+    Clock,
+    Flag,
+    RefreshCw,
+    ShieldAlert
 } from "lucide-react"
+import { useParams, useRouter } from "next/navigation"
+import { useEffect, useRef, useState, useTransition } from "react"
 import { toast } from "sonner"
 
-import BackdropGradient from "@/components/global/backdrop-gradient"
-import { Button } from "@/components/ui/button"
-import { 
-    getExamSessionDetails, 
-    updateExamWarningAction, 
-    submitExamAttemptAction 
+import {
+    getExamSessionDetails,
+    getExamSessionDuration,
+    submitExamAttemptAction,
+    updateExamWarningAction
 } from "@/actions/student-actions"
+import { Button } from "@/components/ui/button"
 
 interface Message {
   id: string
@@ -34,6 +33,11 @@ interface Message {
     name: string
     rollNo: string
   }
+}
+
+const cleanQuestionText = (text: string) => {
+    if (!text) return ""
+    return text.replace(/^(?:q|question)?\s*\d+\s*[\.\)\-:]\s*/i, "")
 }
 
 export default function LockdownExamPage() {
@@ -60,43 +64,126 @@ export default function LockdownExamPage() {
     const [warnings, setWarnings] = useState(0)
     const [fullscreenActive, setFullscreenActive] = useState(false)
     const [showSubmitModal, setShowSubmitModal] = useState(false)
+    const [visited, setVisited] = useState<Record<string, boolean>>({})
+
+    useEffect(() => {
+        if (questions && questions[currentIdx]) {
+            const qId = questions[currentIdx].id
+            setVisited(prev => ({ ...prev, [qId]: true }))
+        }
+    }, [currentIdx, questions])
 
     // Completion State
     const [results, setResults] = useState<any>(null)
 
     // Refs
     const warningRef = useRef(0)
+    const lastWarningTimeRef = useRef<number>(0)
+    const [isOnline, setIsOnline] = useState<boolean>(true)
+    const [offlineSubmitting, setOfflineSubmitting] = useState<boolean>(false)
+    const [isOfflinePending, setIsOfflinePending] = useState<boolean>(false)
+
+    // Online/Offline tracking
+    useEffect(() => {
+        if (typeof window === "undefined") return
+        const handleOnline = () => setIsOnline(true)
+        const handleOffline = () => setIsOnline(false)
+        setIsOnline(navigator.onLine)
+        window.addEventListener("online", handleOnline)
+        window.addEventListener("offline", handleOffline)
+        return () => {
+            window.removeEventListener("online", handleOnline)
+            window.removeEventListener("offline", handleOffline)
+        }
+    }, [])
+
+    // Load offline cached details if exists
+    useEffect(() => {
+        if (typeof window !== "undefined" && attemptId) {
+            const cached = localStorage.getItem(`pioneer_offline_exam_${attemptId}`)
+            if (cached) {
+                setIsOfflinePending(true)
+                try {
+                    const parsed = JSON.parse(cached)
+                    setAnswers(parsed.answers || {})
+                } catch (e) {}
+            }
+        }
+    }, [attemptId])
+
+    // Auto submit helper for offline sync
+    const syncOfflineExam = async () => {
+        if (!attemptId) return
+        setOfflineSubmitting(true)
+        const cached = localStorage.getItem(`pioneer_offline_exam_${attemptId}`)
+        if (!cached) {
+            setIsOfflinePending(false)
+            setOfflineSubmitting(false)
+            return
+        }
+
+        try {
+            const parsed = JSON.parse(cached)
+            const answersToSubmit = parsed.answers || answers
+            const res = await submitExamAttemptAction(attemptId, answersToSubmit)
+            if (res.success) {
+                toast.success("Exam synced and submitted successfully!")
+                localStorage.removeItem(`pioneer_offline_exam_${attemptId}`)
+                setResults(res)
+                setCompleted(true)
+                setIsOfflinePending(false)
+            } else {
+                toast.error(res.error || "Failed to sync exam. Retrying...")
+            }
+        } catch (err) {
+            console.error("Error syncing offline exam:", err)
+        } finally {
+            setOfflineSubmitting(false)
+        }
+    }
+
+    // Auto sync when back online
+    useEffect(() => {
+        if (isOnline && isOfflinePending && !offlineSubmitting) {
+            syncOfflineExam()
+        }
+    }, [isOnline, isOfflinePending])
 
     // 1. Load exam session details on start
     useEffect(() => {
         if (!attemptId) return
 
         async function fetchDetails() {
-            const res = await getExamSessionDetails(attemptId)
-            if (res.success) {
-                setExamTitle(res.examTitle || "")
-                setQuestions(res.questions || [])
-                setDurationMinutes(res.duration || 60)
-                setStartedAt(res.startedAt ? new Date(res.startedAt) : new Date())
-                setWarnings(res.warnings || 0)
-                warningRef.current = res.warnings || 0
+            try {
+                const res = await getExamSessionDetails(attemptId)
+                if (res.success) {
+                    setExamTitle(res.examTitle || "")
+                    setQuestions(res.questions || [])
+                    setDurationMinutes(res.duration || 60)
+                    setStartedAt(res.startedAt ? new Date(res.startedAt) : new Date())
+                    setWarnings(res.warnings || 0)
+                    warningRef.current = res.warnings || 0
 
-                // Calc remaining time
-                const startTime = res.startedAt ? new Date(res.startedAt).getTime() : new Date().getTime()
-                const durationMs = (res.duration || 60) * 60 * 1000
-                const now = new Date().getTime()
-                const timeLeftSecs = Math.max(0, Math.floor((startTime + durationMs - now) / 1000))
-                setSecondsLeft(timeLeftSecs)
+                    // Calc remaining time
+                    const startTime = res.startedAt ? new Date(res.startedAt).getTime() : new Date().getTime()
+                    const durationMs = (res.duration || 60) * 60 * 1000
+                    const now = new Date().getTime()
+                    const timeLeftSecs = Math.max(0, Math.floor((startTime + durationMs - now) / 1000))
+                    setSecondsLeft(timeLeftSecs)
 
-                if (timeLeftSecs <= 0) {
-                    toast.error("Exam duration has already expired.")
-                    handleAutoSubmit()
+                    if (timeLeftSecs <= 0) {
+                        toast.error("Exam duration has already expired.")
+                        handleAutoSubmit()
+                    }
+
+                    setLoading(false)
+                } else {
+                    toast.error(res.error || "Failed to load exam session")
+                    router.push("/student/exams")
                 }
-
+            } catch (err) {
+                console.error("Error loading exam details:", err)
                 setLoading(false)
-            } else {
-                toast.error(res.error || "Failed to load exam session")
-                router.push("/student/exams")
             }
         }
 
@@ -108,6 +195,25 @@ export default function LockdownExamPage() {
         const blockContextMenu = (e: MouseEvent) => e.preventDefault()
         
         const blockKeys = (e: KeyboardEvent) => {
+            const isCtrl = e.ctrlKey || e.metaKey
+            const isAlt = e.altKey
+
+            if (
+                isAlt || // Covers Alt+Tab, Alt+F4, etc.
+                isCtrl || // Covers Ctrl+C, Ctrl+V, etc.
+                e.metaKey || // Win/Cmd key
+                e.key === "PrintScreen" ||
+                e.key === "F12" ||
+                e.key === "Tab" // Block Tab navigation to prevent escaping
+            ) {
+                e.preventDefault()
+                e.stopPropagation()
+                e.stopImmediatePropagation()
+                
+                triggerWarning(`Keyboard shortcut detected: ${e.key}`)
+                return
+            }
+
             e.preventDefault()
             e.stopPropagation()
             e.stopImmediatePropagation()
@@ -221,32 +327,43 @@ export default function LockdownExamPage() {
         if (!started || completed) return
 
         const pollTimer = setInterval(async () => {
-            const res = await getExamSessionDetails(attemptId)
-            if (res.success && typeof res.duration === "number") {
-                if (res.duration !== durationMinutes) {
-                    setDurationMinutes(res.duration)
-                    const startTime = res.startedAt ? new Date(res.startedAt).getTime() : (startedAt ? startedAt.getTime() : new Date().getTime())
-                    const durationMs = res.duration * 60 * 1000
-                    const now = new Date().getTime()
-                    const timeLeftSecs = Math.max(0, Math.floor((startTime + durationMs - now) / 1000))
-                    
-                    setSecondsLeft(timeLeftSecs)
-                    toast.info(`The exam duration has been adjusted by the instructor to ${res.duration} minutes.`)
-                    
-                    if (timeLeftSecs <= 0) {
-                        toast.warning("The new exam duration has expired. Submitting answers.")
-                        handleAutoSubmit()
+            try {
+                const res = await getExamSessionDuration(attemptId)
+                if (res && res.success && typeof res.duration === "number") {
+                    if (res.duration !== durationMinutes) {
+                        setDurationMinutes(res.duration)
+                        const startTime = res.startedAt ? new Date(res.startedAt).getTime() : (startedAt ? startedAt.getTime() : new Date().getTime())
+                        const durationMs = res.duration * 60 * 1000
+                        const now = new Date().getTime()
+                        const timeLeftSecs = Math.max(0, Math.floor((startTime + durationMs - now) / 1000))
+                        
+                        setSecondsLeft(timeLeftSecs)
+                        toast.info(`The exam duration has been adjusted by the instructor to ${res.duration} minutes.`)
+                        
+                        if (timeLeftSecs <= 0) {
+                            toast.warning("The new exam duration has expired. Submitting answers.")
+                            handleAutoSubmit()
+                        }
                     }
                 }
+            } catch (err) {
+                console.error("Polling error:", err)
             }
-        }, 8000)
+        }, 30000)
 
         return () => clearInterval(pollTimer)
     }, [started, completed, attemptId, durationMinutes, startedAt])
 
     // 4. Trigger Warning & Check termination limits
     const triggerWarning = async (reason: string) => {
-        if (completed) return
+        if (completed || isOfflinePending) return
+
+        const now = Date.now()
+        // 2-second cooldown to avoid multiple rapid triggers from single actions (e.g. Alt+Tab)
+        if (now - lastWarningTimeRef.current < 2000) {
+            return
+        }
+        lastWarningTimeRef.current = now
 
         const updatedCount = warningRef.current + 1
         warningRef.current = updatedCount
@@ -255,11 +372,15 @@ export default function LockdownExamPage() {
         toast.warning(`LOCKDOWN ALERT: ${reason} (Warning ${updatedCount}/3)`)
 
         // Save warnings count to database
-        await updateExamWarningAction(attemptId, updatedCount)
+        try {
+            await updateExamWarningAction(attemptId, updatedCount)
+        } catch (err) {
+            console.error("Failed to update warning count on server:", err)
+        }
 
         if (updatedCount >= 3) {
             toast.error("Exam terminated automatically due to repeated lockdown violations.")
-            handleAutoSubmit()
+            submitExam(true)
         }
     }
 
@@ -294,21 +415,45 @@ export default function LockdownExamPage() {
             document.exitFullscreen().catch(() => {})
         }
 
+        const onlineStatus = navigator.onLine
+        if (!onlineStatus) {
+            // Save to local storage
+            localStorage.setItem(`pioneer_offline_exam_${attemptId}`, JSON.stringify({
+                attemptId,
+                answers,
+                timestamp: Date.now()
+            }))
+            setIsOfflinePending(true)
+            toast.warning("You are currently offline. Your exam answers have been saved locally.")
+            return
+        }
+
         startTransition(async () => {
-            const res = await submitExamAttemptAction(attemptId, answers)
-            if (res.success) {
-                setResults(res)
-                toast.success("Exam submitted successfully!")
-                
-                if (res.score !== undefined && res.score >= 50) {
-                    confetti({
-                        particleCount: 100,
-                        spread: 70,
-                        origin: { y: 0.6 }
-                    })
+            try {
+                const res = await submitExamAttemptAction(attemptId, answers)
+                if (res.success) {
+                    setResults(res)
+                    toast.success("Exam submitted successfully!")
+                    
+                    if (res.score !== undefined && res.score >= 50) {
+                        confetti({
+                            particleCount: 100,
+                            spread: 70,
+                            origin: { y: 0.6 }
+                        })
+                    }
+                } else {
+                    toast.error(res.error || "Error occurred during grading.")
                 }
-            } else {
-                toast.error(res.error || "Error occurred during grading.")
+            } catch (err) {
+                console.error("Submission failed, caching locally:", err)
+                localStorage.setItem(`pioneer_offline_exam_${attemptId}`, JSON.stringify({
+                    attemptId,
+                    answers,
+                    timestamp: Date.now()
+                }))
+                setIsOfflinePending(true)
+                toast.warning("Network error occurred. Your exam answers have been saved locally.")
             }
         })
     }
@@ -319,6 +464,10 @@ export default function LockdownExamPage() {
         const m = Math.floor((secondsLeft % 3600) / 60)
         const s = secondsLeft % 60
         return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+    }
+
+    const cleanQuestionText = (text: string) => {
+        return text.replace(/^\d+[\.\)\s]+/, "").trim()
     }
 
     const selectOption = (questionId: string, optionLetter: string) => {
@@ -339,6 +488,57 @@ export default function LockdownExamPage() {
         return (
             <div className="min-h-screen bg-black flex items-center justify-center text-white">
                 <span className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></span>
+            </div>
+        )
+    }
+
+    if (isOfflinePending) {
+        return (
+            <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
+                <div className="w-full max-w-md p-8 bg-zinc-900/80 border border-amber-500/20 rounded-3xl space-y-6 text-center shadow-2xl backdrop-blur-md">
+                    <div className="space-y-2">
+                        <div className="mx-auto w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-400">
+                            <AlertTriangle size={28} className="animate-pulse" />
+                        </div>
+                        <h2 className="text-2xl font-bold text-white tracking-tight">Offline - Pending Sync</h2>
+                        <p className="text-xs text-zinc-400">
+                            Your answers have been saved locally in your browser. We will submit them to the database as soon as your internet connection is restored.
+                        </p>
+                    </div>
+
+                    <div className="bg-zinc-900/60 p-4 border border-zinc-800/60 rounded-2xl text-left space-y-2">
+                        <div className="flex justify-between items-center text-xs">
+                            <span className="text-zinc-500">Connection Status:</span>
+                            <span className={isOnline ? "text-emerald-400 font-semibold" : "text-rose-400 font-semibold"}>
+                                {isOnline ? "Online" : "Offline"}
+                            </span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs">
+                            <span className="text-zinc-500">Local Cache:</span>
+                            <span className="text-zinc-300">Saved Successfully</span>
+                        </div>
+                    </div>
+
+                    <Button
+                        onClick={syncOfflineExam}
+                        disabled={offlineSubmitting || !isOnline}
+                        className="w-full bg-amber-500 hover:bg-amber-600 disabled:bg-zinc-800 text-black font-semibold rounded-xl py-4 flex items-center justify-center gap-2"
+                    >
+                        {offlineSubmitting ? (
+                            <>
+                                <RefreshCw className="h-4 w-4 animate-spin" />
+                                Syncing Exam...
+                            </>
+                        ) : !isOnline ? (
+                            "Waiting for Connection..."
+                        ) : (
+                            "Sync and Submit Now"
+                        )}
+                    </Button>
+                    <p className="text-[10px] text-zinc-500">
+                        Please do not close this browser tab. Your exam is safe.
+                    </p>
+                </div>
             </div>
         )
     }
@@ -491,7 +691,7 @@ export default function LockdownExamPage() {
                 {/* Left Side: Primary Question Workspace (Question & Options) as Floating Card */}
                 <main className="flex-1 p-4 flex flex-col overflow-hidden">
                     {/* Upper Card: Question & MCQ options */}
-                    <div className="flex-1 bg-zinc-900/80 border border-zinc-800 rounded-2xl p-8 overflow-y-auto flex flex-col justify-between backdrop-blur-md shadow-lg">
+                    <div className="flex-1 bg-zinc-900/80 border border-zinc-800 rounded-2xl p-8 overflow-y-auto modern-scrollbar flex flex-col justify-between backdrop-blur-md shadow-lg">
                         <div className="space-y-8 flex-1 flex flex-col justify-center max-w-4xl mx-auto w-full">
                             <div className="flex justify-between items-start gap-4">
                                 <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider bg-zinc-900 border border-zinc-800 px-3 py-1 rounded-lg">
@@ -501,8 +701,8 @@ export default function LockdownExamPage() {
 
                             {/* Question Text */}
                             <div className="space-y-4">
-                                <h3 className="text-2xl md:text-3xl font-extrabold text-white leading-relaxed">
-                                    {activeQuestion.questionText}
+                                <h3 className="text-xl md:text-2xl font-extrabold text-white leading-relaxed">
+                                    {cleanQuestionText(activeQuestion.questionText)}
                                 </h3>
                             </div>
 
@@ -577,23 +777,26 @@ export default function LockdownExamPage() {
                 </main>
 
                 {/* Right Side: Question Navigation Matrix as Floating Card */}
-                <aside className="w-80 p-4 shrink-0 flex flex-col hidden md:flex overflow-hidden">
+                <aside className="w-96 p-4 shrink-0 flex flex-col hidden md:flex overflow-hidden">
                     <div className="flex-1 bg-zinc-900/80 border border-zinc-800 rounded-2xl p-5 flex flex-col justify-between backdrop-blur-md shadow-lg overflow-hidden">
                         <div className="space-y-4 flex-1 flex flex-col overflow-hidden">
                             <h3 className="font-bold text-xs uppercase tracking-wider text-zinc-500 shrink-0">Questions Matrix</h3>
-                            <div className="grid grid-cols-5 gap-2 overflow-y-auto pr-1 flex-1">
+                            <div className="grid grid-cols-5 gap-2 overflow-y-auto pr-1 flex-1 modern-scrollbar">
                                 {questions.map((q, idx) => {
                                     const isAnswered = !!answers[q.id]
                                     const isCurr = currentIdx === idx
                                     const isFlg = !!flags[q.id]
+                                    const isVisited = !!visited[q.id]
 
-                                    let btnStyle = "bg-zinc-900 border-zinc-850 text-zinc-500"
+                                    let btnStyle = "bg-zinc-950 border-zinc-850 text-zinc-500"
                                     if (isCurr) {
-                                        btnStyle = "bg-white text-black border-white"
+                                        btnStyle = "bg-white text-black border-white ring-2 ring-white/50"
                                     } else if (isFlg) {
-                                        btnStyle = "bg-indigo-500/20 border-indigo-500/40 text-indigo-400"
+                                        btnStyle = "bg-purple-600 border-purple-600 text-white font-bold"
                                     } else if (isAnswered) {
-                                        btnStyle = "bg-emerald-500/15 border-emerald-500/30 text-emerald-400"
+                                        btnStyle = "bg-green-600 border-green-600 text-white font-bold"
+                                    } else if (isVisited) {
+                                        btnStyle = "bg-red-600 border-red-600 text-white font-bold"
                                     }
 
                                     return (
@@ -601,7 +804,8 @@ export default function LockdownExamPage() {
                                             type="button"
                                             key={q.id}
                                             onClick={() => setCurrentIdx(idx)}
-                                            className={`h-9 w-9 text-xs font-bold rounded-lg border transition-all flex items-center justify-center ${btnStyle}`}
+                                            className={`h-12 w-12 text-sm font-bold rounded-lg border transition-all flex items-center justify-center ${btnStyle}`}
+                                            title={`Question ${idx + 1}`}
                                         >
                                             {idx + 1}
                                         </button>
@@ -613,13 +817,16 @@ export default function LockdownExamPage() {
                         {/* Legend */}
                         <div className="border-t border-zinc-800/80 pt-4 mt-6 space-y-2 text-[10px] text-zinc-400">
                             <div className="flex items-center gap-2">
-                                <span className="h-2.5 w-2.5 rounded-full bg-zinc-800 border border-zinc-700" /> Unanswered
+                                <span className="h-2.5 w-2.5 rounded-full bg-zinc-950 border border-zinc-850" /> Unvisited
                             </div>
                             <div className="flex items-center gap-2">
-                                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500/20 border border-emerald-500/40" /> Answered
+                                <span className="h-2.5 w-2.5 rounded-full bg-red-600 border border-red-600" /> Visited but Not Answered
                             </div>
                             <div className="flex items-center gap-2">
-                                <span className="h-2.5 w-2.5 rounded-full bg-indigo-500/20 border border-indigo-500/40" /> For Review
+                                <span className="h-2.5 w-2.5 rounded-full bg-green-600 border border-green-600" /> Answered
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="h-2.5 w-2.5 rounded-full bg-purple-600 border border-purple-600" /> Mark Review
                             </div>
                             <div className="flex items-center gap-2">
                                 <span className="h-2.5 w-2.5 rounded-full bg-white border border-white" /> Selected

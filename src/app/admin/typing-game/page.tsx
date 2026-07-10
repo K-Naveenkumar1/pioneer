@@ -42,6 +42,7 @@ export default function AdminTypingGamePage() {
     const [runs, setRuns] = useState<any[]>([])
     const [isActive, setIsActive] = useState(false)
     const [loading, setLoading] = useState(false)
+    const [timeLimit, setTimeLimit] = useState(60)
 
     const runsRef = useRef<any[]>([])
     const pollingRef = useRef<NodeJS.Timeout | null>(null)
@@ -89,7 +90,7 @@ export default function AdminTypingGamePage() {
         }
 
         setLoading(true)
-        const res = await adminStartTypingSessionAction(passage)
+        const res = await adminStartTypingSessionAction(passage, timeLimit)
         setLoading(false)
 
         if (res.success && res.sessionId) {
@@ -124,22 +125,35 @@ export default function AdminTypingGamePage() {
         }
     }
 
-    // Car SVG helper
-    const renderCarSvg = (color: string) => (
-        <svg className="w-12 h-6" viewBox="0 0 100 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+    // F1 Car SVG helper
+    const renderF1CarSvg = (color: string) => (
+        <svg className="w-16 h-8" viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+            {/* Rear wing (large F1 spoiler) */}
+            <path d="M 10 12 H 24 V 16 H 10 Z" fill="#222" />
+            <path d="M 12 16 L 16 32 H 18 L 14 16 Z" fill="#444" />
+            
+            {/* Main body / Chassis (aerodynamic curve) */}
+            <path d="M 16 32 Q 35 22 55 22 H 75 Q 95 24 105 32 Z" fill={color} />
+            
+            {/* Cockpit & Air Intake (halo area) */}
+            <path d="M 45 22 Q 52 12 60 22 Z" fill="#111" />
+            <circle cx="53" cy="18" r="3" fill="#ff4444" />
+            
+            {/* Sidepods */}
+            <path d="M 40 26 H 70 L 68 32 H 38 Z" fill={color} opacity="0.8" />
+            
+            {/* Front wing / Nose cone */}
+            <path d="M 100 29 L 115 32 H 100 Z" fill={color} />
+            <path d="M 110 32 H 120 V 35 H 110 Z" fill="#222" />
+            
             {/* Wheels */}
-            <circle cx="25" cy="40" r="8" fill="#555" />
-            <circle cx="25" cy="40" r="4" fill="#fff" />
-            <circle cx="75" cy="40" r="8" fill="#555" />
-            <circle cx="75" cy="40" r="4" fill="#fff" />
-            {/* Car body */}
-            <path d="M 10 35 L 15 20 Q 20 15 30 15 L 70 15 Q 75 15 80 22 L 90 35 Q 92 38 88 38 L 12 38 Q 8 38 10 35 Z" fill={color} />
-            {/* Windows */}
-            <path d="M 33 18 L 48 18 L 48 26 L 31 26 Z" fill="#fff" opacity="0.6" />
-            <path d="M 52 18 L 67 18 L 72 26 L 52 26 Z" fill="#fff" opacity="0.6" />
-            {/* Spoiler */}
-            <rect x="8" y="10" width="12" height="4" fill="#222" />
-            <rect x="12" y="14" width="4" height="6" fill="#222" />
+            <circle cx="28" cy="30" r="10" fill="#111" />
+            <circle cx="28" cy="30" r="6" fill="#333" />
+            <circle cx="28" cy="30" r="3" fill="#ffeb3b" />
+            
+            <circle cx="92" cy="31" r="9" fill="#111" />
+            <circle cx="92" cy="31" r="5.5" fill="#333" />
+            <circle cx="92" cy="31" r="2.5" fill="#ffeb3b" />
         </svg>
     )
 
@@ -190,6 +204,21 @@ export default function AdminTypingGamePage() {
                                 onChange={(e) => setPassage(e.target.value)}
                                 placeholder="Enter paragraphs or codes students should copy type..."
                                 className="w-full min-h-[100px] p-4 bg-black/40 border border-themeGrey rounded-xl text-white placeholder-zinc-800 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all text-sm resize-none"
+                            />
+                        </div>
+
+                        {/* Time Limit Input */}
+                        <div className="space-y-2">
+                            <label className="block text-xs font-semibold text-themeTextGrey uppercase">
+                                Time Limit (Seconds)
+                            </label>
+                            <input
+                                type="number"
+                                min={10}
+                                max={600}
+                                value={timeLimit}
+                                onChange={(e) => setTimeLimit(parseInt(e.target.value) || 60)}
+                                className="w-full p-4 bg-black/40 border border-themeGrey rounded-xl text-white placeholder-zinc-800 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all text-sm"
                             />
                         </div>
                     </div>
@@ -269,12 +298,12 @@ export default function AdminTypingGamePage() {
                                                 {/* Sliding Racer Car container */}
                                                 <motion.div 
                                                     className="absolute"
-                                                    style={{ left: `calc(${percent}% - 48px)` }}
-                                                    animate={{ left: `calc(${Math.max(4, percent)}% - ${percent >= 100 ? 54 : 48}px)` }}
+                                                    style={{ left: `calc(${percent}% - 64px)` }}
+                                                    animate={{ left: `calc(${Math.max(4, percent)}% - ${percent >= 100 ? 70 : 64}px)` }}
                                                     transition={{ type: "spring", stiffness: 60, damping: 15 }}
                                                 >
                                                     <div className="flex flex-col items-center">
-                                                        {renderCarSvg(studentColor)}
+                                                        {renderF1CarSvg(studentColor)}
                                                     </div>
                                                 </motion.div>
 

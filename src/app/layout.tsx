@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     description: "Luxury education at affordable price",
 }
 
-export const dynamic = "force-dynamic"
+
 
 export default function RootLayout({
     children,

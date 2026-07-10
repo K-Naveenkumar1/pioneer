@@ -51,7 +51,7 @@ export default function StudentLeaderboardPage() {
             {/* Header */}
             <div>
                 <h1 className="text-5xl font-extrabold tracking-tight text-white pb-4">Leaderboard</h1>
-                <p className="text-sm text-zinc-400">Class standings for {className}. Ranks are calculated by approved tasks and completed exam marks.</p>
+                <p className="text-sm text-zinc-400">Class standings for {className}. Ranks are calculated by approved task marks only.</p>
             </div>
 
             {leaderboard.length === 0 ? (
@@ -75,7 +75,7 @@ export default function StudentLeaderboardPage() {
                                 </div>
                                 <div className="pt-2 border-t border-zinc-800/40">
                                     <p className="text-lg font-black text-white">{podium[1].totalScore} pts</p>
-                                    <p className="text-[9px] text-zinc-500">{podium[1].tasksCompleted} tasks • {podium[1].examScoreSum} exam</p>
+                                    <p className="text-[9px] text-zinc-500">{podium[1].tasksCompleted} tasks completed</p>
                                 </div>
                             </GlassCard>
                         )}
@@ -94,7 +94,7 @@ export default function StudentLeaderboardPage() {
                                 </div>
                                 <div className="pt-2 border-t border-amber-500/20">
                                     <p className="text-2xl font-black text-amber-400">{podium[0].totalScore} pts</p>
-                                    <p className="text-[10px] text-amber-300/80">{podium[0].tasksCompleted} tasks • {podium[0].examScoreSum} exam</p>
+                                    <p className="text-[10px] text-amber-300/80">{podium[0].tasksCompleted} tasks completed</p>
                                 </div>
                             </GlassCard>
                         )}
@@ -112,7 +112,7 @@ export default function StudentLeaderboardPage() {
                                 </div>
                                 <div className="pt-2 border-t border-zinc-800/40">
                                     <p className="text-lg font-black text-white">{podium[2].totalScore} pts</p>
-                                    <p className="text-[9px] text-zinc-500">{podium[2].tasksCompleted} tasks • {podium[2].examScoreSum} exam</p>
+                                    <p className="text-[9px] text-zinc-500">{podium[2].tasksCompleted} tasks completed</p>
                                 </div>
                             </GlassCard>
                         )}
@@ -129,7 +129,6 @@ export default function StudentLeaderboardPage() {
                                             <th className="p-4">Student</th>
                                             <th className="p-4">Roll Number</th>
                                             <th className="p-4">Tasks Completed</th>
-                                            <th className="p-4">Exam Score Sum</th>
                                             <th className="p-4 text-right pr-6">Total Score</th>
                                         </tr>
                                     </thead>
@@ -157,7 +156,6 @@ export default function StudentLeaderboardPage() {
                                                     </td>
                                                     <td className="p-4 text-zinc-500 font-mono">{player.rollNo}</td>
                                                     <td className="p-4">{player.tasksCompleted} tasks</td>
-                                                    <td className="p-4">{player.examScoreSum} pts</td>
                                                     <td className="p-4 text-right pr-6 font-bold text-white font-mono">{player.totalScore} pts</td>
                                                 </tr>
                                             )

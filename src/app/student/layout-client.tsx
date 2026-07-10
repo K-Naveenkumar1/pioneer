@@ -26,16 +26,12 @@ interface Props {
 
 export default function StudentLayoutClient({ student, children }: Props) {
     const pathname = usePathname()
-    const [mounted, setMounted] = React.useState(false)
-
-    React.useEffect(() => {
-        setMounted(true)
-    }, [])
 
     // Checks if the route is an active exam attempt session page
-    const isExamActive = mounted && pathname.startsWith("/student/exams/") && pathname !== "/student/exams"
+    const isExamActive = pathname.startsWith("/student/exams/") && pathname !== "/student/exams"
+    const isCodingExamActive = pathname.startsWith("/student/coding-exam/") && pathname !== "/student/coding-exam"
 
-    if (isExamActive) {
+    if (isExamActive || isCodingExamActive) {
         return (
             <div className="min-h-screen bg-black text-white w-full overflow-hidden">
                 {children}
@@ -45,7 +41,6 @@ export default function StudentLayoutClient({ student, children }: Props) {
 
     // Determine current breadcrumb label based on route
     const getBreadcrumbPage = () => {
-        if (!mounted) return "Workspace"
         if (pathname.includes("/student/dashboard")) return "Dashboard"
         if (pathname.includes("/student/checkin")) return "Check-In"
         if (pathname.includes("/student/leaderboard")) return "Leaderboard"

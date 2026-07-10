@@ -6,7 +6,11 @@ import { LogOut } from "lucide-react"
 import { logoutAction } from "@/actions/custom-auth"
 import { toast } from "sonner"
 
-export default function AdminLogoutButton() {
+interface AdminLogoutButtonProps {
+    isCollapsed?: boolean
+}
+
+export default function AdminLogoutButton({ isCollapsed = false }: AdminLogoutButtonProps) {
     const router = useRouter()
     const [isPending, startTransition] = useTransition()
 
@@ -26,10 +30,13 @@ export default function AdminLogoutButton() {
         <button
             onClick={handleLogout}
             disabled={isPending}
-            className="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl hover:bg-red-500/10 hover:text-red-400 text-themeTextGrey transition-all text-sm font-medium"
+            title={isCollapsed ? (isPending ? "Logging out..." : "Logout") : undefined}
+            className={`flex items-center gap-3.5 px-4 py-3 rounded-xl hover:bg-red-500/10 hover:text-red-400 text-themeTextGrey transition-all text-sm font-medium ${
+                isCollapsed ? "w-10 h-10 justify-center p-0 mx-auto" : "w-full"
+            }`}
         >
             <LogOut size={18} />
-            {isPending ? "Logging out..." : "Logout"}
+            {!isCollapsed && (isPending ? "Logging out..." : "Logout")}
         </button>
     )
 }

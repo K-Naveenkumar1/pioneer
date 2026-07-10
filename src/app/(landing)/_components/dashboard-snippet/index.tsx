@@ -9,7 +9,7 @@ const DasboardSnippet = (props: Props) => {
         <div className="w-full aspect-video relative">
             <Image
                 priority
-                src="/dashboard-snippet.png"
+                src="/dashboard-hero.png"
                 className="opacity-[0.95] rounded-md object-contain"
                 alt="snippet"
                 sizes="100vw"

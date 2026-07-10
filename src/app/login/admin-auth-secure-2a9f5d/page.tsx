@@ -97,6 +97,7 @@ export default function AdminLoginPage() {
                 <p className="text-sm text-themeTextGrey mt-2">
                     Secure Exam Portal - Administrative Entrance
                 </p>
+                <p className="text-xs text-zinc-500 font-medium select-none mt-1.5">created by Naveen</p>
             </div>
 
             <div ref={cardRef} className="z-10 w-full max-w-md">

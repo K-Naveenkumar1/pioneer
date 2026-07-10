@@ -43,6 +43,8 @@ export default function StudentTypingGamePage() {
     const runIdRef = useRef<string | null>(null)
     const timerRef = useRef<NodeJS.Timeout | null>(null)
     const syncRef = useRef<NodeJS.Timeout | null>(null)
+    const inputTextRef = useRef("")
+    const elapsedSecondsRef = useRef(0)
 
     useEffect(() => {
         checkSession()
@@ -80,16 +82,30 @@ export default function StudentTypingGamePage() {
             setIsStarted(true)
             setIsFinished(false)
             setInputText("")
+            inputTextRef.current = ""
             setWpm(0)
             setAccuracy(100)
             setProgress(0)
             setStartTime(Date.now())
             setElapsedSeconds(0)
+            elapsedSecondsRef.current = 0
+
+            const limit = session.timeLimit || 60
 
             // Timer interval
             if (timerRef.current) clearInterval(timerRef.current)
             timerRef.current = setInterval(() => {
-                setElapsedSeconds(prev => prev + 1)
+                setElapsedSeconds(prev => {
+                    const nextVal = prev + 1
+                    elapsedSecondsRef.current = nextVal
+                    if (nextVal >= limit) {
+                        clearInterval(timerRef.current!)
+                        toast.error("Time's up! Automatically submitting your typing run.")
+                        finishTypingGame()
+                        return limit
+                    }
+                    return nextVal
+                })
             }, 1000)
 
             // Real-time Database Sync (every 2s)
@@ -104,8 +120,11 @@ export default function StudentTypingGamePage() {
         const currentRunId = runIdRef.current
         if (!currentRunId) return
 
+        const currentInputText = inputTextRef.current
+        const currentElapsedSeconds = elapsedSecondsRef.current
+
         // Compute current WPM, Accuracy, Progress
-        const textLength = inputText.length
+        const textLength = currentInputText.length
         const totalPassageLength = session?.passage?.length || 1
         const currentProgress = Math.min(100, Math.round((textLength / totalPassageLength) * 100))
         const isCompleted = completedForce || currentProgress >= 100
@@ -114,12 +133,12 @@ export default function StudentTypingGamePage() {
         let correctCount = 0
         const passage = session?.passage || ""
         for (let i = 0; i < textLength; i++) {
-            if (inputText[i] === passage[i]) correctCount++
+            if (currentInputText[i] === passage[i]) correctCount++
         }
         const currentAccuracy = textLength > 0 ? Math.round((correctCount / textLength) * 100) : 100
 
         // WPM Calculation
-        const timeElapsedMin = Math.max(1, elapsedSeconds) / 60
+        const timeElapsedMin = Math.max(1, currentElapsedSeconds) / 60
         const currentWpm = Math.round((correctCount / 5) / timeElapsedMin)
 
         await studentUpdateTypingProgressAction(
@@ -141,6 +160,7 @@ export default function StudentTypingGamePage() {
         if (val.length > passage.length) return
 
         setInputText(val)
+        inputTextRef.current = val
 
         // Calculate dynamic stats
         const textLength = val.length
@@ -203,6 +223,44 @@ export default function StudentTypingGamePage() {
             )
         })
     }
+
+    const formatTime = (secs: number) => {
+        const m = Math.floor(secs / 60).toString().padStart(2, "0")
+        const s = (secs % 60).toString().padStart(2, "0")
+        return `${m}:${s}`
+    }
+
+    // F1 Car SVG helper
+    const renderF1CarSvg = (color: string) => (
+        <svg className="w-16 h-8" viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+            {/* Rear wing (large F1 spoiler) */}
+            <path d="M 10 12 H 24 V 16 H 10 Z" fill="#222" />
+            <path d="M 12 16 L 16 32 H 18 L 14 16 Z" fill="#444" />
+            
+            {/* Main body / Chassis (aerodynamic curve) */}
+            <path d="M 16 32 Q 35 22 55 22 H 75 Q 95 24 105 32 Z" fill={color} />
+            
+            {/* Cockpit & Air Intake (halo area) */}
+            <path d="M 45 22 Q 52 12 60 22 Z" fill="#111" />
+            <circle cx="53" cy="18" r="3" fill="#ff4444" />
+            
+            {/* Sidepods */}
+            <path d="M 40 26 H 70 L 68 32 H 38 Z" fill={color} opacity="0.8" />
+            
+            {/* Front wing / Nose cone */}
+            <path d="M 100 29 L 115 32 H 100 Z" fill={color} />
+            <path d="M 110 32 H 120 V 35 H 110 Z" fill="#222" />
+            
+            {/* Wheels */}
+            <circle cx="28" cy="30" r="10" fill="#111" />
+            <circle cx="28" cy="30" r="6" fill="#333" />
+            <circle cx="28" cy="30" r="3" fill="#ffeb3b" />
+            
+            <circle cx="92" cy="31" r="9" fill="#111" />
+            <circle cx="92" cy="31" r="5.5" fill="#333" />
+            <circle cx="92" cy="31" r="2.5" fill="#ffeb3b" />
+        </svg>
+    )
 
     if (loading) {
         return (
@@ -275,14 +333,7 @@ export default function StudentTypingGamePage() {
                                 </div>
                             </div>
 
-                            <div className="pt-4 flex gap-4 justify-center">
-                                <Button
-                                    onClick={startTypingGame}
-                                    className="px-6 py-5 bg-white hover:bg-zinc-200 text-black rounded-xl font-bold text-xs flex items-center gap-1.5"
-                                >
-                                    <RefreshCw size={14} /> Retry Race
-                                </Button>
-                            </div>
+
                         </GlassCard>
                     </motion.div>
                 ) : !isStarted ? (
@@ -316,12 +367,14 @@ export default function StudentTypingGamePage() {
                                 </ul>
                             </div>
 
-                            <Button
-                                onClick={startTypingGame}
-                                className="w-full max-w-md py-6 rounded-xl bg-white hover:bg-zinc-200 text-black font-bold text-sm flex items-center justify-center gap-2 group transition-all"
-                            >
-                                <Play size={16} fill="currentColor" /> Start typing test
-                            </Button>
+                            <div className="flex justify-center w-full">
+                                <Button
+                                    onClick={startTypingGame}
+                                    className="w-full max-w-md py-6 rounded-xl bg-white hover:bg-zinc-200 text-black font-bold text-sm flex items-center justify-center gap-2 group transition-all"
+                                >
+                                    <Play size={16} fill="currentColor" /> Start typing test
+                                </Button>
+                            </div>
                         </GlassCard>
                     </motion.div>
                 ) : (
@@ -336,10 +389,10 @@ export default function StudentTypingGamePage() {
                         {/* Live Stat Panel */}
                         <div className="grid grid-cols-3 gap-6">
                             <GlassCard className="p-4 border border-themeGrey flex flex-col items-center">
-                                <span className="text-xl font-bold text-white flex items-center gap-1.5">
-                                    <Timer size={16} className="text-themeTextGrey" /> {elapsedSeconds}s
+                                <span className="text-xl font-bold text-white flex items-center gap-1.5 font-mono">
+                                    <Timer size={16} className="text-themeTextGrey" /> {formatTime(Math.max(0, (session?.timeLimit || 60) - elapsedSeconds))}
                                 </span>
-                                <span className="text-[9px] text-themeTextGrey uppercase font-semibold mt-1">Time Elapsed</span>
+                                <span className="text-[9px] text-themeTextGrey uppercase font-semibold mt-1">Time Remaining</span>
                             </GlassCard>
                             <GlassCard className="p-4 border border-themeGrey flex flex-col items-center">
                                 <span className="text-xl font-bold text-emerald-400">{wpm} WPM</span>
@@ -352,12 +405,18 @@ export default function StudentTypingGamePage() {
                         </div>
 
                         {/* Progress Bar */}
-                        <div className="w-full bg-zinc-900 h-2.5 rounded-full overflow-hidden border border-zinc-800">
-                            <motion.div 
-                                className="h-full bg-gradient-to-r from-emerald-500 to-indigo-500 rounded-full"
-                                style={{ width: `${progress}%` }}
-                                transition={{ duration: 0.2 }}
-                            />
+                        <div className="space-y-2">
+                            <div className="flex justify-between items-center text-xs font-semibold text-zinc-400">
+                                <span>Progress</span>
+                                <span>{progress}%</span>
+                            </div>
+                            <div className="w-full bg-zinc-900 h-2.5 rounded-full overflow-hidden border border-zinc-800">
+                                <motion.div 
+                                    className="h-full bg-gradient-to-r from-emerald-500 to-indigo-500 rounded-full"
+                                    style={{ width: `${progress}%` }}
+                                    transition={{ duration: 0.2 }}
+                                />
+                            </div>
                         </div>
 
                         {/* Passage display Container */}

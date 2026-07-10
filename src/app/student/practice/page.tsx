@@ -64,6 +64,7 @@ export default function StudentPracticePage() {
     const [warnings, setWarnings] = useState(0)
     const [fullscreenActive, setFullscreenActive] = useState(false)
     const warningRef = useRef(0)
+    const lastWarningTimeRef = useRef<number>(0)
 
     // Editor styling helper
     const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -82,21 +83,21 @@ export default function StudentPracticePage() {
         const blockContextMenu = (e: MouseEvent) => e.preventDefault()
         document.addEventListener("contextmenu", blockContextMenu)
 
-        // Keydown Protection (Ctrl+C, Ctrl+V, F12, Ctrl+U, Ctrl+Shift+I)
+        // Keydown Protection
         const blockKeys = (e: KeyboardEvent) => {
             const isCtrl = e.ctrlKey || e.metaKey
+            const isAlt = e.altKey
+            const key = e.key.toLowerCase()
+
             if (
-                (isCtrl && e.key === "c") || 
-                (isCtrl && e.key === "v") || 
-                (isCtrl && e.key === "u") || 
+                isAlt || // Alt shortcuts
+                (isCtrl && (key === 'c' || key === 'v' || key === 'u' || key === 'a')) ||
                 e.key === "F12" ||
-                (isCtrl && e.shiftKey && e.key === "I") ||
-                (isCtrl && e.shiftKey && e.key === "i") ||
-                e.key === "Alt" ||
-                e.key === "Meta"
+                (isCtrl && e.shiftKey && key === 'i') ||
+                e.metaKey
             ) {
                 e.preventDefault()
-                triggerWarning("Unauthorized key shortcut blocked.")
+                triggerWarning(`Unauthorized key shortcut blocked: ${e.key}`)
             }
         }
         document.addEventListener("keydown", blockKeys)
@@ -134,6 +135,13 @@ export default function StudentPracticePage() {
 
     const triggerWarning = (reason: string) => {
         if (completed) return
+
+        const now = Date.now()
+        // 2-second cooldown to avoid multiple rapid triggers from single actions (e.g. Alt+Tab)
+        if (now - lastWarningTimeRef.current < 2000) {
+            return
+        }
+        lastWarningTimeRef.current = now
 
         const updatedCount = warningRef.current + 1
         warningRef.current = updatedCount

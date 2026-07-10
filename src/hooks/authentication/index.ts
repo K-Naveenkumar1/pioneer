@@ -1,6 +1,6 @@
 import { onSignUpUser } from "@/actions/auth"
 import { SignUpSchema } from "@/components/forms/sign-up/schema"
-import { useSignIn, useSignUp } from "@clerk/nextjs"
+import { useSignIn, useSignUp } from "@clerk/nextjs/legacy"
 import { OAuthStrategy } from "@clerk/types"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation } from "@tanstack/react-query"

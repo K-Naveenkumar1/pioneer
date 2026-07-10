@@ -69,7 +69,7 @@ export default function AdminLeaderboardPage() {
                     <h1 className="text-3xl font-bold tracking-tight text-white flex items-center gap-2">
                         <Trophy className="text-white animate-pulse" /> Class Leaderboard
                     </h1>
-                    <p className="text-sm text-themeTextGrey">View student ranks, tasks completed, and exam scores by class.</p>
+                    <p className="text-sm text-themeTextGrey">View student ranks and tasks completed by class. Ranks are based on task marks only.</p>
                 </div>
 
                 <div className="flex items-center gap-3">
@@ -122,7 +122,7 @@ export default function AdminLeaderboardPage() {
                                 </div>
                                 <div className="pt-2 border-t border-zinc-800/40">
                                     <p className="text-lg font-black text-white">{podium[1].totalScore} pts</p>
-                                    <p className="text-[9px] text-zinc-500">{podium[1].tasksCompleted} tasks • {podium[1].examScoreSum} exam</p>
+                                    <p className="text-[9px] text-zinc-500">{podium[1].tasksCompleted} tasks completed</p>
                                 </div>
                             </GlassCard>
                         )}
@@ -141,7 +141,7 @@ export default function AdminLeaderboardPage() {
                                 </div>
                                 <div className="pt-2 border-t border-amber-500/20">
                                     <p className="text-2xl font-black text-amber-400">{podium[0].totalScore} pts</p>
-                                    <p className="text-[10px] text-amber-300/80">{podium[0].tasksCompleted} tasks • {podium[0].examScoreSum} exam</p>
+                                    <p className="text-[10px] text-amber-300/80">{podium[0].tasksCompleted} tasks completed</p>
                                 </div>
                             </GlassCard>
                         )}
@@ -159,7 +159,7 @@ export default function AdminLeaderboardPage() {
                                 </div>
                                 <div className="pt-2 border-t border-zinc-800/40">
                                     <p className="text-lg font-black text-white">{podium[2].totalScore} pts</p>
-                                    <p className="text-[9px] text-zinc-500">{podium[2].tasksCompleted} tasks • {podium[2].examScoreSum} exam</p>
+                                    <p className="text-[9px] text-zinc-500">{podium[2].tasksCompleted} tasks completed</p>
                                 </div>
                             </GlassCard>
                         )}
@@ -176,7 +176,6 @@ export default function AdminLeaderboardPage() {
                                             <th className="p-4">Student</th>
                                             <th className="p-4">Roll Number</th>
                                             <th className="p-4">Tasks Completed</th>
-                                            <th className="p-4">Exam Score Sum</th>
                                             <th className="p-4 text-right pr-6">Total Score</th>
                                         </tr>
                                     </thead>
@@ -192,7 +191,6 @@ export default function AdminLeaderboardPage() {
                                                     <td className="p-4 font-semibold text-white">{player.name}</td>
                                                     <td className="p-4 font-mono">{player.rollNo}</td>
                                                     <td className="p-4">{player.tasksCompleted}</td>
-                                                    <td className="p-4">{player.examScoreSum}</td>
                                                     <td className="p-4 text-right pr-6 font-bold text-white">{player.totalScore} pts</td>
                                                 </tr>
                                             )
