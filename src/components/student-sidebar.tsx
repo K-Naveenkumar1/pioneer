@@ -144,7 +144,7 @@ export function StudentSidebar({ student, ...props }: StudentSidebarProps & Reac
                   <div className="size-7 rounded-full bg-black" />
                 </div>
                 <div className="flex flex-col leading-none">
-                  <span className="font-bold text-[19px] text-white tracking-tight leading-none">Billionaire.</span>
+                  <span className="font-bold text-[19px] text-white tracking-tight leading-none">Naveo.</span>
                   <span className="text-xs text-zinc-500 font-medium mt-0.95 select-none">created by Naveen</span>
                 </div>
               </Link>

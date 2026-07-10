@@ -90,7 +90,7 @@ export default function AdminLoginPage() {
             {/* Header Brand */}
             <div className="z-10 mb-8 text-center">
                 <h1 ref={titleRef} className="text-4xl md:text-5xl font-bold text-themeTextWhite flex items-center justify-center gap-2 tracking-tight">
-                    {"Billionaire.".split("").map((char, index) => (
+                    {"Naveo.".split("").map((char, index) => (
                         <span key={index} className="inline-block">{char}</span>
                     ))}
                 </h1>

@@ -15,7 +15,7 @@ const CallToAction = (props: Props) => {
         Every Students <br className="md:hidden"/>Deserve
         </GradientText>
         <p className="text-sm md:text-center text-left text-muted-foreground text-themeTextGrey">
-          Billionaire is vibrant online community platform that empowers
+          Naveo is vibrant online community platform that empowers
           people to connect, <br className="hidden md:block"/>{" "}
           collabrate and cultivate meaningful
           relationships

@@ -110,7 +110,7 @@ export default function LoginPage() {
             {/* Header Brand */}
             <div className="mb-8 text-center z-10 flex flex-col items-center leading-none">
                 <h1 className="text-[28px] font-bold text-white tracking-tight select-none leading-none">
-                    Billionaire.
+                    Naveo.
                 </h1>
                 <p className="text-sm text-zinc-500 font-medium select-none -mt-0.5">created by Naveen</p>
             </div>

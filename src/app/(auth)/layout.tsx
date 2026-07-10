@@ -15,7 +15,7 @@ const AuthLayout = async ({children}: Props) => {
     <div className="flex flex-col w-full items-center py-24">
       <div className="flex flex-col items-center leading-none">
         <h2 className="text-4xl font-bold text-themeTextWhite leading-none">
-          Billionaire.
+          Naveo.
         </h2>
         <p className="text-sm text-zinc-500 font-medium select-none -mt-0.5">created by Naveen</p>
       </div>

@@ -10,7 +10,7 @@ const LandingPageNavbar = (props: Props) => {
   return (
     <div className="w-full flex justify-between sticky top-0 items-center py-5 z-50">
         <div className="flex flex-col leading-none">
-           <p className="font-bold text-2xl tracking-tight leading-none">Billionaire.</p>
+           <p className="font-bold text-2xl tracking-tight leading-none">Naveo.</p>
             <span className="text-xs text-zinc-500 font-medium select-none -mt-0.95">created by Naveen</span>
         </div>
         <Menu orientation="desktop"/>

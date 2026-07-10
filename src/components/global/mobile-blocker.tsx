@@ -54,7 +54,7 @@ export default function MobileBlocker() {
                         Desktop Required
                     </h1>
                     <p className="text-sm leading-relaxed text-zinc-400">
-                        The <span className="text-zinc-200 font-semibold">Billionaire</span> platform features interactive dashboards, advanced educational metrics, and luxury content designed exclusively for large screens.
+                        The <span className="text-zinc-200 font-semibold">Naveo</span> platform features interactive dashboards, advanced educational metrics, and luxury content designed exclusively for large screens.
                     </p>
                 </div>
 
