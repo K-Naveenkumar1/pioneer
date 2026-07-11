@@ -126,83 +126,44 @@ export default function AdminTypingGamePage() {
     }
 
     // F1 Car SVG helper
-    const renderF1CarSvg = (color: string) => (
-        <svg className="w-16 h-8" viewBox="0 0 140 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-                <linearGradient id="greenFlameOuter" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#22c55e" stopOpacity="0" />
-                    <stop offset="50%" stopColor="#4ade80" stopOpacity="0.75" />
-                    <stop offset="100%" stopColor="#15803d" stopOpacity="0.95" />
-                </linearGradient>
-                <linearGradient id="greenFlameInner" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#86efac" stopOpacity="0" />
-                    <stop offset="60%" stopColor="#bbf7d0" stopOpacity="0.9" />
-                    <stop offset="100%" stopColor="#ffffff" stopOpacity="1" />
-                </linearGradient>
-            </defs>
-            
-            <style dangerouslySetInnerHTML={{ __html: `
-                @keyframes flicker {
-                    0%, 100% {
-                        transform: scale(1) translate(0px, 0px);
-                    }
-                    50% {
-                        transform: scale(1.15, 0.95) translate(-2px, 0.5px);
-                    }
-                }
-                .green-flame-outer {
-                    animation: flicker 0.15s infinite ease-in-out alternate;
-                    transform-origin: 34px 29px;
-                }
-                .green-flame-inner {
-                    animation: flicker 0.1s infinite ease-in-out alternate-reverse;
-                    transform-origin: 32px 29px;
-                }
-            ` }} />
+    const renderF1CarSvg = (color: string, progress: number) => {
+        // Flame scales dynamically with progress (from 0.8x up to 1.5x length)
+        const flameScale = 0.8 + (progress / 100) * 0.7;
 
-            {/* Green Flame (Back of the car) */}
-            <path 
-                className="green-flame-outer" 
-                d="M 34 26 Q 10 20 5 29 Q 10 38 34 32 Z" 
-                fill="url(#greenFlameOuter)" 
-            />
-            <path 
-                className="green-flame-inner" 
-                d="M 32 27 Q 15 23 10 29 Q 15 35 32 31 Z" 
-                fill="url(#greenFlameInner)" 
-            />
-
-            {/* Car translated to make room for flame */}
-            <g transform="translate(20, 0)">
-                {/* Rear wing (large F1 spoiler) */}
-                <path d="M 10 12 H 24 V 16 H 10 Z" fill="#222" />
-                <path d="M 12 16 L 16 32 H 18 L 14 16 Z" fill="#444" />
-                
-                {/* Main body / Chassis (aerodynamic curve) */}
-                <path d="M 16 32 Q 35 22 55 22 H 75 Q 95 24 105 32 Z" fill={color} />
-                
-                {/* Cockpit & Air Intake (halo area) */}
-                <path d="M 45 22 Q 52 12 60 22 Z" fill="#111" />
-                <circle cx="53" cy="18" r="3" fill="#ff4444" />
-                
-                {/* Sidepods */}
-                <path d="M 40 26 H 70 L 68 32 H 38 Z" fill={color} opacity="0.8" />
-                
-                {/* Front wing / Nose cone */}
-                <path d="M 100 29 L 115 32 H 100 Z" fill={color} />
-                <path d="M 110 32 H 120 V 35 H 110 Z" fill="#222" />
-                
-                {/* Wheels */}
-                <circle cx="28" cy="30" r="10" fill="#111" />
-                <circle cx="28" cy="30" r="6" fill="#333" />
-                <circle cx="28" cy="30" r="3" fill="#ffeb3b" />
-                
-                <circle cx="92" cy="31" r="9" fill="#111" />
-                <circle cx="92" cy="31" r="5.5" fill="#333" />
-                <circle cx="92" cy="31" r="2.5" fill="#ffeb3b" />
-            </g>
-        </svg>
-    )
+        return (
+            <svg className="w-20 h-10" viewBox="0 0 140 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {/* Car translated to make room for exhaust trail */}
+                <g transform="translate(20, 0)">
+                    {/* Rear wing (large F1 spoiler) */}
+                    <path d="M 10 12 H 24 V 16 H 10 Z" fill="#222" />
+                    <path d="M 12 16 L 16 32 H 18 L 14 16 Z" fill="#444" />
+                    
+                    {/* Main body / Chassis (aerodynamic curve) */}
+                    <path d="M 16 32 Q 35 22 55 22 H 75 Q 95 24 105 32 Z" fill={color} />
+                    
+                    {/* Cockpit & Air Intake (halo area) */}
+                    <path d="M 45 22 Q 52 12 60 22 Z" fill="#111" />
+                    <circle cx="53" cy="18" r="3" fill="#ff4444" />
+                    
+                    {/* Sidepods */}
+                    <path d="M 40 26 H 70 L 68 32 H 38 Z" fill={color} opacity="0.8" />
+                    
+                    {/* Front wing / Nose cone */}
+                    <path d="M 100 29 L 115 32 H 100 Z" fill={color} />
+                    <path d="M 110 32 H 120 V 35 H 110 Z" fill="#222" />
+                    
+                    {/* Wheels / Tires (with bright outer stroke and compounds to make them clearly visible) */}
+                    <circle cx="28" cy="30" r="10" fill="#444446" stroke="#d1d1d6" strokeWidth="1.5" />
+                    <circle cx="28" cy="30" r="6" fill="#8e8e93" />
+                    <circle cx="28" cy="30" r="3" fill="#ffeb3b" />
+                    
+                    <circle cx="92" cy="31" r="9" fill="#444446" stroke="#d1d1d6" strokeWidth="1.5" />
+                    <circle cx="92" cy="31" r="5.5" fill="#8e8e93" />
+                    <circle cx="92" cy="31" r="2.5" fill="#ffeb3b" />
+                </g>
+            </svg>
+        )
+    }
 
     return (
         <div className="space-y-8 select-none">
@@ -335,22 +296,33 @@ export default function AdminTypingGamePage() {
                                             </div>
 
                                             {/* Race Track Lane */}
-                                            <div className="h-10 bg-zinc-950 border border-zinc-900 rounded-xl relative overflow-hidden flex items-center p-1.5 shadow-inner">
-                                                {/* Dashed middle line */}
-                                                <div className="absolute inset-x-0 h-0.5 border-t border-dashed border-zinc-800/60 top-1/2 -translate-y-1/2 pointer-events-none" />
+                                            <div className="h-12 bg-zinc-950 border border-zinc-900 rounded-xl relative overflow-hidden flex items-center p-1.5 shadow-inner">
+                                                {/* Background Progress Track (Total path line starting at exhaust line, dark green gradient for remaining progress) */}
+                                                <div className="absolute left-[32px] h-1 bg-gradient-to-r from-emerald-950 via-emerald-900 to-emerald-950/80 border border-emerald-900/30 rounded-full pointer-events-none" style={{ width: "calc(100% - 80px)" }} />
                                                 
                                                 {/* Finish Checkered Line */}
                                                 <div className="absolute right-12 inset-y-0 w-2.5 bg-gradient-to-b from-black via-white to-black bg-[size:10px_10px] opacity-30 border-l border-r border-zinc-850" />
 
+                                                {/* Progress Trail Line (Green line trailing the car exhaust - Solid Green) */}
+                                                <motion.div 
+                                                    className="absolute left-[32px] bg-emerald-500 rounded-l-full top-1/2 -translate-y-1/2 pointer-events-none z-0 shadow-[0_0_6px_rgba(16,185,129,0.85)]"
+                                                    style={{ 
+                                                        width: `calc(${percent}% - ${(percent * 1.28).toFixed(2)}px)`,
+                                                        height: '4px'
+                                                    }}
+                                                    animate={{ width: `calc(${percent}% - ${(percent * 1.28).toFixed(2)}px)` }}
+                                                    transition={{ type: "spring", stiffness: 60, damping: 15 }}
+                                                />
+
                                                 {/* Sliding Racer Car container */}
                                                 <motion.div 
-                                                    className="absolute"
-                                                    style={{ left: `calc(${percent}% - 64px)` }}
-                                                    animate={{ left: `calc(${Math.max(4, percent)}% - ${percent >= 100 ? 70 : 64}px)` }}
+                                                    className="absolute z-10"
+                                                    style={{ left: `calc(${percent}% - ${(percent * 1.28).toFixed(2)}px)` }}
+                                                    animate={{ left: `calc(${percent}% - ${(percent * 1.28).toFixed(2)}px)` }}
                                                     transition={{ type: "spring", stiffness: 60, damping: 15 }}
                                                 >
                                                     <div className="flex flex-col items-center">
-                                                        {renderF1CarSvg(studentColor)}
+                                                        {renderF1CarSvg(studentColor, percent)}
                                                     </div>
                                                 </motion.div>
 
