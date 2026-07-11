@@ -11,7 +11,7 @@ import "./globals.css"
 const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-    title: "Naveo - Education At Your Fingertips",
+    title: "Naveo - Created By Naveen",
     description: "Luxury education at affordable price",
 }
 

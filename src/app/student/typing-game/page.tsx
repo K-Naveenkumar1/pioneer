@@ -232,33 +232,80 @@ export default function StudentTypingGamePage() {
 
     // F1 Car SVG helper
     const renderF1CarSvg = (color: string) => (
-        <svg className="w-16 h-8" viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-            {/* Rear wing (large F1 spoiler) */}
-            <path d="M 10 12 H 24 V 16 H 10 Z" fill="#222" />
-            <path d="M 12 16 L 16 32 H 18 L 14 16 Z" fill="#444" />
+        <svg className="w-16 h-8" viewBox="0 0 140 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="greenFlameOuter" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#22c55e" stopOpacity="0" />
+                    <stop offset="50%" stopColor="#4ade80" stopOpacity="0.75" />
+                    <stop offset="100%" stopColor="#15803d" stopOpacity="0.95" />
+                </linearGradient>
+                <linearGradient id="greenFlameInner" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#86efac" stopOpacity="0" />
+                    <stop offset="60%" stopColor="#bbf7d0" stopOpacity="0.9" />
+                    <stop offset="100%" stopColor="#ffffff" stopOpacity="1" />
+                </linearGradient>
+            </defs>
             
-            {/* Main body / Chassis (aerodynamic curve) */}
-            <path d="M 16 32 Q 35 22 55 22 H 75 Q 95 24 105 32 Z" fill={color} />
-            
-            {/* Cockpit & Air Intake (halo area) */}
-            <path d="M 45 22 Q 52 12 60 22 Z" fill="#111" />
-            <circle cx="53" cy="18" r="3" fill="#ff4444" />
-            
-            {/* Sidepods */}
-            <path d="M 40 26 H 70 L 68 32 H 38 Z" fill={color} opacity="0.8" />
-            
-            {/* Front wing / Nose cone */}
-            <path d="M 100 29 L 115 32 H 100 Z" fill={color} />
-            <path d="M 110 32 H 120 V 35 H 110 Z" fill="#222" />
-            
-            {/* Wheels */}
-            <circle cx="28" cy="30" r="10" fill="#111" />
-            <circle cx="28" cy="30" r="6" fill="#333" />
-            <circle cx="28" cy="30" r="3" fill="#ffeb3b" />
-            
-            <circle cx="92" cy="31" r="9" fill="#111" />
-            <circle cx="92" cy="31" r="5.5" fill="#333" />
-            <circle cx="92" cy="31" r="2.5" fill="#ffeb3b" />
+            <style dangerouslySetInnerHTML={{ __html: `
+                @keyframes flicker {
+                    0%, 100% {
+                        transform: scale(1) translate(0px, 0px);
+                    }
+                    50% {
+                        transform: scale(1.15, 0.95) translate(-2px, 0.5px);
+                    }
+                }
+                .green-flame-outer {
+                    animation: flicker 0.15s infinite ease-in-out alternate;
+                    transform-origin: 34px 29px;
+                }
+                .green-flame-inner {
+                    animation: flicker 0.1s infinite ease-in-out alternate-reverse;
+                    transform-origin: 32px 29px;
+                }
+            ` }} />
+
+            {/* Green Flame (Back of the car) */}
+            <path 
+                className="green-flame-outer" 
+                d="M 34 26 Q 10 20 5 29 Q 10 38 34 32 Z" 
+                fill="url(#greenFlameOuter)" 
+            />
+            <path 
+                className="green-flame-inner" 
+                d="M 32 27 Q 15 23 10 29 Q 15 35 32 31 Z" 
+                fill="url(#greenFlameInner)" 
+            />
+
+            {/* Car translated to make room for flame */}
+            <g transform="translate(20, 0)">
+                {/* Rear wing (large F1 spoiler) */}
+                <path d="M 10 12 H 24 V 16 H 10 Z" fill="#222" />
+                <path d="M 12 16 L 16 32 H 18 L 14 16 Z" fill="#444" />
+                
+                {/* Main body / Chassis (aerodynamic curve) */}
+                <path d="M 16 32 Q 35 22 55 22 H 75 Q 95 24 105 32 Z" fill={color} />
+                
+                {/* Cockpit & Air Intake (halo area) */}
+                <path d="M 45 22 Q 52 12 60 22 Z" fill="#111" />
+                <circle cx="53" cy="18" r="3" fill="#ff4444" />
+                
+                {/* Sidepods */}
+                <path d="M 40 26 H 70 L 68 32 H 38 Z" fill={color} opacity="0.8" />
+                
+                {/* Front wing / Nose cone */}
+                <path d="M 100 29 L 115 32 H 100 Z" fill={color} />
+                <path d="M 110 32 H 120 V 35 H 110 Z" fill="#222" />
+                
+                {/* Wheels */}
+                <circle cx="28" cy="30" r="10" fill="#111" />
+                <circle cx="28" cy="30" r="6" fill="#333" />
+                <circle cx="28" cy="30" r="3" fill="#ffeb3b" />
+                
+                <circle cx="92" cy="31" r="9" fill="#111" />
+                <circle cx="92" cy="31" r="5.5" fill="#333" />
+                <circle cx="92" cy="31" r="2.5" fill="#ffeb3b" />
+            </g>
         </svg>
     )
 

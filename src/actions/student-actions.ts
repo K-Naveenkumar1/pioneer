@@ -113,9 +113,15 @@ export async function getDashboardDataAction() {
         const student = await getStudentUser()
         if (!student) return { success: false, error: "Unauthorized" }
 
-        // Run all queries in parallel in one DB call set
+        // Fetch student profile to get classId first
+        const dbStudent = await client.student.findUnique({
+            where: { id: student.id },
+            select: { id: true, name: true, rollNo: true, department: true, classId: true }
+        })
+        if (!dbStudent) return { success: false, error: "Student not found" }
+
+        // Run remaining queries in parallel using classId
         const [
-            dbStudent,
             tasks,
             submissions,
             exams,
@@ -124,17 +130,18 @@ export async function getDashboardDataAction() {
             distinctSystemDays,
             sessions
         ] = await Promise.all([
-            client.student.findUnique({
-                where: { id: student.id },
-                select: { id: true, name: true, rollNo: true, department: true, classId: true }
-            }),
             client.task.findMany({ orderBy: { createdAt: "desc" }, take: 10 }),
             client.taskSubmission.findMany({ where: { studentId: student.id } }),
             client.exam.findMany({
-                where: { type: { not: "CODING" } },
+                where: { 
+                    type: { not: "CODING" },
+                    OR: [
+                        { classId: dbStudent.classId },
+                        { classId: null }
+                    ]
+                },
                 include: { _count: { select: { questions: true } } },
-                orderBy: { createdAt: "desc" },
-                take: 10
+                orderBy: { createdAt: "desc" }
             }),
             client.examAttempt.findMany({ where: { studentId: student.id } }),
             client.attendance.findMany({

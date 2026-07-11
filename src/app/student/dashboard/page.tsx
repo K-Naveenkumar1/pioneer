@@ -384,25 +384,19 @@ export default function StudentDashboard() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {exams.length === 0 ? (
+                                    {exams.filter((ex: any) => ex.attempted).length === 0 ? (
                                         <tr>
-                                            <td colSpan={3} className="py-6 text-center text-zinc-500">No exams available yet.</td>
+                                            <td colSpan={3} className="py-6 text-center text-zinc-500">No exams completed yet.</td>
                                         </tr>
                                     ) : (
-                                        exams.slice(0, 5).map((ex: any) => (
+                                        exams.filter((ex: any) => ex.attempted).slice(0, 5).map((ex: any) => (
                                             <tr key={ex.id} className="border-b border-zinc-800/30 hover:bg-zinc-900/20 transition-all">
                                                 <td className="py-3.5 pr-2 font-bold text-white truncate max-w-[120px]">{ex.title}</td>
                                                 <td className="py-3.5 px-2 text-zinc-500">{ex.duration} mins</td>
                                                 <td className="py-3.5 pl-2 text-right">
-                                                    {ex.attempted ? (
-                                                        <span className="font-extrabold text-emerald-400 font-mono">
-                                                            {ex.score} / {ex.totalQuestions}
-                                                        </span>
-                                                    ) : (
-                                                        <span className="text-zinc-500 bg-zinc-900/50 border border-zinc-800 px-2 py-0.5 rounded text-[10px]">
-                                                            Pending
-                                                        </span>
-                                                    )}
+                                                    <span className="font-extrabold text-emerald-400 font-mono">
+                                                        {ex.score}%
+                                                    </span>
                                                 </td>
                                             </tr>
                                         ))
