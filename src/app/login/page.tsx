@@ -112,7 +112,7 @@ export default function LoginPage() {
                 <h1 className="text-[28px] font-bold text-white tracking-tight select-none leading-none">
                     Naveo.
                 </h1>
-                <p className="text-sm text-zinc-500 font-medium select-none -mt-0.5">created by Naveen</p>
+                <p className="text-sm text-zinc-500 font-medium select-none -mt-0.5">by Naveen</p>
             </div>
 
             {/* Card Container */}

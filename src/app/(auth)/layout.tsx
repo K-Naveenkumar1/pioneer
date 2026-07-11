@@ -17,7 +17,7 @@ const AuthLayout = async ({children}: Props) => {
         <h2 className="text-4xl font-bold text-themeTextWhite leading-none">
           Naveo.
         </h2>
-        <p className="text-sm text-zinc-500 font-medium select-none -mt-0.5">created by Naveen</p>
+        <p className="text-sm text-zinc-500 font-medium select-none -mt-0.5">by Naveen</p>
       </div>
       <BackdropGradient className="w-4/12 h-2/6 opacity-40" container="flex flex-col items-center">
       <GlassCard className="xs:w-full md:w-7/12 lg:w-5/12 xl:w-4/12 p-7 mt-16">

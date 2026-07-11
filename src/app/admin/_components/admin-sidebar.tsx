@@ -71,7 +71,7 @@ export default function AdminSidebar({ admin }: AdminSidebarProps) {
                             <div>
                                 <h2 className="font-extrabold text-lg tracking-tight leading-tight">Navedx.</h2>
                                 <p className="text-[10px] text-themeTextGrey">Administrator Portal</p>
-                                <p className="text-[10px] text-zinc-500 font-medium leading-none mt-1">created by Naveen</p>
+                                <p className="text-[10px] text-zinc-500 font-medium leading-none mt-1">by Naveen</p>
                             </div>
                         )}
                     </div>
