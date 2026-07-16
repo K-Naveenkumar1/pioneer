@@ -88,16 +88,21 @@ export default function AdminLoginPage() {
             </div>
 
             {/* Header Brand */}
-            <div className="z-10 mb-8 text-center">
-                <h1 ref={titleRef} className="text-4xl md:text-5xl font-bold text-themeTextWhite flex items-center justify-center gap-2 tracking-tight">
-                    {"Naveo.".split("").map((char, index) => (
-                        <span key={index} className="inline-block">{char}</span>
-                    ))}
-                </h1>
-                <p className="text-sm text-themeTextGrey mt-2">
-                    Secure Exam Portal - Administrative Entrance
-                </p>
-                <p className="text-xs text-zinc-500 font-medium select-none mt-1.5">by Naveen</p>
+            <div className="z-10 mb-8 text-center flex items-center justify-center gap-3">
+                <div className="flex aspect-square size-9 items-center justify-center rounded-lg bg-white shrink-0">
+                    <div className="size-8 rounded-full bg-black" />
+                </div>
+                <div className="flex flex-col items-start leading-none">
+                    <h1 ref={titleRef} className="text-4xl md:text-5xl font-bold text-themeTextWhite flex items-center justify-center gap-2 tracking-tight">
+                        {"Naveo.".split("").map((char, index) => (
+                            <span key={index} className="inline-block">{char}</span>
+                        ))}
+                    </h1>
+                    <p className="text-sm text-themeTextGrey mt-2">
+                        Secure Exam Portal - Administrative Entrance
+                    </p>
+                    <p className="text-xs text-zinc-500 font-medium select-none mt-1.5">by Naveen</p>
+                </div>
             </div>
 
             <div ref={cardRef} className="z-10 w-full max-w-md">

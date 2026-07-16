@@ -64,12 +64,12 @@ export default function AdminSidebar({ admin }: AdminSidebarProps) {
                 {/* Brand logo & Collapse Button */}
                 <div className={`flex items-center justify-between ${isCollapsed ? "flex-col gap-4" : ""}`}>
                     <div className="flex items-center gap-3">
-                        <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-white shrink-0">
-                            <div className="size-3.5 rounded-full bg-black" />
+                        <div className="flex aspect-square size-9 items-center justify-center rounded-lg bg-white shrink-0">
+                            <div className="size-8 rounded-full bg-black" />
                         </div>
                         {!isCollapsed && (
                             <div>
-                                <h2 className="font-extrabold text-lg tracking-tight leading-tight">Navedx.</h2>
+                                <h2 className="font-extrabold text-lg tracking-tight leading-tight">Naveo.</h2>
                                 <p className="text-[10px] text-themeTextGrey">Administrator Portal</p>
                                 <p className="text-[10px] text-zinc-500 font-medium leading-none mt-1">by Naveen</p>
                             </div>
