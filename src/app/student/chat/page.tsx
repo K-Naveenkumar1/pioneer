@@ -11,11 +11,13 @@ interface Message {
   id: string
   message: string
   createdAt: Date | string
-  studentId: string
-  student: {
+  studentId: string | null
+  isAdmin: boolean
+  adminName?: string | null
+  student?: {
     name: string
     rollNo: string
-  }
+  } | null
 }
 
 export default function StudentChatPage() {
@@ -176,7 +178,13 @@ export default function StudentChatPage() {
                                             {/* Sender Label */}
                                             <span className="text-[10px] text-zinc-400 font-semibold mb-1 flex items-center gap-1">
                                                 <User size={10} className="text-zinc-500" />
-                                                {msg.student.name} <span className="text-zinc-600 font-mono">({msg.student.rollNo}){isMe && " (You)"}</span>
+                                                {msg.isAdmin ? (
+                                                    <span className="text-rose-400 font-bold">Instructor (@{msg.adminName || "Admin"})</span>
+                                                ) : (
+                                                    <>
+                                                        {msg.student?.name || "Student"} <span className="text-zinc-600 font-mono">({msg.student?.rollNo || "N/A"}){isMe && " (You)"}</span>
+                                                    </>
+                                                )}
                                             </span>
 
                                             {/* Chat Bubble */}

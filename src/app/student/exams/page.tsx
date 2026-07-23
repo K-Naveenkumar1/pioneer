@@ -125,9 +125,19 @@ export default function StudentExamsPage() {
                                             <p className="text-sm font-bold text-white">{exam.score}%</p>
                                         </div>
                                     </div>
-                                    <p className="text-[10px] text-themeTextGrey">
-                                        Completed: {new Date(exam.completedAt).toLocaleDateString()}
-                                    </p>
+                                    <div className="flex flex-col items-end gap-1.5">
+                                        {exam.attemptId && (
+                                            <Button
+                                                onClick={() => router.push(`/student/exams/${exam.attemptId}`)}
+                                                className="bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white rounded-xl text-xs px-3 py-1.5 font-bold h-8 transition-all"
+                                            >
+                                                Review Answers
+                                            </Button>
+                                        )}
+                                        <p className="text-[10px] text-themeTextGrey">
+                                            Completed: {new Date(exam.completedAt).toLocaleDateString()}
+                                        </p>
+                                    </div>
                                 </div>
                             ) : (
                                 <div className="mt-8 pt-4">

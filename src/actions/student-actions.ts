@@ -463,6 +463,7 @@ export async function getStudentExams(type?: string) {
                 examCode: exam.examCode, // Include exam code
                 totalQuestions: exam._count.questions,
                 attempted: !!attempt,
+                attemptId: attempt ? attempt.id : null,
                 score: attempt ? attempt.score : null,
                 completedAt: attempt ? attempt.completedAt : null
             }
@@ -648,6 +649,7 @@ export async function getExamSessionDetails(attemptId: string) {
                                 optionB: true,
                                 optionC: true,
                                 optionD: true,
+                                correctAnswer: true,
                                 title: true,
                                 constraints: true,
                                 inputFormat: true,
@@ -665,11 +667,16 @@ export async function getExamSessionDetails(attemptId: string) {
             return { success: false, error: "Session invalid or unauthorized" }
         }
 
-        if (attempt.completedAt) {
-            return { success: false, error: "Exam is already completed and graded." }
-        }
+        const isCompleted = !!attempt.completedAt
 
-        let questions = attempt.exam.questions
+        let questions = attempt.exam.questions.map(q => {
+            if (!isCompleted) {
+                const { correctAnswer, ...rest } = q
+                return rest
+            }
+            return q
+        })
+
         if (attempt.exam.type === "MCQ" && questions.length > 0) {
             // Seeded shuffle using attemptId (UUID)
             let h = 2166136261 >>> 0
@@ -693,6 +700,13 @@ export async function getExamSessionDetails(attemptId: string) {
             questions = shuffled
         }
 
+        let studentAnswers: Record<string, string> = {}
+        if (isCompleted && attempt.answers) {
+            try {
+                studentAnswers = JSON.parse(attempt.answers)
+            } catch (e) {}
+        }
+
         return {
             success: true,
             examTitle: attempt.exam.title,
@@ -701,7 +715,10 @@ export async function getExamSessionDetails(attemptId: string) {
             questions,
             startedAt: attempt.startedAt,
             warnings: attempt.warnings,
-            codingSubmissions: attempt.codingSubmissions
+            codingSubmissions: attempt.codingSubmissions,
+            isCompleted,
+            studentAnswers,
+            score: attempt.score
         }
     } catch (e: any) {
         return { success: false, error: e.message }

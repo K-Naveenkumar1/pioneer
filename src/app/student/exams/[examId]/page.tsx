@@ -160,6 +160,19 @@ export default function LockdownExamPage() {
                     setExamTitle(res.examTitle || "")
                     setQuestions(res.questions || [])
                     setDurationMinutes(res.duration || 60)
+
+                    if (res.isCompleted) {
+                        setCompleted(true)
+                        setResults({
+                            score: res.score,
+                            totalQuestions: res.questions.length,
+                            correctCount: res.questions.filter((q: any) => res.studentAnswers?.[q.id]?.trim().toUpperCase() === q.correctAnswer?.trim().toUpperCase()).length
+                        })
+                        setAnswers(res.studentAnswers || {})
+                        setLoading(false)
+                        return
+                    }
+
                     setStartedAt(res.startedAt ? new Date(res.startedAt) : new Date())
                     setWarnings(res.warnings || 0)
                     warningRef.current = res.warnings || 0
@@ -192,6 +205,8 @@ export default function LockdownExamPage() {
 
     // 2a. Global Keyboard, Clipboard, and Context Menu Blocker
     useEffect(() => {
+        if (completed) return
+
         const blockContextMenu = (e: MouseEvent) => e.preventDefault()
         
         const blockKeys = (e: KeyboardEvent) => {
@@ -244,7 +259,7 @@ export default function LockdownExamPage() {
             document.removeEventListener("contextmenu", blockContextMenu)
             document.removeEventListener("copy", handleCopy)
         }
-    }, [])
+    }, [completed])
 
     // 2b. Lockdown Protection Event Listeners (blur, visibility, fullscreen, beforeunload)
     useEffect(() => {
@@ -559,42 +574,146 @@ export default function LockdownExamPage() {
         )
     }
 
+
     // Completion View
     if (completed) {
         return (
-            <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
-                <div className="w-full max-w-md p-8 bg-zinc-900/80 border border-zinc-800 rounded-3xl space-y-6 text-center shadow-2xl backdrop-blur-md">
+            <div className="min-h-screen bg-black text-white flex items-center justify-center p-6 md:p-12 overflow-y-auto">
+                <div className="w-full max-w-4xl p-6 md:p-8 bg-zinc-900/80 border border-zinc-800 rounded-3xl space-y-8 shadow-2xl backdrop-blur-md">
                     {isPending ? (
-                        <div className="py-8 flex justify-center">
-                            <span className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></span>
+                        <div className="text-center py-8">
+                            <span className="animate-spin rounded-full h-8 w-8 border-b-2 border-white inline-block"></span>
+                            <p className="text-sm text-zinc-500 mt-4">Grading your exam attempt...</p>
                         </div>
                     ) : results ? (
-                        <div className="space-y-6">
-                            <div className="space-y-2">
-                                <Award className="mx-auto text-emerald-400" size={48} />
-                                <h2 className="text-2xl font-bold text-white tracking-tight">Exam Completed</h2>
-                                <p className="text-xs text-zinc-500">Your attempt has been graded and recorded successfully.</p>
+                        <div className="space-y-8">
+                            {/* Summary Card */}
+                            <div className="flex flex-col md:flex-row items-center justify-between gap-6 bg-zinc-950/40 p-6 border border-zinc-800/40 rounded-2xl">
+                                <div className="flex items-center gap-4 text-left">
+                                    <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl">
+                                        <Award size={32} />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-xl font-bold text-white tracking-tight">Exam Review: {examTitle}</h2>
+                                        <p className="text-xs text-zinc-500">Review your questions and graded answers below.</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-4 items-center">
+                                    <div className="bg-zinc-900/60 px-5 py-3 border border-zinc-800/60 rounded-xl text-center min-w-[100px]">
+                                        <p className="text-[10px] text-zinc-500 uppercase font-semibold">Percentage</p>
+                                        <p className="text-2xl font-extrabold text-white mt-0.5">{results.score}%</p>
+                                    </div>
+                                    <div className="bg-zinc-900/60 px-5 py-3 border border-zinc-800/60 rounded-xl text-center min-w-[100px]">
+                                        <p className="text-[10px] text-zinc-500 uppercase font-semibold">Marks</p>
+                                        <p className="text-2xl font-extrabold text-white mt-0.5">
+                                            {results.correctCount} / {results.totalQuestions}
+                                        </p>
+                                    </div>
+                                    <Button
+                                        onClick={() => router.push("/student/exams")}
+                                        className="bg-white hover:bg-zinc-200 text-black font-semibold rounded-xl px-6 py-5"
+                                    >
+                                        Return to Portal
+                                    </Button>
+                                </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="bg-zinc-900/60 p-4 border border-zinc-800/60 rounded-2xl text-center">
-                                    <p className="text-xs text-zinc-500">Percentage</p>
-                                    <p className="text-3xl font-extrabold text-white mt-1">{results.score}%</p>
-                                </div>
-                                <div className="bg-zinc-900/60 p-4 border border-zinc-800/60 rounded-2xl text-center">
-                                    <p className="text-xs text-zinc-500">Marks</p>
-                                    <p className="text-3xl font-extrabold text-white mt-1">
-                                        {results.correctCount} / {results.totalQuestions}
-                                    </p>
+                            {/* Detailed Answers Review */}
+                            <div className="space-y-6">
+                                <h3 className="text-lg font-bold text-white border-b border-zinc-800 pb-2">Questions & Answers Detail</h3>
+                                <div className="space-y-6 max-h-[600px] overflow-y-auto pr-2">
+                                    {questions.map((q: any, idx: number) => {
+                                        const studentAns = answers[q.id] || ""
+                                        const correctAns = q.correctAnswer || ""
+                                        const isCorrect = studentAns.trim().toUpperCase() === correctAns.trim().toUpperCase()
+
+                                        return (
+                                            <div key={q.id} className="p-5 bg-zinc-950/20 border border-zinc-800/80 rounded-2xl space-y-4">
+                                                <div className="flex items-start justify-between gap-4">
+                                                    <div>
+                                                        <span className="text-[10px] uppercase font-bold text-zinc-500 block mb-1">
+                                                            Question {idx + 1}
+                                                        </span>
+                                                        <h4 className="text-sm font-semibold text-white leading-relaxed">
+                                                            {q.questionText}
+                                                        </h4>
+                                                    </div>
+                                                    {studentAns ? (
+                                                        isCorrect ? (
+                                                            <span className="shrink-0 flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-2.5 py-1 rounded-lg">
+                                                                ✓ Correct
+                                                            </span>
+                                                        ) : (
+                                                            <span className="shrink-0 flex items-center gap-1 text-[11px] font-bold text-rose-400 bg-rose-400/10 border border-rose-400/20 px-2.5 py-1 rounded-lg">
+                                                                ✗ Incorrect
+                                                            </span>
+                                                        )
+                                                    ) : (
+                                                        <span className="shrink-0 flex items-center gap-1 text-[11px] font-bold text-zinc-400 bg-zinc-800/30 border border-zinc-800/40 px-2.5 py-1 rounded-lg">
+                                                            Unanswered
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                {/* Options List */}
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                    {[
+                                                        { key: "A", label: q.optionA },
+                                                        { key: "B", label: q.optionB },
+                                                        { key: "C", label: q.optionC },
+                                                        { key: "D", label: q.optionD }
+                                                    ].map((opt) => {
+                                                        const isSelected = studentAns.trim().toUpperCase() === opt.key
+                                                        const isRight = correctAns.trim().toUpperCase() === opt.key
+
+                                                        let borderStyle = "border-zinc-800/60"
+                                                        let bgStyle = "bg-zinc-900/40"
+                                                        let textStyle = "text-zinc-300"
+
+                                                        if (isRight) {
+                                                            borderStyle = "border-emerald-500/30"
+                                                            bgStyle = "bg-emerald-500/10"
+                                                            textStyle = "text-emerald-300 font-semibold"
+                                                        } else if (isSelected && !isRight) {
+                                                            borderStyle = "border-rose-500/30"
+                                                            bgStyle = "bg-rose-500/10"
+                                                            textStyle = "text-rose-300 font-semibold"
+                                                        }
+
+                                                        return (
+                                                            <div
+                                                                key={opt.key}
+                                                                className={`p-3 border rounded-xl flex items-center gap-3 text-xs ${borderStyle} ${bgStyle} ${textStyle}`}
+                                                            >
+                                                                <span className="w-5 h-5 rounded-md bg-black/40 flex items-center justify-center font-bold text-[10px]">
+                                                                    {opt.key}
+                                                                </span>
+                                                                <span>{opt.label}</span>
+                                                                {isRight && (
+                                                                    <span className="ml-auto text-[9px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded font-bold uppercase">
+                                                                        Correct Answer
+                                                                    </span>
+                                                                )}
+                                                                {isSelected && !isRight && (
+                                                                    <span className="ml-auto text-[9px] bg-rose-500/20 text-rose-400 border border-rose-500/30 px-1.5 py-0.5 rounded font-bold uppercase">
+                                                                        Your Answer
+                                                                    </span>
+                                                                )}
+                                                                {isSelected && isRight && (
+                                                                    <span className="ml-auto text-[9px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded font-bold uppercase">
+                                                                        Correct & Selected
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        )
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )
+                                    })}
                                 </div>
                             </div>
-
-                            <Button
-                                onClick={() => router.push("/student/exams")}
-                                className="w-full bg-white hover:bg-zinc-200 text-black font-semibold rounded-xl py-4"
-                            >
-                                Return to Portal
-                            </Button>
                         </div>
                     ) : (
                         <p className="text-sm text-red-400">Failed to grade attempt. Please contact an admin.</p>

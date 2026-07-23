@@ -1653,3 +1653,29 @@ export async function adminGetLeaderboardAction(classId: string) {
     }
 }
 
+export async function adminDeleteStudentsAction(studentIds: string[]) {
+    try {
+        const admin = await getAdminUser()
+        if (!admin) return { success: false, error: "Unauthorized" }
+
+        if (!studentIds || studentIds.length === 0) {
+            return { success: false, error: "No students selected for deletion" }
+        }
+
+        // Run deletion of related records in a transaction to handle relationMode = "prisma"
+        await client.$transaction([
+            client.attendance.deleteMany({ where: { studentId: { in: studentIds } } }),
+            client.taskSubmission.deleteMany({ where: { studentId: { in: studentIds } } }),
+            client.examAttempt.deleteMany({ where: { studentId: { in: studentIds } } }),
+            client.note.deleteMany({ where: { studentId: { in: studentIds } } }),
+            client.studentMessage.deleteMany({ where: { studentId: { in: studentIds } } }),
+            client.typingGameRun.deleteMany({ where: { studentId: { in: studentIds } } }),
+            client.student.deleteMany({ where: { id: { in: studentIds } } })
+        ])
+
+        return { success: true, message: `${studentIds.length} student(s) deleted successfully.` }
+    } catch (e: any) {
+        return { success: false, error: e.message || "Failed to delete students" }
+    }
+}
+

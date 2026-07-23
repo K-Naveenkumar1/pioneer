@@ -21,10 +21,11 @@ import {
     adminGetStudentsList,
     adminToggleInClassPermission,
     adminAssignWFHAction,
-    adminCreateClassAction,
-    adminGetClassesAction,
-    adminUpdateStudentAction,
-    adminBatchCreateStudentsAction
+    adminCreateClassAction, 
+    adminGetClassesAction, 
+    adminUpdateStudentAction, 
+    adminBatchCreateStudentsAction,
+    adminDeleteStudentsAction
 } from "@/actions/admin-actions"
 
 export default function AdminStudentsPage() {
@@ -46,6 +47,9 @@ export default function AdminStudentsPage() {
     const [editName, setEditName] = useState("")
     const [editDepartment, setEditDepartment] = useState("")
     const [editClassId, setEditClassId] = useState("")
+
+    // Selection state for multi-delete
+    const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([])
 
     useEffect(() => {
         loadData()
@@ -97,6 +101,29 @@ export default function AdminStudentsPage() {
                 loadStudents()
             } else {
                 toast.error(res.error || "Failed to update student details.")
+            }
+        })
+    }
+
+    const handleDeleteSelected = async () => {
+        if (selectedStudentIds.length === 0) return
+        
+        if (
+            !window.confirm(
+                `Are you sure you want to permanently delete the ${selectedStudentIds.length} selected student(s)? This will cascade delete all their attendance records, exam attempts, task submissions, notes, and chat messages.`
+            )
+        ) {
+            return
+        }
+
+        startTransition(async () => {
+            const res = await adminDeleteStudentsAction(selectedStudentIds)
+            if (res.success) {
+                toast.success(res.message)
+                setSelectedStudentIds([])
+                await loadStudents()
+            } else {
+                toast.error(res.error || "Failed to delete student profiles")
             }
         })
     }
@@ -398,9 +425,34 @@ export default function AdminStudentsPage() {
 
                 {/* Table column */}
                 <div className="lg:col-span-2 space-y-6">
-                    <h3 className="text-lg font-bold text-white">
-                        Registered Profiles ({students.length})
-                    </h3>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-themeGrey/40 pb-4">
+                        <div className="flex items-center gap-3">
+                            <input 
+                                type="checkbox"
+                                checked={students.length > 0 && selectedStudentIds.length === students.length}
+                                onChange={(e) => {
+                                    if (e.target.checked) {
+                                        setSelectedStudentIds(students.map(s => s.id))
+                                    } else {
+                                        setSelectedStudentIds([])
+                                    }
+                                }}
+                                className="rounded border-zinc-700 bg-zinc-900 text-indigo-600 focus:ring-0 focus:ring-offset-0 w-4 h-4 cursor-pointer"
+                            />
+                            <h3 className="text-lg font-bold text-white">
+                                Registered Profiles ({students.length})
+                            </h3>
+                        </div>
+                        {selectedStudentIds.length > 0 && (
+                            <Button
+                                onClick={handleDeleteSelected}
+                                disabled={isPending}
+                                className="bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs px-4 py-2 flex items-center gap-1.5 h-9 shrink-0 transition-all"
+                            >
+                                Delete Selected ({selectedStudentIds.length})
+                            </Button>
+                        )}
+                    </div>
 
                     {students.length === 0 ? (
                         <GlassCard className="p-8 text-center text-themeTextGrey text-sm border border-themeGrey">
@@ -478,8 +530,20 @@ export default function AdminStudentsPage() {
                                     ) : (
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-4">
-                                                <div className="w-10 h-10 rounded-xl bg-zinc-800 border border-themeGrey flex items-center justify-center font-bold text-sm text-themeTextWhite">
-                                                    {student.name.substring(0, 2).toUpperCase()}
+                                                <input 
+                                                    type="checkbox"
+                                                    checked={selectedStudentIds.includes(student.id)}
+                                                    onChange={(e) => {
+                                                        if (e.target.checked) {
+                                                            setSelectedStudentIds(prev => [...prev, student.id])
+                                                        } else {
+                                                            setSelectedStudentIds(prev => prev.filter(id => id !== student.id))
+                                                        }
+                                                    }}
+                                                    className="rounded border-zinc-700 bg-zinc-900 text-indigo-600 focus:ring-0 focus:ring-offset-0 w-4 h-4 cursor-pointer shrink-0"
+                                                />
+                                                <div className="w-10 h-10 rounded-xl bg-zinc-800 border border-themeGrey flex items-center justify-center font-bold text-sm text-themeTextWhite shrink-0">
+                                                    {(student.name || "Student").substring(0, 2).toUpperCase()}
                                                 </div>
                                                 <div>
                                                     <h4 className="font-bold text-sm text-white flex items-center gap-2">
