@@ -5,6 +5,13 @@ import { getAdminUser } from "./custom-auth"
 import { hashPassword } from "@/lib/hash"
 import mammoth from "mammoth"
 
+function getLocalDateString() {
+    const d = new Date()
+    const offset = d.getTimezoneOffset()
+    const localDate = new Date(d.getTime() - (offset*60*1000))
+    return localDate.toISOString().split('T')[0]
+}
+
 /**
  * Creates a new student credentials profile.
  */
@@ -179,7 +186,10 @@ export async function adminToggleInClassPermission(studentId: string, allowed: b
 
         await client.student.update({
             where: { id: studentId },
-            data: { isAllowedInClass: allowed }
+            data: { 
+                isAllowedInClass: allowed,
+                allowedClassDate: allowed ? getLocalDateString() : null
+            }
         })
 
         return { success: true, message: `In-class permission successfully updated.` }
@@ -945,7 +955,10 @@ export async function adminSetAttendanceStatusAction(studentId: string, date: st
         // Update student checkin access permission (Present = Allowed, Absent = Blocked)
         await client.student.update({
             where: { id: studentId },
-            data: { isAllowedInClass: isPresent }
+            data: { 
+                isAllowedInClass: isPresent,
+                allowedClassDate: isPresent ? date : null
+            }
         })
 
         if (isPresent) {
@@ -999,7 +1012,10 @@ export async function adminBatchSetAttendanceStatusAction(
         // Update all students' checkin access permissions (Present = Allowed, Absent = Blocked)
         await client.student.updateMany({
             where: { id: { in: studentIds } },
-            data: { isAllowedInClass: isPresent }
+            data: { 
+                isAllowedInClass: isPresent,
+                allowedClassDate: isPresent ? date : null
+            }
         })
 
         if (isPresent) {
@@ -1447,7 +1463,7 @@ export async function adminCreateCodingExamAction(
     }
 }
 
-export async function adminStartTypingSessionAction(passage: string, timeLimit: number = 60) {
+export async function adminStartTypingSessionAction(passage: string, timeLimit: number = 60, classId: string) {
     try {
         const admin = await getAdminUser()
         if (!admin) return { success: false, error: "Unauthorized" }
@@ -1456,8 +1472,12 @@ export async function adminStartTypingSessionAction(passage: string, timeLimit: 
             return { success: false, error: "Passage cannot be empty" }
         }
 
+        if (!classId) {
+            return { success: false, error: "Class must be selected" }
+        }
+
         await client.typingGameSession.updateMany({
-            where: { isActive: true },
+            where: { isActive: true, classId },
             data: { isActive: false }
         })
 
@@ -1465,7 +1485,8 @@ export async function adminStartTypingSessionAction(passage: string, timeLimit: 
             data: {
                 isActive: true,
                 passage: passage.trim(),
-                timeLimit
+                timeLimit,
+                classId
             }
         })
 

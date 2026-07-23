@@ -18,7 +18,8 @@ import { Button } from "@/components/ui/button"
 import { 
     adminStartTypingSessionAction, 
     adminEndTypingSessionAction, 
-    adminGetTypingLeaderboardAction 
+    adminGetTypingLeaderboardAction,
+    adminGetClassesAction 
 } from "@/actions/admin-actions"
 
 const PRESETS = [
@@ -43,6 +44,8 @@ export default function AdminTypingGamePage() {
     const [isActive, setIsActive] = useState(false)
     const [loading, setLoading] = useState(false)
     const [timeLimit, setTimeLimit] = useState(60)
+    const [classes, setClasses] = useState<any[]>([])
+    const [selectedClassId, setSelectedClassId] = useState("")
 
     const runsRef = useRef<any[]>([])
     const pollingRef = useRef<NodeJS.Timeout | null>(null)
@@ -55,10 +58,23 @@ export default function AdminTypingGamePage() {
             setIsActive(true)
             startPolling(storedSession)
         }
+        loadClasses()
         return () => {
             if (pollingRef.current) clearInterval(pollingRef.current)
         }
     }, [])
+
+    const loadClasses = async () => {
+        const res = await adminGetClassesAction()
+        if (res.success) {
+            setClasses(res.classes || [])
+            if (res.classes && res.classes.length > 0) {
+                setSelectedClassId(res.classes[0].id)
+            }
+        } else {
+            toast.error(res.error || "Failed to load classes")
+        }
+    }
 
     const startPolling = (sid: string) => {
         if (pollingRef.current) clearInterval(pollingRef.current)
@@ -89,8 +105,13 @@ export default function AdminTypingGamePage() {
             return
         }
 
+        if (!selectedClassId) {
+            toast.error("Please select a class/batch first.")
+            return
+        }
+
         setLoading(true)
-        const res = await adminStartTypingSessionAction(passage, timeLimit)
+        const res = await adminStartTypingSessionAction(passage, timeLimit, selectedClassId)
         setLoading(false)
 
         if (res.success && res.sessionId) {
@@ -200,6 +221,25 @@ export default function AdminTypingGamePage() {
                                     <p className="text-[10px] mt-1 line-clamp-2 opacity-80">{p.text}</p>
                                 </button>
                             ))}
+                        </div>
+
+                        {/* Class Dropdown Selector */}
+                        <div className="space-y-2">
+                            <label className="block text-xs font-semibold text-themeTextGrey uppercase">
+                                Target Class / Batch
+                            </label>
+                            <select
+                                value={selectedClassId}
+                                onChange={(e) => setSelectedClassId(e.target.value)}
+                                className="w-full p-4 bg-black/40 border border-themeGrey rounded-xl text-white focus:outline-none focus:ring-1 focus:ring-white/20 transition-all text-sm cursor-pointer"
+                            >
+                                <option value="" className="bg-zinc-950 text-zinc-400">Select Class</option>
+                                {classes.map((cls: any) => (
+                                    <option key={cls.id} value={cls.id} className="bg-zinc-950 text-white">
+                                        {cls.name}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
 
                         {/* Text Passage Input */}

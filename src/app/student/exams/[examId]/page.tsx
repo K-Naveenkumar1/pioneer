@@ -272,17 +272,8 @@ export default function LockdownExamPage() {
                 clearClipboard()
             }
         }
-        const handleWindowBlur = () => {
-            triggerWarning("Exam browser window lost focus.")
-            clearClipboard()
-        }
-        const handleWindowFocus = () => {
-            clearClipboard()
-        }
 
         document.addEventListener("visibilitychange", handleVisibilityChange)
-        window.addEventListener("blur", handleWindowBlur)
-        window.addEventListener("focus", handleWindowFocus)
 
         // Fullscreen Change Detector
         const handleFullscreenChange = () => {
@@ -297,8 +288,6 @@ export default function LockdownExamPage() {
         return () => {
             window.removeEventListener("beforeunload", handleBeforeUnload)
             document.removeEventListener("visibilitychange", handleVisibilityChange)
-            window.removeEventListener("blur", handleWindowBlur)
-            window.removeEventListener("focus", handleWindowFocus)
             document.removeEventListener("fullscreenchange", handleFullscreenChange)
         }
     }, [started, completed])

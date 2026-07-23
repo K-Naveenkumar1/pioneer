@@ -26,8 +26,9 @@ export async function checkInAction() {
         if (!dbStudent) return { success: false, error: "Student profile not found" }
 
         // Determine check-in type and enforce admin permissions
+        const dateStr = getLocalDateString()
         let checkInType = ""
-        if (dbStudent.isAllowedInClass) {
+        if (dbStudent.isAllowedInClass && dbStudent.allowedClassDate === dateStr) {
             checkInType = "CLASS"
         } else if (dbStudent.isAssignedWFH) {
             // Check WFH deadline
@@ -39,10 +40,8 @@ export async function checkInAction() {
             return { success: false, error: "Blocked: The administrator has not granted you check-in permission at this time." }
         }
 
-        const dateStr = getLocalDateString()
-
         // Check if there is already an active check-in (missing checkOut)
-        const activeAttendance = await client.attendance.findFirst({
+        let activeAttendance = await client.attendance.findFirst({
             where: {
                 studentId: student.id,
                 checkOut: null
@@ -50,7 +49,18 @@ export async function checkInAction() {
         })
 
         if (activeAttendance) {
-            return { success: true, record: activeAttendance, message: "Already checked in" }
+            if (activeAttendance.date !== dateStr) {
+                // Auto checkout previous day's session: set checkOut to checkIn + 8 hours
+                const checkInDate = new Date(activeAttendance.checkIn)
+                const autoCheckOutTime = new Date(checkInDate.getTime() + 8 * 60 * 60 * 1000)
+                await client.attendance.update({
+                    where: { id: activeAttendance.id },
+                    data: { checkOut: autoCheckOutTime }
+                })
+                activeAttendance = null
+            } else {
+                return { success: true, record: activeAttendance, message: "Already checked in" }
+            }
         }
 
         const newAttendance = await client.attendance.create({
@@ -241,14 +251,26 @@ export async function getAttendanceStatus() {
         const student = await getStudentUser()
         if (!student) return { isCheckedIn: false, activeRecord: null }
 
-        const activeRecord = await client.attendance.findFirst({
+        const dateStr = getLocalDateString()
+
+        let activeRecord = await client.attendance.findFirst({
             where: {
                 studentId: student.id,
                 checkOut: null
             }
         })
 
-        const dateStr = getLocalDateString()
+        // Auto checkout previous day's session
+        if (activeRecord && activeRecord.date !== dateStr) {
+            const checkInDate = new Date(activeRecord.checkIn)
+            const autoCheckOutTime = new Date(checkInDate.getTime() + 8 * 60 * 60 * 1000)
+            await client.attendance.update({
+                where: { id: activeRecord.id },
+                data: { checkOut: autoCheckOutTime }
+            })
+            activeRecord = null
+        }
+
         const todayRecords = await client.attendance.findMany({
             where: {
                 studentId: student.id,
@@ -1154,8 +1176,17 @@ export async function studentGetActiveTypingSessionAction() {
         const student = await getStudentUser()
         if (!student) return { success: false, error: "Unauthorized" }
 
+        const dbStudent = await client.student.findUnique({
+            where: { id: student.id },
+            select: { classId: true }
+        })
+
+        if (!dbStudent || !dbStudent.classId) {
+            return { success: true, session: null }
+        }
+
         const session = await client.typingGameSession.findFirst({
-            where: { isActive: true },
+            where: { isActive: true, classId: dbStudent.classId },
             orderBy: { createdAt: "desc" }
         })
 

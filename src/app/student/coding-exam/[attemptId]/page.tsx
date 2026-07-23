@@ -290,11 +290,7 @@ export default function LockdownCodingExamPage() {
                 triggerWarning("Window switched or Tab changed detected.")
             }
         }
-        const handleWindowBlur = () => {
-            triggerWarning("Exam browser window lost focus.")
-        }
         document.addEventListener("visibilitychange", handleVisibilityChange)
-        window.addEventListener("blur", handleWindowBlur)
 
         // Fullscreen Change Detector
         const handleFullscreenChange = () => {
@@ -309,7 +305,6 @@ export default function LockdownCodingExamPage() {
         return () => {
             document.removeEventListener("contextmenu", blockContextMenu)
             document.removeEventListener("visibilitychange", handleVisibilityChange)
-            window.removeEventListener("blur", handleWindowBlur)
             document.removeEventListener("fullscreenchange", handleFullscreenChange)
         }
     }, [started, completed])

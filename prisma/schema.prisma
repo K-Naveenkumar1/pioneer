@@ -189,6 +189,7 @@ model Student {
   department   String?
   isFirstLogin Boolean          @default(true)
   isAllowedInClass Boolean      @default(false)
+  allowedClassDate String?
   isAssignedWFH    Boolean      @default(false)
   wfhDeadline      DateTime?
   createdAt    DateTime         @default(now())
@@ -210,6 +211,7 @@ model Class {
   students           Student[]
   noTaskDeclarations NoTaskDeclaration[]
   exams              Exam[]
+  typingSessions     TypingGameSession[]
   createdAt          DateTime  @default(now())
 }
 
@@ -343,6 +345,10 @@ model TypingGameSession {
   timeLimit Int      @default(60) // time limit in seconds
   createdAt DateTime @default(now())
   runs      TypingGameRun[]
+  classId   String?
+  class     Class?   @relation(fields: [classId], references: [id], onDelete: SetNull)
+
+  @@index([classId])
 }
 
 model TypingGameRun {
