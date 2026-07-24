@@ -961,36 +961,6 @@ export async function adminSetAttendanceStatusAction(studentId: string, date: st
             }
         })
 
-        if (isPresent) {
-            const existing = await client.attendance.findFirst({
-                where: { studentId, date }
-            })
-
-            if (!existing) {
-                await client.attendance.create({
-                    data: {
-                        studentId,
-                        date,
-                        checkIn: new Date(date + "T09:00:00"),
-                        checkOut: new Date(date + "T17:00:00"),
-                        type: "CLASS"
-                    }
-                })
-            } else {
-                await client.attendance.update({
-                    where: { id: existing.id },
-                    data: {
-                        checkIn: new Date(date + "T09:00:00"),
-                        checkOut: new Date(date + "T17:00:00")
-                    }
-                })
-            }
-        } else {
-            await client.attendance.deleteMany({
-                where: { studentId, date }
-            })
-        }
-
         return { success: true, message: "Attendance status updated successfully." }
     } catch (e: any) {
         return { success: false, error: e.message || "Failed to update attendance status" }
@@ -1018,43 +988,53 @@ export async function adminBatchSetAttendanceStatusAction(
             }
         })
 
-        if (isPresent) {
-            for (const studentId of studentIds) {
-                const existing = await client.attendance.findFirst({
-                    where: { studentId, date }
-                })
-                if (!existing) {
-                    await client.attendance.create({
-                        data: {
-                            studentId,
-                            date,
-                            checkIn: new Date(date + "T09:00:00"),
-                            checkOut: new Date(date + "T17:00:00"),
-                            type: "CLASS"
-                        }
-                    })
-                } else {
-                    await client.attendance.update({
-                        where: { id: existing.id },
-                        data: {
-                            checkIn: new Date(date + "T09:00:00"),
-                            checkOut: new Date(date + "T17:00:00")
-                        }
-                    })
-                }
-            }
-        } else {
-            await client.attendance.deleteMany({
-                where: {
-                    studentId: { in: studentIds },
-                    date
-                }
-            })
-        }
-
         return { success: true, message: "Attendance statuses updated successfully." }
     } catch (e: any) {
         return { success: false, error: e.message || "Failed to update attendance status" }
+    }
+}
+
+/**
+ * Blocks check-in permission for all students in a class.
+ */
+export async function adminBlockAllCheckinsAction(classId: string) {
+    try {
+        const admin = await getAdminUser()
+        if (!admin) return { success: false, error: "Unauthorized" }
+
+        await client.student.updateMany({
+            where: { classId: classId || undefined },
+            data: {
+                isAllowedInClass: false,
+                allowedClassDate: null
+            }
+        })
+
+        return { success: true, message: "All check-in permissions for this class have been blocked." }
+    } catch (e: any) {
+        return { success: false, error: e.message }
+    }
+}
+
+/**
+ * Unblocks check-in permission for all students in a class for a date.
+ */
+export async function adminUnblockAllCheckinsAction(classId: string, date: string) {
+    try {
+        const admin = await getAdminUser()
+        if (!admin) return { success: false, error: "Unauthorized" }
+
+        await client.student.updateMany({
+            where: { classId: classId || undefined },
+            data: {
+                isAllowedInClass: true,
+                allowedClassDate: date
+            }
+        })
+
+        return { success: true, message: "All check-in permissions for this class have been unblocked." }
+    } catch (e: any) {
+        return { success: false, error: e.message }
     }
 }
 

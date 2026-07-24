@@ -123,11 +123,11 @@ export default function AdminDoubtsChatPage() {
                                             isStaff ? "justify-end" : ""
                                         }`}>
                                             <span className="font-semibold text-zinc-400">
-                                                {isStaff ? `Instructor (@${msg.adminName})` : msg.student?.name}
+                                                {isStaff ? `Instructor (@${msg.adminName})` : (msg.student?.name || "Deleted Student")}
                                             </span>
-                                            {!isStaff && (
+                                            {!isStaff && msg.student && (
                                                 <span className="font-mono text-zinc-600">
-                                                    ({msg.student?.rollNo})
+                                                    ({msg.student.rollNo})
                                                 </span>
                                             )}
                                         </div>

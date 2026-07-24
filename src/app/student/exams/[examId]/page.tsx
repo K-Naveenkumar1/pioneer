@@ -20,7 +20,8 @@ import {
     getExamSessionDetails,
     getExamSessionDuration,
     submitExamAttemptAction,
-    updateExamWarningAction
+    updateExamWarningAction,
+    studentUpdateExamAnswersAction
 } from "@/actions/student-actions"
 import { Button } from "@/components/ui/button"
 
@@ -79,6 +80,11 @@ export default function LockdownExamPage() {
     // Refs
     const warningRef = useRef(0)
     const lastWarningTimeRef = useRef<number>(0)
+    const answersRef = useRef<Record<string, string>>({})
+    
+    useEffect(() => {
+        answersRef.current = answers
+    }, [answers])
     const [isOnline, setIsOnline] = useState<boolean>(true)
     const [offlineSubmitting, setOfflineSubmitting] = useState<boolean>(false)
     const [isOfflinePending, setIsOfflinePending] = useState<boolean>(false)
@@ -419,12 +425,14 @@ export default function LockdownExamPage() {
             document.exitFullscreen().catch(() => {})
         }
 
+        const currentAnswers = answersRef.current
+
         const onlineStatus = navigator.onLine
         if (!onlineStatus) {
             // Save to local storage
             localStorage.setItem(`pioneer_offline_exam_${attemptId}`, JSON.stringify({
                 attemptId,
-                answers,
+                answers: currentAnswers,
                 timestamp: Date.now()
             }))
             setIsOfflinePending(true)
@@ -434,7 +442,7 @@ export default function LockdownExamPage() {
 
         startTransition(async () => {
             try {
-                const res = await submitExamAttemptAction(attemptId, answers)
+                const res = await submitExamAttemptAction(attemptId, currentAnswers)
                 if (res.success) {
                     setResults(res)
                     toast.success("Exam submitted successfully!")
@@ -475,10 +483,17 @@ export default function LockdownExamPage() {
     }
 
     const selectOption = (questionId: string, optionLetter: string) => {
-        setAnswers(prev => ({
-            ...prev,
+        const updatedAnswers = {
+            ...answers,
             [questionId]: optionLetter
-        }))
+        }
+        setAnswers(updatedAnswers)
+
+        if (attemptId) {
+            studentUpdateExamAnswersAction(attemptId, updatedAnswers).catch(err => {
+                console.error("Failed to persist answers immediately:", err)
+            })
+        }
     }
 
     const toggleFlag = (questionId: string) => {

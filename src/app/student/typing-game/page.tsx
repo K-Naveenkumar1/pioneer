@@ -279,11 +279,11 @@ export default function StudentTypingGamePage() {
     }
 
     return (
-        <div className="space-y-8 relative max-w-4xl mx-auto">
+        <div className="space-y-8 relative">
             {/* Header */}
             <div>
                 <h1 className="text-5xl font-bold tracking-tight text-white pb-3 flex items-center gap-3">
-                    <Keyboard size={36} className="text-white" /> Typing Speed Racing
+                    Typing Speed Racing
                 </h1>
                 <p className="text-sm text-themeTextGrey">Participate in live class typing tests hosted by your administrator.</p>
             </div>

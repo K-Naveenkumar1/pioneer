@@ -1,7 +1,7 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
-import { Calendar, Clock, RefreshCw, UserCheck, AlertTriangle, CheckCircle, UploadCloud, Plus } from "lucide-react"
+import React, { useState, useEffect, useTransition } from "react"
+import { Calendar, Clock, RefreshCw, UserCheck, AlertTriangle, CheckCircle, UploadCloud, Plus, Lock, Unlock } from "lucide-react"
 import { toast } from "sonner"
 
 import GlassCard from "@/components/global/glass-card"
@@ -12,7 +12,9 @@ import {
     adminUpdateAttendanceAction,
     adminDeleteAttendanceAction,
     adminSetAttendanceStatusAction,
-    adminBatchSetAttendanceStatusAction
+    adminBatchSetAttendanceStatusAction,
+    adminBlockAllCheckinsAction,
+    adminUnblockAllCheckinsAction
 } from "@/actions/admin-actions"
 
 export default function AdminAttendancePage() {
@@ -30,6 +32,45 @@ export default function AdminAttendancePage() {
     const [editingAttendanceId, setEditingAttendanceId] = useState<string | null>(null)
     const [editCheckIn, setEditCheckIn] = useState("")
     const [editCheckOut, setEditCheckOut] = useState("")
+
+    // Action transition state
+    const [isPendingAction, startTransitionAction] = useTransition()
+
+    const handleBlockAllCheckins = () => {
+        if (!selectedClassId) {
+            toast.error("Please select a class first.")
+            return
+        }
+        if (!confirm("Are you sure you want to block check-ins for all students in this class?")) return
+
+        startTransitionAction(async () => {
+            const res = await adminBlockAllCheckinsAction(selectedClassId)
+            if (res.success) {
+                toast.success(res.message)
+                loadAttendanceReport()
+            } else {
+                toast.error(res.error || "Failed to block check-ins.")
+            }
+        })
+    }
+
+    const handleUnblockAllCheckins = () => {
+        if (!selectedClassId) {
+            toast.error("Please select a class first.")
+            return
+        }
+        if (!confirm(`Are you sure you want to unblock check-ins for all students in this class for the date ${selectedDate}?`)) return
+
+        startTransitionAction(async () => {
+            const res = await adminUnblockAllCheckinsAction(selectedClassId, selectedDate)
+            if (res.success) {
+                toast.success(res.message)
+                loadAttendanceReport()
+            } else {
+                toast.error(res.error || "Failed to unblock check-ins.")
+            }
+        })
+    }
 
 
 
@@ -149,7 +190,22 @@ export default function AdminAttendancePage() {
                     </h1>
                     <p className="text-sm text-themeTextGrey">Audit check-in sessions, active hours, date filters, and class lists.</p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
+                    <Button
+                        onClick={handleBlockAllCheckins}
+                        disabled={isPendingAction || !selectedClassId}
+                        variant="outline"
+                        className="border-red-500/20 hover:bg-red-500/10 text-red-400 font-semibold flex items-center gap-1.5 py-2.5 px-4 rounded-xl text-xs"
+                    >
+                        <Lock size={14} /> Block All Check-ins
+                    </Button>
+                    <Button
+                        onClick={handleUnblockAllCheckins}
+                        disabled={isPendingAction || !selectedClassId}
+                        className="bg-white hover:bg-zinc-200 text-black font-semibold flex items-center gap-1.5 py-2.5 px-4 rounded-xl text-xs"
+                    >
+                        <Unlock size={14} /> Unblock All Check-ins
+                    </Button>
                     <button
                         onClick={loadAttendanceReport}
                         className="p-2.5 bg-zinc-900 border border-themeGrey rounded-xl text-themeTextGrey hover:text-white hover:border-zinc-700 transition-all"

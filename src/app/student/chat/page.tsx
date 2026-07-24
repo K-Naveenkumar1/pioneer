@@ -182,7 +182,15 @@ export default function StudentChatPage() {
                                                     <span className="text-rose-400 font-bold">Instructor (@{msg.adminName || "Admin"})</span>
                                                 ) : (
                                                     <>
-                                                        {msg.student?.name || "Student"} <span className="text-zinc-600 font-mono">({msg.student?.rollNo || "N/A"}){isMe && " (You)"}</span>
+                                                        {isMe ? (
+                                                            <>
+                                                                {currentStudent?.name || msg.student?.name || "Student"} <span className="text-zinc-600 font-mono">({currentStudent?.rollNo || msg.student?.rollNo || "N/A"}) (You)</span>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                {msg.student?.name || "Student"} <span className="text-zinc-600 font-mono">({msg.student?.rollNo || "N/A"})</span>
+                                                            </>
+                                                        )}
                                                     </>
                                                 )}
                                             </span>

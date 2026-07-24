@@ -131,7 +131,7 @@ export default function StudentTasksPage() {
         return (
             <div className="min-h-[60vh] flex flex-col items-center justify-center text-center p-8">
                 <GlassCard className="max-w-md p-8 border border-themeGrey flex flex-col items-center">
-                    <div className="p-4 bg-zinc-900 border border-themeGrey rounded-full text-amber-400 mb-4 animate-bounce">
+                    <div className="p-4 bg-zinc-900 border border-themeGrey rounded-full text-amber-400 mb-4">
                         <Lock size={36} />
                     </div>
                     <h2 className="text-2xl font-bold text-white mb-2">

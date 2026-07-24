@@ -48,7 +48,7 @@ export default function AdminExamsPage() {
     const [isPending, startTransition] = useTransition()
 
     // Tab control
-    const [activeTab, setActiveTab] = useState<"creator" | "submissions">("creator")
+    const [activeTab, setActiveTab] = useState<"creator" | "submissions" | "monitoring">("creator")
 
     // Creator Type Toggle
     const [examType, setExamType] = useState<"MCQ" | "CODING">("MCQ")
@@ -63,6 +63,26 @@ export default function AdminExamsPage() {
     const [completedAttempts, setCompletedAttempts] = useState<any[]>([])
     const [liveAttempts, setLiveAttempts] = useState<any[]>([])
     const [loadingSubmissions, setLoadingSubmissions] = useState(false)
+
+    // Completed submissions sorting state
+    const [sortBy, setSortBy] = useState<"scoreDesc" | "scoreAsc" | "timeAsc" | "timeDesc">("scoreDesc")
+    const sortedCompletedAttempts = React.useMemo(() => {
+        return [...completedAttempts].sort((a, b) => {
+            if (sortBy === "scoreDesc") {
+                return b.score - a.score
+            }
+            if (sortBy === "scoreAsc") {
+                return a.score - b.score
+            }
+            if (sortBy === "timeAsc") {
+                return new Date(a.completedAt).getTime() - new Date(b.completedAt).getTime()
+            }
+            if (sortBy === "timeDesc") {
+                return new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime()
+            }
+            return 0
+        })
+    }, [completedAttempts, sortBy])
     const [submittingAction, setSubmittingAction] = useState(false)
 
     // Edit Exam Modal States
@@ -148,6 +168,22 @@ export default function AdminExamsPage() {
         loadExams()
         loadClasses()
     }, [])
+
+    // Poll for live submissions when an exam is selected for viewing submissions/monitoring
+    useEffect(() => {
+        if (!selectedSubmissionsExamId) return
+
+        const interval = setInterval(() => {
+            adminGetExamSubmissionsAction(selectedSubmissionsExamId).then(res => {
+                if (res.success) {
+                    setCompletedAttempts(res.completed || [])
+                    setLiveAttempts(res.live || [])
+                }
+            })
+        }, 3000)
+
+        return () => clearInterval(interval)
+    }, [selectedSubmissionsExamId])
 
     const loadClasses = async () => {
         const res = await adminGetClassesAction()
@@ -499,7 +535,26 @@ export default function AdminExamsPage() {
                             : "border-transparent text-themeTextGrey hover:text-white"
                     }`}
                 >
-                    <Activity size={16} /> Results & Live Monitoring
+                    <CheckCircle size={16} /> Completed Results
+                </button>
+                <button
+                    onClick={() => {
+                        setActiveTab("monitoring")
+                        if (selectedSubmissionsExamId) {
+                            loadSubmissions(selectedSubmissionsExamId)
+                        }
+                    }}
+                    className={`px-5 py-3 text-sm font-bold border-b-2 transition-all flex items-center gap-2 ${
+                        activeTab === "monitoring"
+                            ? "border-white text-white bg-white/[0.02]"
+                            : "border-transparent text-themeTextGrey hover:text-white"
+                    }`}
+                >
+                    <span className="flex h-2 w-2 relative">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                    </span>
+                    Live Monitoring
                 </button>
             </div>
 
@@ -1008,13 +1063,15 @@ export default function AdminExamsPage() {
                             >
                                 <RefreshCw size={14} className={loadingSubmissions ? "animate-spin" : ""} /> Refresh Status
                             </Button>
-                            <Button
-                                onClick={handleDownloadExcel}
-                                disabled={loadingSubmissions || completedAttempts.length === 0 || !selectedSubmissionsExamId}
-                                className="bg-white hover:bg-zinc-200 text-black font-semibold flex items-center gap-1.5 py-4 rounded-xl text-xs"
-                            >
-                                <Download size={14} /> Export Results (Excel/CSV)
-                            </Button>
+                            {activeTab === "submissions" && (
+                                <Button
+                                    onClick={handleDownloadExcel}
+                                    disabled={loadingSubmissions || completedAttempts.length === 0 || !selectedSubmissionsExamId}
+                                    className="bg-white hover:bg-zinc-200 text-black font-semibold flex items-center gap-1.5 py-4 rounded-xl text-xs"
+                                >
+                                    <Download size={14} /> Export Results (Excel/CSV)
+                                </Button>
+                            )}
                         </div>
                     </GlassCard>
 
@@ -1026,120 +1083,136 @@ export default function AdminExamsPage() {
                         <GlassCard className="p-8 text-center text-themeTextGrey text-sm border border-themeGrey">
                             Please publish an exam first to monitor and view submissions.
                         </GlassCard>
-                    ) : (
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                            {/* Live Monitoring Column */}
-                            <div className="space-y-6">
-                                <div className="flex justify-between items-center">
-                                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                        <span className="flex h-2.5 w-2.5 relative">
-                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
-                                        </span>
-                                        Live Writing Now ({liveAttempts.length})
-                                    </h3>
-                                </div>
-
-                                <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
-                                    {liveAttempts.length === 0 ? (
-                                        <GlassCard className="p-6 text-center text-themeTextGrey text-xs border border-themeGrey italic">
-                                            No students are currently taking this exam.
-                                        </GlassCard>
-                                    ) : (
-                                        liveAttempts.map((att: any) => (
-                                            <GlassCard key={att.id} className="p-5 border border-red-500/10 bg-red-500/[0.02] space-y-4 hover:border-red-500/20 transition-all">
-                                                <div className="flex justify-between items-start gap-2">
-                                                    <div className="overflow-hidden">
-                                                        <h4 className="font-bold text-sm text-white truncate">{att.studentName}</h4>
-                                                        <p className="text-[10px] text-themeTextGrey truncate">{att.rollNo}</p>
-                                                    </div>
-                                                    <span className="text-[10px] font-bold text-red-400 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20">
-                                                        Active
-                                                    </span>
-                                                </div>
-
-                                                <div className="grid grid-cols-2 gap-2 text-xs text-themeTextGrey">
-                                                    <div>
-                                                        <p className="text-[10px] text-zinc-500">Progress</p>
-                                                        <p className="font-semibold text-white mt-0.5">
-                                                            {att.answeredCount} / {att.totalQuestions} Ans
-                                                        </p>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-[10px] text-zinc-500">Warnings</p>
-                                                        <p className={`font-semibold mt-0.5 ${att.warnings > 0 ? "text-amber-400 font-bold" : "text-white"}`}>
-                                                            {att.warnings} / 3
-                                                        </p>
-                                                    </div>
-                                                </div>
-
-                                                <div className="text-[10px] text-zinc-500 border-t border-themeGrey/40 pt-3 flex justify-between items-center">
-                                                    <span>Started: {new Date(att.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                                    <button
-                                                        onClick={() => handleForceSubmitAttempt(att.id)}
-                                                        disabled={submittingAction}
-                                                        className="text-[10px] font-bold text-amber-500 hover:text-amber-400 transition-all"
-                                                    >
-                                                        Force Submit
-                                                    </button>
-                                                </div>
-                                            </GlassCard>
-                                        ))
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Completed Submissions Column */}
-                            <div className="lg:col-span-2 space-y-6">
+                    ) : activeTab === "submissions" ? (
+                        /* Completed Submissions Column */
+                        <div className="space-y-6">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-zinc-950/40 p-4 border border-themeGrey/40 rounded-2xl">
                                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
                                     <CheckCircle size={18} className="text-emerald-400" />
                                     Completed Results ({completedAttempts.length})
                                 </h3>
 
-                                <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
-                                    {completedAttempts.length === 0 ? (
-                                        <GlassCard className="p-8 text-center text-themeTextGrey text-sm border border-themeGrey">
-                                            No students have finished this exam yet.
-                                        </GlassCard>
-                                    ) : (
-                                        completedAttempts.map((att: any) => (
-                                            <GlassCard key={att.id} className="p-5 border border-themeGrey/40 hover:border-zinc-700 transition-all flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                                                <div className="space-y-1 overflow-hidden">
-                                                    <h4 className="font-bold text-sm text-white truncate">{att.studentName}</h4>
-                                                    <p className="text-xs text-themeTextGrey truncate font-medium">Roll No: {att.rollNo}</p>
-                                                    <p className="text-[10px] text-zinc-500">
-                                                        Finished: {new Date(att.completedAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                                <div className="flex items-center gap-2 text-xs">
+                                    <span className="text-zinc-500 font-semibold uppercase">Sort By:</span>
+                                    <select
+                                        value={sortBy}
+                                        onChange={(e) => setSortBy(e.target.value as any)}
+                                        className="bg-zinc-900 border border-themeGrey rounded-lg text-white px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-white/20 cursor-pointer"
+                                    >
+                                        <option value="scoreDesc">Marks: High to Low</option>
+                                        <option value="scoreAsc">Marks: Low to High</option>
+                                        <option value="timeAsc">Completed: First to Last</option>
+                                        <option value="timeDesc">Completed: Last to First</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4 max-h-[700px] overflow-y-auto pr-1">
+                                {sortedCompletedAttempts.length === 0 ? (
+                                    <GlassCard className="p-8 text-center text-themeTextGrey text-sm border border-themeGrey">
+                                        No students have finished this exam yet.
+                                    </GlassCard>
+                                ) : (
+                                    sortedCompletedAttempts.map((att: any) => (
+                                        <GlassCard key={att.id} className="p-5 border border-themeGrey/40 hover:border-zinc-700 transition-all flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                            <div className="space-y-1 overflow-hidden">
+                                                <h4 className="font-bold text-sm text-white truncate">{att.studentName}</h4>
+                                                <p className="text-xs text-themeTextGrey truncate font-medium">Roll No: {att.rollNo}</p>
+                                                <p className="text-[10px] text-zinc-500">
+                                                    Finished: {new Date(att.completedAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                                                </p>
+                                            </div>
+
+                                            <div className="flex flex-wrap items-center gap-6">
+                                                <div className="text-center min-w-[70px]">
+                                                    <p className="text-[10px] text-zinc-500 uppercase">Score</p>
+                                                    <p className="text-lg font-extrabold text-emerald-400 mt-0.5">{att.score}%</p>
+                                                </div>
+                                                <div className="text-center min-w-[70px]">
+                                                    <p className="text-[10px] text-zinc-500 uppercase">Marks</p>
+                                                    <p className="text-sm font-bold text-white mt-1">{att.marks}</p>
+                                                </div>
+                                                <div className="text-center min-w-[70px]">
+                                                    <p className="text-[10px] text-zinc-500 uppercase">Warnings</p>
+                                                    <p className={`text-sm font-bold mt-1 ${att.warnings > 0 ? "text-red-400 font-bold" : "text-white"}`}>
+                                                        {att.warnings}
                                                     </p>
                                                 </div>
 
-                                                <div className="flex flex-wrap items-center gap-6">
-                                                    <div className="text-center min-w-[70px]">
-                                                        <p className="text-[10px] text-zinc-500 uppercase">Score</p>
-                                                        <p className="text-lg font-extrabold text-emerald-400 mt-0.5">{att.score}%</p>
-                                                    </div>
-                                                    <div className="text-center min-w-[70px]">
-                                                        <p className="text-[10px] text-zinc-500 uppercase">Marks</p>
-                                                        <p className="text-sm font-bold text-white mt-1">{att.marks}</p>
-                                                    </div>
-                                                    <div className="text-center min-w-[70px]">
-                                                        <p className="text-[10px] text-zinc-500 uppercase">Warnings</p>
-                                                        <p className={`text-sm font-bold mt-1 ${att.warnings > 0 ? "text-red-400 font-bold" : "text-white"}`}>
-                                                            {att.warnings}
-                                                        </p>
-                                                    </div>
+                                                <button
+                                                    onClick={() => handleResetAttempt(att.id)}
+                                                    disabled={submittingAction}
+                                                    className="px-3.5 py-1.5 bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700 transition-all rounded-lg text-xs font-bold shrink-0"
+                                                >
+                                                    Allow Rewrite
+                                                </button>
+                                            </div>
+                                        </GlassCard>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                    ) : (
+                        /* Live Monitoring Column */
+                        <div className="space-y-6">
+                            <div className="flex justify-between items-center">
+                                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                    <span className="flex h-2.5 w-2.5 relative">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+                                    </span>
+                                    Live Writing Now ({liveAttempts.length})
+                                </h3>
+                            </div>
 
-                                                    <button
-                                                        onClick={() => handleResetAttempt(att.id)}
-                                                        disabled={submittingAction}
-                                                        className="px-3.5 py-1.5 bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700 transition-all rounded-lg text-xs font-bold shrink-0"
-                                                    >
-                                                        Allow Rewrite
-                                                    </button>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-h-[700px] overflow-y-auto pr-1">
+                                {liveAttempts.length === 0 ? (
+                                    <div className="col-span-full">
+                                        <GlassCard className="p-8 text-center text-themeTextGrey text-sm border border-themeGrey italic">
+                                            No students are currently taking this exam.
+                                        </GlassCard>
+                                    </div>
+                                ) : (
+                                    liveAttempts.map((att: any) => (
+                                        <GlassCard key={att.id} className="p-5 border border-red-500/10 bg-red-500/[0.02] space-y-4 hover:border-red-500/20 transition-all">
+                                            <div className="flex justify-between items-start gap-2">
+                                                <div className="overflow-hidden">
+                                                    <h4 className="font-bold text-sm text-white truncate">{att.studentName}</h4>
+                                                    <p className="text-[10px] text-themeTextGrey truncate">{att.rollNo}</p>
                                                 </div>
-                                            </GlassCard>
-                                        ))
-                                    )}
-                                </div>
+                                                <span className="text-[10px] font-bold text-red-400 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20">
+                                                    Active
+                                                </span>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-2 text-xs text-themeTextGrey">
+                                                <div>
+                                                    <p className="text-[10px] text-zinc-500">Progress</p>
+                                                    <p className="font-semibold text-white mt-0.5">
+                                                        {att.answeredCount} / {att.totalQuestions} Ans
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] text-zinc-500">Warnings</p>
+                                                    <p className={`font-semibold mt-0.5 ${att.warnings > 0 ? "text-amber-400 font-bold" : "text-white"}`}>
+                                                        {att.warnings} / 3
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div className="text-[10px] text-zinc-500 border-t border-themeGrey/40 pt-3 flex justify-between items-center">
+                                                <span>Started: {new Date(att.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                <button
+                                                    onClick={() => handleForceSubmitAttempt(att.id)}
+                                                    disabled={submittingAction}
+                                                    className="text-[10px] font-bold text-amber-500 hover:text-amber-400 transition-all"
+                                                >
+                                                    Force Submit
+                                                </button>
+                                            </div>
+                                        </GlassCard>
+                                    ))
+                                )}
                             </div>
                         </div>
                     )}

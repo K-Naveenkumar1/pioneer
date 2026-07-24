@@ -1279,3 +1279,33 @@ export async function studentUpdateTypingProgressAction(
         return { success: false, error: e.message }
     }
 }
+
+export async function studentUpdateExamAnswersAction(attemptId: string, answers: Record<string, string>) {
+    try {
+        const student = await getStudentUser()
+        if (!student) return { success: false, error: "Unauthorized" }
+
+        const attempt = await client.examAttempt.findUnique({
+            where: { id: attemptId }
+        })
+
+        if (!attempt || attempt.studentId !== student.id) {
+            return { success: false, error: "Attempt invalid or unauthorized" }
+        }
+
+        if (attempt.completedAt) {
+            return { success: false, error: "Exam is already completed" }
+        }
+
+        await client.examAttempt.update({
+            where: { id: attemptId },
+            data: {
+                answers: JSON.stringify(answers)
+            }
+        })
+
+        return { success: true }
+    } catch (e: any) {
+        return { success: false, error: e.message }
+    }
+}

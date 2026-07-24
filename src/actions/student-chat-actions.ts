@@ -18,12 +18,7 @@ export async function getStudentChatMessagesAction() {
                 createdAt: "asc"
             },
             include: {
-                student: {
-                    select: {
-                        name: true,
-                        rollNo: true
-                    }
-                }
+                student: true
             }
         })
 
@@ -52,12 +47,7 @@ export async function sendStudentChatMessageAction(message: string) {
                 isAdmin: false
             },
             include: {
-                student: {
-                    select: {
-                        name: true,
-                        rollNo: true
-                    }
-                }
+                student: true
             }
         })
 
