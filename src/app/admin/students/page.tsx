@@ -51,6 +51,20 @@ export default function AdminStudentsPage() {
     // Selection state for multi-delete
     const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([])
 
+    // Search query state
+    const [searchQuery, setSearchQuery] = useState("")
+
+    const filteredStudents = React.useMemo(() => {
+        if (!searchQuery.trim()) return students
+        const q = searchQuery.toLowerCase().trim()
+        return students.filter(student => 
+            (student.name || "").toLowerCase().includes(q) || 
+            (student.rollNo || "").toLowerCase().includes(q) ||
+            (student.department || "").toLowerCase().includes(q) ||
+            (student.class?.name || "").toLowerCase().includes(q)
+        )
+    }, [students, searchQuery])
+
     useEffect(() => {
         loadData()
     }, [])
@@ -426,41 +440,53 @@ export default function AdminStudentsPage() {
                 {/* Table column */}
                 <div className="lg:col-span-2 space-y-6">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-themeGrey/40 pb-4">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 w-full sm:w-auto">
                             <input 
                                 type="checkbox"
-                                checked={students.length > 0 && selectedStudentIds.length === students.length}
+                                checked={filteredStudents.length > 0 && filteredStudents.every(s => selectedStudentIds.includes(s.id))}
                                 onChange={(e) => {
                                     if (e.target.checked) {
-                                        setSelectedStudentIds(students.map(s => s.id))
+                                        setSelectedStudentIds(prev => {
+                                            const ids = new Set([...prev, ...filteredStudents.map(s => s.id)])
+                                            return Array.from(ids)
+                                        })
                                     } else {
-                                        setSelectedStudentIds([])
+                                        setSelectedStudentIds(prev => prev.filter(id => !filteredStudents.some(s => s.id === id)))
                                     }
                                 }}
                                 className="rounded border-zinc-700 bg-zinc-900 text-indigo-600 focus:ring-0 focus:ring-offset-0 w-4 h-4 cursor-pointer"
                             />
-                            <h3 className="text-lg font-bold text-white">
-                                Registered Profiles ({students.length})
+                            <h3 className="text-lg font-bold text-white shrink-0">
+                                Registered Profiles ({searchQuery ? `${filteredStudents.length} of ${students.length}` : students.length})
                             </h3>
                         </div>
-                        {selectedStudentIds.length > 0 && (
-                            <Button
-                                onClick={handleDeleteSelected}
-                                disabled={isPending}
-                                className="bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs px-4 py-2 flex items-center gap-1.5 h-9 shrink-0 transition-all"
-                            >
-                                Delete Selected ({selectedStudentIds.length})
-                            </Button>
-                        )}
+                        <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+                            <input
+                                type="text"
+                                placeholder="Search by name, roll no, class..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="px-4 py-2 bg-black/40 border border-themeGrey rounded-xl text-white placeholder-themeTextGrey focus:outline-none focus:ring-2 focus:ring-white/20 transition-all text-xs w-full sm:w-60"
+                            />
+                            {selectedStudentIds.length > 0 && (
+                                <Button
+                                    onClick={handleDeleteSelected}
+                                    disabled={isPending}
+                                    className="bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs px-4 py-2 flex items-center gap-1.5 h-9 shrink-0 transition-all"
+                                >
+                                    Delete Selected ({selectedStudentIds.length})
+                                </Button>
+                            )}
+                        </div>
                     </div>
 
-                    {students.length === 0 ? (
+                    {filteredStudents.length === 0 ? (
                         <GlassCard className="p-8 text-center text-themeTextGrey text-sm border border-themeGrey">
-                            No student profiles registered yet. Register a profile on the left.
+                            {searchQuery ? "No matching students found." : "No student profiles registered yet. Register a profile on the left."}
                         </GlassCard>
                     ) : (
                         <div className="space-y-4 max-h-[900px] overflow-y-auto pr-1">
-                            {students.map((student: any) => (
+                            {filteredStudents.map((student: any) => (
                                 <GlassCard 
                                     key={student.id} 
                                     className="p-5 border border-themeGrey/40 flex flex-col gap-4 hover:border-zinc-700 transition-all"

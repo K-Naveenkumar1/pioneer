@@ -14,7 +14,9 @@ import {
     adminSetAttendanceStatusAction,
     adminBatchSetAttendanceStatusAction,
     adminBlockAllCheckinsAction,
-    adminUnblockAllCheckinsAction
+    adminUnblockAllCheckinsAction,
+    adminGiveCheckinAccessAction,
+    adminEndCheckinAction
 } from "@/actions/admin-actions"
 
 export default function AdminAttendancePage() {
@@ -36,38 +38,38 @@ export default function AdminAttendancePage() {
     // Action transition state
     const [isPendingAction, startTransitionAction] = useTransition()
 
-    const handleBlockAllCheckins = () => {
+    const handleGiveAccess = () => {
         if (!selectedClassId) {
             toast.error("Please select a class first.")
             return
         }
-        if (!confirm("Are you sure you want to block check-ins for all students in this class?")) return
+        if (!confirm(`Are you sure you want to unblock check-ins for the marked (Present) students in this class for the date ${selectedDate}?`)) return
 
         startTransitionAction(async () => {
-            const res = await adminBlockAllCheckinsAction(selectedClassId)
+            const res = await adminGiveCheckinAccessAction(selectedClassId, selectedDate)
             if (res.success) {
                 toast.success(res.message)
                 loadAttendanceReport()
             } else {
-                toast.error(res.error || "Failed to block check-ins.")
+                toast.error(res.error || "Failed to give check-in access.")
             }
         })
     }
 
-    const handleUnblockAllCheckins = () => {
+    const handleEndCheckin = () => {
         if (!selectedClassId) {
             toast.error("Please select a class first.")
             return
         }
-        if (!confirm(`Are you sure you want to unblock check-ins for all students in this class for the date ${selectedDate}?`)) return
+        if (!confirm("Are you sure you want to end check-in? All students in this class will be checked out and check-in access will be blocked.")) return
 
         startTransitionAction(async () => {
-            const res = await adminUnblockAllCheckinsAction(selectedClassId, selectedDate)
+            const res = await adminEndCheckinAction(selectedClassId)
             if (res.success) {
                 toast.success(res.message)
                 loadAttendanceReport()
             } else {
-                toast.error(res.error || "Failed to unblock check-ins.")
+                toast.error(res.error || "Failed to end check-in.")
             }
         })
     }
@@ -192,19 +194,19 @@ export default function AdminAttendancePage() {
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
                     <Button
-                        onClick={handleBlockAllCheckins}
+                        onClick={handleEndCheckin}
                         disabled={isPendingAction || !selectedClassId}
                         variant="outline"
                         className="border-red-500/20 hover:bg-red-500/10 text-red-400 font-semibold flex items-center gap-1.5 py-2.5 px-4 rounded-xl text-xs"
                     >
-                        <Lock size={14} /> Block All Check-ins
+                        <Lock size={14} /> End Check-in
                     </Button>
                     <Button
-                        onClick={handleUnblockAllCheckins}
+                        onClick={handleGiveAccess}
                         disabled={isPendingAction || !selectedClassId}
                         className="bg-white hover:bg-zinc-200 text-black font-semibold flex items-center gap-1.5 py-2.5 px-4 rounded-xl text-xs"
                     >
-                        <Unlock size={14} /> Unblock All Check-ins
+                        <Unlock size={14} /> Give Access
                     </Button>
                     <button
                         onClick={loadAttendanceReport}

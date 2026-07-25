@@ -31,7 +31,8 @@ import {
     updateExamWarningAction, 
     runCodeAction,
     gradeCodingQuestionAction,
-    submitCodingExamAction 
+    submitCodingExamAction,
+    saveCodingDraftAction
 } from "@/actions/student-actions"
 
 // Map languages to Judge0 CE IDs
@@ -137,7 +138,7 @@ export default function LockdownCodingExamPage() {
         }
     }, [])
 
-    // Load offline cached details if exists
+    // Load offline cached details / drafts if exists
     useEffect(() => {
         if (typeof window !== "undefined" && attemptId) {
             const cached = localStorage.getItem(`pioneer_offline_coding_exam_${attemptId}`)
@@ -148,6 +149,19 @@ export default function LockdownCodingExamPage() {
                     setCodes(parsed.codes || {})
                     setLangs(parsed.langs || {})
                 } catch (e) {}
+            } else {
+                const draftCodes = localStorage.getItem(`pioneer_coding_exam_codes_draft_${attemptId}`)
+                if (draftCodes) {
+                    try {
+                        setCodes(prev => ({ ...prev, ...JSON.parse(draftCodes) }))
+                    } catch (e) {}
+                }
+                const draftLangs = localStorage.getItem(`pioneer_coding_exam_langs_draft_${attemptId}`)
+                if (draftLangs) {
+                    try {
+                        setLangs(prev => ({ ...prev, ...JSON.parse(draftLangs) }))
+                    } catch (e) {}
+                }
             }
         }
     }, [attemptId])
@@ -224,6 +238,14 @@ export default function LockdownCodingExamPage() {
                     setWarnings(res.warnings || 0)
                     warningRef.current = res.warnings || 0
 
+                    // Cache successfully fetched details
+                    localStorage.setItem(`pioneer_coding_exam_details_${attemptId}`, JSON.stringify({
+                        examTitle: res.examTitle || "",
+                        questions: res.questions || [],
+                        duration: res.duration || 60,
+                        startedAt: res.startedAt
+                    }))
+
                     // Restore saved coding submissions if any
                     if (res.codingSubmissions) {
                         try {
@@ -243,8 +265,15 @@ export default function LockdownCodingExamPage() {
                                     }
                                 }
                             })
-                            setCodes(prev => ({ ...prev, ...initialCodes }))
-                            setLangs(prev => ({ ...prev, ...initialLangs }))
+                            
+                            // Load draft local storage values to merge/override if exists
+                            const draftCodes = localStorage.getItem(`pioneer_coding_exam_codes_draft_${attemptId}`)
+                            const draftLangs = localStorage.getItem(`pioneer_coding_exam_langs_draft_${attemptId}`)
+                            const parsedDraftCodes = draftCodes ? JSON.parse(draftCodes) : {}
+                            const parsedDraftLangs = draftLangs ? JSON.parse(draftLangs) : {}
+
+                            setCodes(prev => ({ ...prev, ...initialCodes, ...parsedDraftCodes }))
+                            setLangs(prev => ({ ...prev, ...initialLangs, ...parsedDraftLangs }))
                         } catch (err) {
                             console.error("Error restoring coding submissions:", err)
                         }
@@ -269,6 +298,42 @@ export default function LockdownCodingExamPage() {
                 }
             } catch (err) {
                 console.error("Error loading exam details:", err)
+                
+                // Fallback to offline cached details
+                const cachedDetails = localStorage.getItem(`pioneer_coding_exam_details_${attemptId}`)
+                if (cachedDetails) {
+                    try {
+                        const parsed = JSON.parse(cachedDetails)
+                        setExamTitle(parsed.examTitle || "")
+                        setQuestions(parsed.questions || [])
+                        setDurationMinutes(parsed.duration || 60)
+                        setStartedAt(parsed.startedAt ? new Date(parsed.startedAt) : new Date())
+
+                        // Calc remaining time
+                        const startTime = parsed.startedAt ? new Date(parsed.startedAt).getTime() : new Date().getTime()
+                        const durationMs = (parsed.duration || 60) * 60 * 1000
+                        const now = new Date().getTime()
+                        const timeLeftSecs = Math.max(0, Math.floor((startTime + durationMs - now) / 1000))
+                        setSecondsLeft(timeLeftSecs)
+
+                        // Load drafts
+                        const draftCodes = localStorage.getItem(`pioneer_coding_exam_codes_draft_${attemptId}`)
+                        if (draftCodes) {
+                            setCodes(JSON.parse(draftCodes))
+                        }
+                        const draftLangs = localStorage.getItem(`pioneer_coding_exam_langs_draft_${attemptId}`)
+                        if (draftLangs) {
+                            setLangs(JSON.parse(draftLangs))
+                        }
+
+                        toast.info("Offline mode: loaded exam details from browser storage.")
+                        setLoading(false)
+                        return
+                    } catch (e) {
+                        console.error("Failed to parse cached details:", e)
+                    }
+                }
+
                 setLoading(false)
             }
         }
@@ -390,6 +455,12 @@ export default function LockdownCodingExamPage() {
 
     // 5. Trigger Warning & Check termination limits (Only 1 warning allowed!)
     const triggerWarning = async (reason: string) => {
+        // Bypass lockdown warnings if offline to prevent OS/browser connection dialogs from terminating the exam
+        if (typeof window !== "undefined" && !navigator.onLine) {
+            console.log("Bypassing lockdown warning since student is offline:", reason)
+            return
+        }
+
         if (completed || isOfflinePending) return
 
         const now = Date.now()
@@ -491,9 +562,42 @@ export default function LockdownCodingExamPage() {
         setSelectedLang(lang)
     }, [currentIdx, currentQuestion])
 
+    // Question switcher to save database draft before navigating
+    const switchQuestion = (newIdx: number) => {
+        if (currentQuestion && attemptId) {
+            const codeToSave = codes[currentQuestion.id] || selectedLang.default
+            const langId = langs[currentQuestion.id] || LANGUAGES[1].id
+            const langObj = LANGUAGES.find(l => l.id === langId) || LANGUAGES[1]
+
+            saveCodingDraftAction(attemptId, currentQuestion.id, codeToSave, langObj.judge0Id).catch(err => {
+                console.error("Failed to save coding draft:", err)
+            })
+        }
+        setCurrentIdx(newIdx)
+    }
+
+    // Periodic auto-save to database every 10 seconds
+    useEffect(() => {
+        if (!started || completed || !currentQuestion || !attemptId) return
+
+        const autoSaveTimer = setInterval(() => {
+            const onlineStatus = navigator.onLine
+            if (onlineStatus) {
+                const codeToSave = codes[currentQuestion.id] || selectedLang.default
+                saveCodingDraftAction(attemptId, currentQuestion.id, codeToSave, selectedLang.judge0Id).catch(err => {
+                    console.error("Failed to auto-save coding draft:", err)
+                })
+            }
+        }, 10000)
+
+        return () => clearInterval(autoSaveTimer)
+    }, [started, completed, currentQuestion, attemptId, codes, selectedLang])
+
     const handleCodeChange = (val: string) => {
         if (!currentQuestion) return
-        setCodes(prev => ({ ...prev, [currentQuestion.id]: val }))
+        const newCodes = { ...codes, [currentQuestion.id]: val }
+        setCodes(newCodes)
+        localStorage.setItem(`pioneer_coding_exam_codes_draft_${attemptId}`, JSON.stringify(newCodes))
     }
 
     const handleLanguageChange = (langId: string) => {
@@ -501,10 +605,14 @@ export default function LockdownCodingExamPage() {
         const lang = LANGUAGES.find(l => l.id === langId)
         if (lang) {
             setSelectedLang(lang)
-            setLangs(prev => ({ ...prev, [currentQuestion.id]: langId }))
+            const newLangs = { ...langs, [currentQuestion.id]: langId }
+            setLangs(newLangs)
+            localStorage.setItem(`pioneer_coding_exam_langs_draft_${attemptId}`, JSON.stringify(newLangs))
             // Only overwrite code if it wasn't modified
             if (!codes[currentQuestion.id] || codes[currentQuestion.id] === selectedLang.default) {
-                setCodes(prev => ({ ...prev, [currentQuestion.id]: lang.default }))
+                const newCodes = { ...codes, [currentQuestion.id]: lang.default }
+                setCodes(newCodes)
+                localStorage.setItem(`pioneer_coding_exam_codes_draft_${attemptId}`, JSON.stringify(newCodes))
             }
         }
     }
@@ -817,7 +925,7 @@ export default function LockdownCodingExamPage() {
                                     <button
                                         key={q.id}
                                         onClick={() => {
-                                            setCurrentIdx(idx)
+                                            switchQuestion(idx)
                                             setStdout("")
                                             setStderr("")
                                             setTestResults(null)
@@ -839,24 +947,24 @@ export default function LockdownCodingExamPage() {
                             <button
                                 disabled={currentIdx === 0}
                                 onClick={() => {
-                                    setCurrentIdx(prev => Math.max(0, prev - 1))
+                                    switchQuestion(Math.max(0, currentIdx - 1))
                                     setStdout("")
                                     setStderr("")
                                     setTestResults(null)
                                 }}
-                                className="p-2 bg-zinc-900 border border-zinc-850 rounded-lg text-zinc-400 hover:text-white disabled:opacity-40"
+                                className="p-2 bg-zinc-900 border border-zinc-855 rounded-lg text-zinc-400 hover:text-white disabled:opacity-40"
                             >
                                 <ChevronLeft size={14} />
                             </button>
                             <button
                                 disabled={currentIdx === questions.length - 1}
                                 onClick={() => {
-                                    setCurrentIdx(prev => Math.min(questions.length - 1, prev + 1))
+                                    switchQuestion(Math.min(questions.length - 1, currentIdx + 1))
                                     setStdout("")
                                     setStderr("")
                                     setTestResults(null)
                                 }}
-                                className="p-2 bg-zinc-900 border border-zinc-850 rounded-lg text-zinc-400 hover:text-white disabled:opacity-40"
+                                className="p-2 bg-zinc-900 border border-zinc-855 rounded-lg text-zinc-400 hover:text-white disabled:opacity-40"
                             >
                                 <ChevronRight size={14} />
                             </button>

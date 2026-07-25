@@ -92,8 +92,18 @@ export default function AdminTypingGamePage() {
     const loadLeaderboard = async (sid: string) => {
         const res = await adminGetTypingLeaderboardAction(sid)
         if (res.success && res.runs) {
-            setRuns(res.runs)
-            runsRef.current = res.runs
+            // Sort runs by progress percentage first, then WPM, then accuracy to determine race rank
+            const sortedRuns = [...res.runs].sort((a, b) => {
+                if (b.progressPercentage !== a.progressPercentage) {
+                    return b.progressPercentage - a.progressPercentage
+                }
+                if (b.wpm !== a.wpm) {
+                    return b.wpm - a.wpm
+                }
+                return b.accuracy - a.accuracy
+            })
+            setRuns(sortedRuns)
+            runsRef.current = sortedRuns
         } else if (!res.success) {
             console.error("Leaderboard poll error:", res.error)
         }

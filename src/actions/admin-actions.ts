@@ -188,7 +188,7 @@ export async function adminToggleInClassPermission(studentId: string, allowed: b
             where: { id: studentId },
             data: { 
                 isAllowedInClass: allowed,
-                allowedClassDate: allowed ? getLocalDateString() : null
+                allowedClassDate: allowed ? "PENDING_" + getLocalDateString() : null
             }
         })
 
@@ -945,19 +945,19 @@ export async function adminDeleteExamAction(examId: string) {
 }
 
 /**
- * Manually marks a student present (creates/updates default 8h log) or absent (deletes logs).
+ * Manually marks a student present or absent (deletes logs or blocks access).
  */
 export async function adminSetAttendanceStatusAction(studentId: string, date: string, isPresent: boolean) {
     try {
         const admin = await getAdminUser()
         if (!admin) return { success: false, error: "Unauthorized" }
 
-        // Update student checkin access permission (Present = Allowed, Absent = Blocked)
+        // Update student checkin access permission (Present = Allowed but pending, Absent = Blocked)
         await client.student.update({
             where: { id: studentId },
             data: { 
                 isAllowedInClass: isPresent,
-                allowedClassDate: isPresent ? date : null
+                allowedClassDate: isPresent ? "PENDING_" + date : null
             }
         })
 
@@ -979,12 +979,12 @@ export async function adminBatchSetAttendanceStatusAction(
         const admin = await getAdminUser()
         if (!admin) return { success: false, error: "Unauthorized" }
 
-        // Update all students' checkin access permissions (Present = Allowed, Absent = Blocked)
+        // Update all students' checkin access permissions (Present = Allowed but pending, Absent = Blocked)
         await client.student.updateMany({
             where: { id: { in: studentIds } },
             data: { 
                 isAllowedInClass: isPresent,
-                allowedClassDate: isPresent ? date : null
+                allowedClassDate: isPresent ? "PENDING_" + date : null
             }
         })
 
@@ -1033,6 +1033,82 @@ export async function adminUnblockAllCheckinsAction(classId: string, date: strin
         })
 
         return { success: true, message: "All check-in permissions for this class have been unblocked." }
+    } catch (e: any) {
+        return { success: false, error: e.message }
+    }
+}
+
+/**
+ * Grants access to checked-in students marked present for a date in a class.
+ */
+export async function adminGiveCheckinAccessAction(classId: string, date: string) {
+    try {
+        const admin = await getAdminUser()
+        if (!admin) return { success: false, error: "Unauthorized" }
+
+        const pendingPrefix = "PENDING_" + date
+        const result = await client.student.updateMany({
+            where: {
+                classId: classId || undefined,
+                isAllowedInClass: true,
+                allowedClassDate: pendingPrefix
+            },
+            data: {
+                allowedClassDate: date
+            }
+        })
+
+        return { success: true, message: `Access granted successfully to student check-ins.` }
+    } catch (e: any) {
+        return { success: false, error: e.message }
+    }
+}
+
+/**
+ * Ends check-in session for all students in a class, checking them out and blocking access.
+ */
+export async function adminEndCheckinAction(classId: string) {
+    try {
+        const admin = await getAdminUser()
+        if (!admin) return { success: false, error: "Unauthorized" }
+
+        const dateStr = getLocalDateString()
+
+        // 1. Block access for all students in this class
+        await client.student.updateMany({
+            where: { classId: classId || undefined },
+            data: {
+                isAllowedInClass: false,
+                allowedClassDate: null
+            }
+        })
+
+        // 2. Find all active attendance records for students in this class
+        const activeAttendances = await client.attendance.findMany({
+            where: {
+                student: {
+                    classId: classId || undefined
+                },
+                checkOut: null
+            }
+        })
+
+        // 3. Update active attendance records to be checked out now
+        if (activeAttendances.length > 0) {
+            await client.attendance.updateMany({
+                where: {
+                    id: { in: activeAttendances.map(a => a.id) }
+                },
+                data: {
+                    checkOut: new Date()
+                }
+            })
+        }
+
+        return { 
+            success: true, 
+            message: `Check-in session ended. ${activeAttendances.length} student(s) checked out, and check-in access blocked.` 
+        }
     } catch (e: any) {
         return { success: false, error: e.message }
     }
@@ -1272,12 +1348,15 @@ export async function adminGetExamSubmissionsAction(examId: string) {
             } else {
                 // Live writing attempt monitoring
                 let answeredCount = 0
+                let answeredQuestions: string[] = []
                 if (isCoding) {
                     const codingSubmissionsMap = JSON.parse(att.codingSubmissions || "{}")
                     answeredCount = Object.keys(codingSubmissionsMap).length
+                    answeredQuestions = Object.keys(codingSubmissionsMap)
                 } else {
                     const answersMap = JSON.parse(att.answers || "{}")
                     answeredCount = Object.keys(answersMap).length
+                    answeredQuestions = Object.keys(answersMap)
                 }
 
                 liveList.push({
@@ -1287,7 +1366,9 @@ export async function adminGetExamSubmissionsAction(examId: string) {
                     warnings: att.warnings,
                     startedAt: att.startedAt,
                     answeredCount,
-                    totalQuestions
+                    totalQuestions,
+                    answeredQuestions,
+                    questions: att.exam.questions.map((q: any) => ({ id: q.id }))
                 })
             }
         }
@@ -1514,8 +1595,9 @@ export async function adminGetTypingLeaderboardAction(sessionId: string) {
                 }
             },
             orderBy: [
+                { progressPercentage: "desc" },
                 { wpm: "desc" },
-                { progressPercentage: "desc" }
+                { accuracy: "desc" }
             ]
         })
 

@@ -299,13 +299,14 @@ export async function getStudentTasks() {
 
         const dbStudent = await client.student.findUnique({
             where: { id: student.id },
-            select: { isAllowedInClass: true, isAssignedWFH: true }
+            select: { isAllowedInClass: true, allowedClassDate: true, isAssignedWFH: true }
         })
 
         if (!dbStudent) return { success: false, error: "Student profile not found" }
 
+        const dateStr = getLocalDateString()
         // Block task access completely if admin has not allowed check-in
-        const isAllowed = dbStudent.isAllowedInClass || dbStudent.isAssignedWFH
+        const isAllowed = (dbStudent.isAllowedInClass && dbStudent.allowedClassDate === dateStr) || dbStudent.isAssignedWFH
         if (!isAllowed) {
             return {
                 success: true,
@@ -733,17 +734,31 @@ export async function getStudentProfileDetails() {
         const student = await getStudentUser()
         if (!student) return { success: false, error: "Unauthorized" }
 
-        const profile = await client.student.findUnique({
+        const dbStudent = await client.student.findUnique({
             where: { id: student.id },
             select: {
                 id: true,
                 rollNo: true,
                 name: true,
                 isAllowedInClass: true,
+                allowedClassDate: true,
                 isAssignedWFH: true,
                 wfhDeadline: true
             }
         })
+        if (!dbStudent) return { success: false, error: "Student profile not found" }
+
+        const dateStr = getLocalDateString()
+        const isAllowedInClass = dbStudent.isAllowedInClass && dbStudent.allowedClassDate === dateStr
+
+        const profile = {
+            id: dbStudent.id,
+            rollNo: dbStudent.rollNo,
+            name: dbStudent.name,
+            isAllowedInClass,
+            isAssignedWFH: dbStudent.isAssignedWFH,
+            wfhDeadline: dbStudent.wfhDeadline
+        }
         return { success: true, profile }
     } catch (e: any) {
         return { success: false, error: e.message }
@@ -1301,6 +1316,54 @@ export async function studentUpdateExamAnswersAction(attemptId: string, answers:
             where: { id: attemptId },
             data: {
                 answers: JSON.stringify(answers)
+            }
+        })
+
+        return { success: true }
+    } catch (e: any) {
+        return { success: false, error: e.message }
+    }
+}
+
+/**
+ * Saves a student's coding solution draft to the database in real-time.
+ */
+export async function saveCodingDraftAction(
+    attemptId: string,
+    questionId: string,
+    code: string,
+    languageId: number
+) {
+    try {
+        const student = await getStudentUser()
+        if (!student) return { success: false, error: "Unauthorized" }
+
+        const attempt = await client.examAttempt.findUnique({
+            where: { id: attemptId }
+        })
+
+        if (!attempt || attempt.studentId !== student.id) {
+            return { success: false, error: "Attempt invalid or unauthorized" }
+        }
+
+        if (attempt.completedAt) {
+            return { success: false, error: "Exam is already completed" }
+        }
+
+        const submissionsMap = JSON.parse(attempt.codingSubmissions || "{}")
+        const existing = submissionsMap[questionId] || {}
+        submissionsMap[questionId] = {
+            code,
+            languageId,
+            marks: existing.marks ?? 0,
+            testCaseResults: existing.testCaseResults ?? [],
+            isDraft: true
+        }
+
+        await client.examAttempt.update({
+            where: { id: attemptId },
+            data: {
+                codingSubmissions: JSON.stringify(submissionsMap)
             }
         })
 

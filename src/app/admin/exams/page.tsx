@@ -180,7 +180,7 @@ export default function AdminExamsPage() {
                     setLiveAttempts(res.live || [])
                 }
             })
-        }, 3000)
+        }, 1500)
 
         return () => clearInterval(interval)
     }, [selectedSubmissionsExamId])
@@ -1199,6 +1199,31 @@ export default function AdminExamsPage() {
                                                     </p>
                                                 </div>
                                             </div>
+
+                                            {/* Live Questions Answered Map */}
+                                            {att.questions && att.questions.length > 0 && (
+                                                <div className="border-t border-themeGrey/40 pt-3 space-y-1.5">
+                                                    <p className="text-[9px] uppercase tracking-wider text-zinc-500 font-bold">Answered Map</p>
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {att.questions.map((q: any, idx: number) => {
+                                                            const isAnswered = att.answeredQuestions?.includes(q.id)
+                                                            return (
+                                                                <div
+                                                                    key={q.id}
+                                                                    className={`w-5 h-5 flex items-center justify-center rounded text-[9px] font-bold border transition-all ${
+                                                                        isAnswered
+                                                                            ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30 font-extrabold"
+                                                                            : "bg-zinc-900 text-zinc-600 border-zinc-800"
+                                                                    }`}
+                                                                    title={`Question ${idx + 1}: ${isAnswered ? "Answered" : "Unanswered"}`}
+                                                                >
+                                                                    {idx + 1}
+                                                                </div>
+                                                            )
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            )}
 
                                             <div className="text-[10px] text-zinc-500 border-t border-themeGrey/40 pt-3 flex justify-between items-center">
                                                 <span>Started: {new Date(att.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>

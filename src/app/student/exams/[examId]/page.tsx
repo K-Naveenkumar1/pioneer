@@ -10,7 +10,8 @@ import {
     Clock,
     Flag,
     RefreshCw,
-    ShieldAlert
+    ShieldAlert,
+    X
 } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
 import { useEffect, useRef, useState, useTransition } from "react"
@@ -103,7 +104,7 @@ export default function LockdownExamPage() {
         }
     }, [])
 
-    // Load offline cached details if exists
+    // Load offline cached details / drafts if exists
     useEffect(() => {
         if (typeof window !== "undefined" && attemptId) {
             const cached = localStorage.getItem(`pioneer_offline_exam_${attemptId}`)
@@ -113,6 +114,14 @@ export default function LockdownExamPage() {
                     const parsed = JSON.parse(cached)
                     setAnswers(parsed.answers || {})
                 } catch (e) {}
+            } else {
+                const draft = localStorage.getItem(`pioneer_exam_answers_draft_${attemptId}`)
+                if (draft) {
+                    try {
+                        const parsed = JSON.parse(draft)
+                        setAnswers(prev => ({ ...prev, ...parsed }))
+                    } catch (e) {}
+                }
             }
         }
     }, [attemptId])
@@ -167,6 +176,14 @@ export default function LockdownExamPage() {
                     setQuestions(res.questions || [])
                     setDurationMinutes(res.duration || 60)
 
+                    // Cache successfully fetched details
+                    localStorage.setItem(`pioneer_exam_details_${attemptId}`, JSON.stringify({
+                        examTitle: res.examTitle || "",
+                        questions: res.questions || [],
+                        duration: res.duration || 60,
+                        startedAt: res.startedAt
+                    }))
+
                     if (res.isCompleted) {
                         setCompleted(true)
                         setResults({
@@ -195,6 +212,17 @@ export default function LockdownExamPage() {
                         handleAutoSubmit()
                     }
 
+                    // Recover saved draft answers from localStorage if any
+                    const draft = localStorage.getItem(`pioneer_exam_answers_draft_${attemptId}`)
+                    if (draft) {
+                        try {
+                            const parsed = JSON.parse(draft)
+                            setAnswers(prev => ({ ...prev, ...parsed, ...res.studentAnswers }))
+                        } catch (e) {}
+                    } else if (res.studentAnswers) {
+                        setAnswers(res.studentAnswers)
+                    }
+
                     setLoading(false)
                 } else {
                     toast.error(res.error || "Failed to load exam session")
@@ -202,6 +230,37 @@ export default function LockdownExamPage() {
                 }
             } catch (err) {
                 console.error("Error loading exam details:", err)
+                
+                // Fallback to offline cached details
+                const cachedDetails = localStorage.getItem(`pioneer_exam_details_${attemptId}`)
+                if (cachedDetails) {
+                    try {
+                        const parsed = JSON.parse(cachedDetails)
+                        setExamTitle(parsed.examTitle || "")
+                        setQuestions(parsed.questions || [])
+                        setDurationMinutes(parsed.duration || 60)
+                        setStartedAt(parsed.startedAt ? new Date(parsed.startedAt) : new Date())
+                        
+                        // Calc remaining time
+                        const startTime = parsed.startedAt ? new Date(parsed.startedAt).getTime() : new Date().getTime()
+                        const durationMs = (parsed.duration || 60) * 60 * 1000
+                        const now = new Date().getTime()
+                        const timeLeftSecs = Math.max(0, Math.floor((startTime + durationMs - now) / 1000))
+                        setSecondsLeft(timeLeftSecs)
+
+                        const draft = localStorage.getItem(`pioneer_exam_answers_draft_${attemptId}`)
+                        if (draft) {
+                            setAnswers(JSON.parse(draft))
+                        }
+
+                        toast.info("Offline mode: loaded exam details from browser storage.")
+                        setLoading(false)
+                        return
+                    } catch (e) {
+                        console.error("Failed to parse cached details:", e)
+                    }
+                }
+
                 setLoading(false)
             }
         }
@@ -366,6 +425,12 @@ export default function LockdownExamPage() {
 
     // 4. Trigger Warning & Check termination limits
     const triggerWarning = async (reason: string) => {
+        // Bypass lockdown warnings if offline to prevent OS/browser connection dialogs from terminating the exam
+        if (typeof window !== "undefined" && !navigator.onLine) {
+            console.log("Bypassing lockdown warning since student is offline:", reason)
+            return
+        }
+
         if (completed || isOfflinePending) return
 
         const now = Date.now()
@@ -489,6 +554,9 @@ export default function LockdownExamPage() {
         }
         setAnswers(updatedAnswers)
 
+        // Save draft answers to local storage immediately
+        localStorage.setItem(`pioneer_exam_answers_draft_${attemptId}`, JSON.stringify(updatedAnswers))
+
         if (attemptId) {
             studentUpdateExamAnswersAction(attemptId, updatedAnswers).catch(err => {
                 console.error("Failed to persist answers immediately:", err)
@@ -593,41 +661,51 @@ export default function LockdownExamPage() {
     // Completion View
     if (completed) {
         return (
-            <div className="min-h-screen bg-black text-white flex items-center justify-center p-6 md:p-12 overflow-y-auto">
-                <div className="w-full max-w-4xl p-6 md:p-8 bg-zinc-900/80 border border-zinc-800 rounded-3xl space-y-8 shadow-2xl backdrop-blur-md">
+            <div className="fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-6 md:p-12 overflow-y-auto backdrop-blur-sm animate-fade-in">
+                <div className="w-full max-w-4xl p-6 md:p-8 bg-zinc-900/90 border border-zinc-800 rounded-3xl space-y-6 shadow-2xl relative my-auto max-h-[90vh] flex flex-col overflow-hidden animate-scale-up">
+                    
+                    {/* Close Button */}
+                    <button 
+                        onClick={() => router.push("/student/exams")}
+                        className="absolute top-4 right-4 p-2 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 rounded-full text-zinc-400 hover:text-white transition-all z-10"
+                        title="Close Review"
+                    >
+                        <X size={16} />
+                    </button>
+
                     {isPending ? (
-                        <div className="text-center py-8">
+                        <div className="text-center py-8 flex-1 flex flex-col items-center justify-center">
                             <span className="animate-spin rounded-full h-8 w-8 border-b-2 border-white inline-block"></span>
                             <p className="text-sm text-zinc-500 mt-4">Grading your exam attempt...</p>
                         </div>
                     ) : results ? (
-                        <div className="space-y-8">
+                        <div className="space-y-6 flex-1 flex flex-col overflow-hidden">
                             {/* Summary Card */}
-                            <div className="flex flex-col md:flex-row items-center justify-between gap-6 bg-zinc-950/40 p-6 border border-zinc-800/40 rounded-2xl">
+                            <div className="flex flex-col md:flex-row items-center justify-between gap-6 bg-zinc-950/40 p-5 border border-zinc-800/40 rounded-2xl shrink-0">
                                 <div className="flex items-center gap-4 text-left">
                                     <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl">
-                                        <Award size={32} />
+                                        <Award size={28} />
                                     </div>
                                     <div>
-                                        <h2 className="text-xl font-bold text-white tracking-tight">Exam Review: {examTitle}</h2>
-                                        <p className="text-xs text-zinc-500">Review your questions and graded answers below.</p>
+                                        <h2 className="text-lg font-bold text-white tracking-tight">Exam Review: {examTitle}</h2>
+                                        <p className="text-[11px] text-zinc-500">Review your questions and graded answers below.</p>
                                     </div>
                                 </div>
 
-                                <div className="flex gap-4 items-center">
-                                    <div className="bg-zinc-900/60 px-5 py-3 border border-zinc-800/60 rounded-xl text-center min-w-[100px]">
-                                        <p className="text-[10px] text-zinc-500 uppercase font-semibold">Percentage</p>
-                                        <p className="text-2xl font-extrabold text-white mt-0.5">{results.score}%</p>
+                                <div className="flex gap-3 items-center">
+                                    <div className="bg-zinc-900/60 px-4 py-2 border border-zinc-800/60 rounded-xl text-center min-w-[90px]">
+                                        <p className="text-[9px] text-zinc-500 uppercase font-semibold">Percentage</p>
+                                        <p className="text-lg font-extrabold text-white mt-0.5">{results.score}%</p>
                                     </div>
-                                    <div className="bg-zinc-900/60 px-5 py-3 border border-zinc-800/60 rounded-xl text-center min-w-[100px]">
-                                        <p className="text-[10px] text-zinc-500 uppercase font-semibold">Marks</p>
-                                        <p className="text-2xl font-extrabold text-white mt-0.5">
+                                    <div className="bg-zinc-900/60 px-4 py-2 border border-zinc-800/60 rounded-xl text-center min-w-[90px]">
+                                        <p className="text-[9px] text-zinc-500 uppercase font-semibold">Marks</p>
+                                        <p className="text-lg font-extrabold text-white mt-0.5">
                                             {results.correctCount} / {results.totalQuestions}
                                         </p>
                                     </div>
                                     <Button
                                         onClick={() => router.push("/student/exams")}
-                                        className="bg-white hover:bg-zinc-200 text-black font-semibold rounded-xl px-6 py-5"
+                                        className="bg-white hover:bg-zinc-200 text-black font-semibold rounded-xl px-5 h-10 text-xs shrink-0"
                                     >
                                         Return to Portal
                                     </Button>
@@ -635,44 +713,44 @@ export default function LockdownExamPage() {
                             </div>
 
                             {/* Detailed Answers Review */}
-                            <div className="space-y-6">
-                                <h3 className="text-lg font-bold text-white border-b border-zinc-800 pb-2">Questions & Answers Detail</h3>
-                                <div className="space-y-6 max-h-[600px] overflow-y-auto pr-2">
+                            <div className="space-y-4 flex-1 flex flex-col overflow-hidden">
+                                <h3 className="text-base font-bold text-white border-b border-zinc-800 pb-2 shrink-0">Questions & Answers Detail</h3>
+                                <div className="space-y-4 overflow-y-auto pr-2 flex-1">
                                     {questions.map((q: any, idx: number) => {
                                         const studentAns = answers[q.id] || ""
                                         const correctAns = q.correctAnswer || ""
                                         const isCorrect = studentAns.trim().toUpperCase() === correctAns.trim().toUpperCase()
 
                                         return (
-                                            <div key={q.id} className="p-5 bg-zinc-950/20 border border-zinc-800/80 rounded-2xl space-y-4">
+                                            <div key={q.id} className="p-4 bg-zinc-950/20 border border-zinc-800/80 rounded-2xl space-y-3">
                                                 <div className="flex items-start justify-between gap-4">
                                                     <div>
-                                                        <span className="text-[10px] uppercase font-bold text-zinc-500 block mb-1">
+                                                        <span className="text-[9px] uppercase font-bold text-zinc-500 block mb-1">
                                                             Question {idx + 1}
                                                         </span>
-                                                        <h4 className="text-sm font-semibold text-white leading-relaxed">
+                                                        <h4 className="text-xs font-semibold text-white leading-relaxed">
                                                             {q.questionText}
                                                         </h4>
                                                     </div>
                                                     {studentAns ? (
                                                         isCorrect ? (
-                                                            <span className="shrink-0 flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-2.5 py-1 rounded-lg">
+                                                            <span className="shrink-0 flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-2 py-0.5 rounded-lg">
                                                                 ✓ Correct
                                                             </span>
                                                         ) : (
-                                                            <span className="shrink-0 flex items-center gap-1 text-[11px] font-bold text-rose-400 bg-rose-400/10 border border-rose-400/20 px-2.5 py-1 rounded-lg">
+                                                            <span className="shrink-0 flex items-center gap-1 text-[10px] font-bold text-rose-400 bg-rose-400/10 border border-rose-400/20 px-2 py-0.5 rounded-lg">
                                                                 ✗ Incorrect
                                                             </span>
                                                         )
                                                     ) : (
-                                                        <span className="shrink-0 flex items-center gap-1 text-[11px] font-bold text-zinc-400 bg-zinc-800/30 border border-zinc-800/40 px-2.5 py-1 rounded-lg">
+                                                        <span className="shrink-0 flex items-center gap-1 text-[10px] font-bold text-zinc-400 bg-zinc-800/30 border border-zinc-800/40 px-2 py-0.5 rounded-lg">
                                                             Unanswered
                                                         </span>
                                                     )}
                                                 </div>
 
                                                 {/* Options List */}
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
                                                     {[
                                                         { key: "A", label: q.optionA },
                                                         { key: "B", label: q.optionB },
@@ -699,25 +777,25 @@ export default function LockdownExamPage() {
                                                         return (
                                                             <div
                                                                 key={opt.key}
-                                                                className={`p-3 border rounded-xl flex items-center gap-3 text-xs ${borderStyle} ${bgStyle} ${textStyle}`}
+                                                                className={`p-2.5 border rounded-xl flex items-center gap-2.5 text-[11px] ${borderStyle} ${bgStyle} ${textStyle}`}
                                                             >
-                                                                <span className="w-5 h-5 rounded-md bg-black/40 flex items-center justify-center font-bold text-[10px]">
+                                                                <span className="w-4 h-4 rounded bg-black/40 flex items-center justify-center font-bold text-[9px]">
                                                                     {opt.key}
                                                                 </span>
                                                                 <span>{opt.label}</span>
                                                                 {isRight && (
-                                                                    <span className="ml-auto text-[9px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded font-bold uppercase">
-                                                                        Correct Answer
+                                                                    <span className="ml-auto text-[8px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1 py-0.5 rounded font-bold uppercase">
+                                                                        Correct
                                                                     </span>
                                                                 )}
                                                                 {isSelected && !isRight && (
-                                                                    <span className="ml-auto text-[9px] bg-rose-500/20 text-rose-400 border border-rose-500/30 px-1.5 py-0.5 rounded font-bold uppercase">
+                                                                    <span className="ml-auto text-[8px] bg-rose-500/20 text-rose-400 border border-rose-500/30 px-1 py-0.5 rounded font-bold uppercase">
                                                                         Your Answer
                                                                     </span>
                                                                 )}
                                                                 {isSelected && isRight && (
-                                                                    <span className="ml-auto text-[9px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded font-bold uppercase">
-                                                                        Correct & Selected
+                                                                    <span className="ml-auto text-[8px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1 py-0.5 rounded font-bold uppercase">
+                                                                        Selected
                                                                     </span>
                                                                 )}
                                                             </div>
