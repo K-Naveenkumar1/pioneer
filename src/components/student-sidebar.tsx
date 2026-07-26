@@ -35,7 +35,8 @@ import {
   LogOut,
   MessageSquare,
   MoreVertical,
-  Trophy
+  Trophy,
+  Library
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
@@ -84,6 +85,11 @@ const data = {
           title: "Digital Notes",
           url: "/student/notes",
           icon: FileText,
+        },
+        {
+          title: "Course Materials",
+          url: "/student/materials",
+          icon: Library,
         },
         {
           title: "Tasks",
