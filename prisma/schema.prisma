@@ -367,3 +367,27 @@ model TypingGameRun {
   @@index([studentId])
 }
 
+model CourseMaterial {
+  id          String               @id @default(uuid())
+  title       String
+  description String?              @db.Text
+  fileUrl     String?              // Relative path to uploaded file in public/uploads/
+  fileName    String?              // Original filename of uploaded file
+  isLocked    Boolean              @default(false)
+  createdAt   DateTime             @default(now())
+  pages       CourseMaterialPage[]
+}
+
+model CourseMaterialPage {
+  id               String         @id @default(uuid())
+  pageNumber       Int
+  title            String?
+  content          String?        @db.Text
+  imageUrl         String?        // Relative path to uploaded page image in public/uploads/
+  isLocked         Boolean        @default(false)
+  courseMaterialId String
+  courseMaterial   CourseMaterial @relation(fields: [courseMaterialId], references: [id], onDelete: Cascade)
+
+  @@index([courseMaterialId])
+}
+

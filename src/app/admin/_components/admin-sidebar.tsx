@@ -13,7 +13,8 @@ import {
     MessageSquare,
     Keyboard,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    FileText
 } from "lucide-react"
 import AdminLogoutButton from "./logout-button"
 
@@ -28,6 +29,7 @@ const NAV_ITEMS = [
     { href: "/admin/students", label: "Students", icon: Users },
     { href: "/admin/tasks", label: "Tasks & Submissions", icon: CheckSquare },
     { href: "/admin/exams", label: "Exams (MCQ)", icon: BookOpen },
+    { href: "/admin/materials", label: "Course Materials", icon: FileText },
     { href: "/admin/attendance", label: "Attendance Logs", icon: Calendar },
     { href: "/admin/leaderboard", label: "Leaderboard", icon: Trophy },
     { href: "/admin/chat", label: "Doubts Chat", icon: MessageSquare },

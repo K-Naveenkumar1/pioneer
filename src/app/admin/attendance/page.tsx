@@ -38,6 +38,25 @@ export default function AdminAttendancePage() {
     // Action transition state
     const [isPendingAction, startTransitionAction] = useTransition()
 
+    // Sorting & display states
+    const [sortBy, setSortBy] = useState<"rollNo" | "name">("rollNo")
+    const [rollNoFirst, setRollNoFirst] = useState(true)
+
+    // Memoized sorting of reports
+    const sortedReport = React.useMemo(() => {
+        return [...report].sort((a, b) => {
+            if (sortBy === "rollNo") {
+                const rollA = a.rollNo || ""
+                const rollB = b.rollNo || ""
+                return rollA.localeCompare(rollB, undefined, { numeric: true, sensitivity: 'base' })
+            } else {
+                const nameA = a.name || ""
+                const nameB = b.name || ""
+                return nameA.localeCompare(nameB, undefined, { sensitivity: 'base' })
+            }
+        })
+    }, [report, sortBy])
+
     const handleGiveAccess = () => {
         if (!selectedClassId) {
             toast.error("Please select a class first.")
@@ -247,7 +266,44 @@ export default function AdminAttendancePage() {
                     />
                 </div>
 
+                <div>
+                    <label className="block text-xs font-semibold text-themeTextGrey uppercase mb-2">Sort By</label>
+                    <div className="flex flex-col gap-2 p-3 bg-black/40 border border-themeGrey rounded-xl text-xs min-h-[48px] justify-center">
+                        <label className="flex items-center gap-2 cursor-pointer select-none text-themeTextWhite hover:text-white">
+                            <input 
+                                type="checkbox"
+                                checked={sortBy === "rollNo"}
+                                onChange={() => setSortBy("rollNo")}
+                                className="rounded border-zinc-700 bg-zinc-900 text-indigo-600 focus:ring-0 focus:ring-offset-0 w-4 h-4 cursor-pointer"
+                            />
+                            <span>Roll Number</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer select-none text-themeTextWhite hover:text-white">
+                            <input 
+                                type="checkbox"
+                                checked={sortBy === "name"}
+                                onChange={() => setSortBy("name")}
+                                className="rounded border-zinc-700 bg-zinc-900 text-indigo-600 focus:ring-0 focus:ring-offset-0 w-4 h-4 cursor-pointer"
+                            />
+                            <span>Alphabetical Order</span>
+                        </label>
+                    </div>
+                </div>
 
+                <div>
+                    <label className="block text-xs font-semibold text-themeTextGrey uppercase mb-2">Display Options</label>
+                    <div className="flex flex-col gap-2 p-3 bg-black/40 border border-themeGrey rounded-xl text-xs min-h-[48px] justify-center">
+                        <label className="flex items-center gap-2 cursor-pointer select-none text-themeTextWhite hover:text-white">
+                            <input 
+                                type="checkbox"
+                                checked={rollNoFirst}
+                                onChange={(e) => setRollNoFirst(e.target.checked)}
+                                className="rounded border-zinc-700 bg-zinc-900 text-indigo-600 focus:ring-0 focus:ring-offset-0 w-4 h-4 cursor-pointer"
+                            />
+                            <span>Show Roll No First</span>
+                        </label>
+                    </div>
+                </div>
             </div>
 
             {/* Attendance List */}
@@ -302,14 +358,23 @@ export default function AdminAttendancePage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {report.map((row: any) => (
+                                {sortedReport.map((row: any) => (
                                     <tr 
                                         key={row.studentId} 
                                         className="border-b border-themeGrey/40 hover:bg-white/[0.01] transition-all text-themeTextWhite font-medium"
                                     >
                                         <td className="p-4">
-                                            <div className="font-semibold text-white">{row.name}</div>
-                                            <div className="text-[10px] text-zinc-500 font-mono mt-0.5">{row.rollNo}</div>
+                                            {rollNoFirst ? (
+                                                <>
+                                                    <div className="font-mono text-xs font-semibold text-white">{row.rollNo}</div>
+                                                    <div className="text-[10px] text-zinc-500 font-medium mt-0.5">{row.name}</div>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <div className="font-semibold text-white">{row.name}</div>
+                                                    <div className="text-[10px] text-zinc-500 font-mono mt-0.5">{row.rollNo}</div>
+                                                </>
+                                            )}
                                         </td>
                                         <td className="p-4">{row.department}</td>
                                         <td className="p-4 font-mono font-bold text-sm">
