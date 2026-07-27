@@ -840,7 +840,7 @@ export default function AdminExamsPage() {
                                                     </button>
                                                 </div>
 
-                                                <h4 className="font-bold text-sm text-white">{q.questionText}</h4>
+                                                <h4 className="font-bold text-sm text-white whitespace-pre-wrap">{q.questionText}</h4>
 
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 text-xs text-themeTextGrey border-t border-themeGrey/30 pt-3">
                                                     <p className={q.correctAnswer === "A" ? "text-emerald-400 font-semibold" : ""}>A) {q.optionA}</p>
@@ -1365,12 +1365,11 @@ export default function AdminExamsPage() {
                                                         </button>
                                                     </div>
 
-                                                    <input
-                                                        type="text"
+                                                    <textarea
                                                         value={q.questionText}
                                                         placeholder="Question text"
                                                         onChange={(e) => handleEditQuestionField(idx, "questionText", e.target.value)}
-                                                        className="w-full px-3 py-2 bg-black border border-themeGrey/60 rounded-lg text-xs text-white placeholder-zinc-600 focus:outline-none"
+                                                        className="w-full min-h-[60px] px-3 py-2 bg-black border border-themeGrey/60 rounded-lg text-xs text-white placeholder-zinc-600 focus:outline-none resize-y"
                                                     />
 
                                                     <div className="grid grid-cols-2 gap-2 text-xs">

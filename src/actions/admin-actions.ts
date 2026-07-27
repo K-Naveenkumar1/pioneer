@@ -368,13 +368,21 @@ export async function parseDocxQuestionsAction(base64Data: string) {
         const parseRes = await mammoth.extractRawText({ buffer })
         const text = parseRes.value
 
-        const lines = text.split(/\r?\n/).map(line => line.trim()).filter(line => line.length > 0)
+        const rawLines = text.split(/\r?\n/)
         const questions: any[] = []
         let currentQ: any = null
         let expectingNewQuestion = true
 
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i]
+        for (let i = 0; i < rawLines.length; i++) {
+            const rawLine = rawLines[i]
+            const line = rawLine.trim()
+
+            if (line.length === 0) {
+                if (currentQ && !currentQ.optionA) {
+                    currentQ.questionText += "\n"
+                }
+                continue
+            }
 
             // Correct Answer pattern (supports: "Answer: B", "Correct Answer: B", "Ans: B", "Answer Key: B", "Correct: B", "Answer - B", etc.)
             const ansMatch = line.match(/^(?:Correct\s+Answer|Answer\s+Key|Answer|Correct|Ans|Key)[\s:-]+([A-D])/i)
@@ -457,7 +465,7 @@ export async function parseDocxQuestionsAction(base64Data: string) {
             } else {
                 // Multiline question description append
                 if (currentQ) {
-                    currentQ.questionText += " " + line
+                    currentQ.questionText += "\n" + rawLine
                 }
             }
         }

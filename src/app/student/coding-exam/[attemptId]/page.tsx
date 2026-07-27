@@ -991,7 +991,7 @@ export default function LockdownCodingExamPage() {
                                     
                                     <div className="space-y-1">
                                         <p className="font-semibold text-zinc-200">Problem Description:</p>
-                                        <p className="whitespace-pre-line text-zinc-400 text-xs">{currentQuestion.questionText}</p>
+                                        <p className="whitespace-pre-wrap text-zinc-400 text-xs">{currentQuestion.questionText}</p>
                                     </div>
 
                                     {currentQuestion.constraints && (

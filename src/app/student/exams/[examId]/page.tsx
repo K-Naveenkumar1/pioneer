@@ -728,7 +728,7 @@ export default function LockdownExamPage() {
                                                         <span className="text-[9px] uppercase font-bold text-zinc-500 block mb-1">
                                                             Question {idx + 1}
                                                         </span>
-                                                        <h4 className="text-xs font-semibold text-white leading-relaxed">
+                                                        <h4 className="text-xs font-semibold text-white leading-relaxed whitespace-pre-wrap">
                                                             {q.questionText}
                                                         </h4>
                                                     </div>
@@ -902,7 +902,7 @@ export default function LockdownExamPage() {
 
                             {/* Question Text */}
                             <div className="space-y-4">
-                                <h3 className="text-xl md:text-2xl font-extrabold text-white leading-relaxed">
+                                <h3 className="text-xl md:text-2xl font-extrabold text-white leading-relaxed whitespace-pre-wrap">
                                     {cleanQuestionText(activeQuestion.questionText)}
                                 </h3>
                             </div>
