@@ -893,7 +893,7 @@ export default function LockdownExamPage() {
                 <main className="flex-1 p-4 flex flex-col overflow-hidden">
                     {/* Upper Card: Question & MCQ options */}
                     <div className="flex-1 bg-zinc-900/80 border border-zinc-800 rounded-2xl p-8 overflow-y-auto modern-scrollbar flex flex-col justify-between backdrop-blur-md shadow-lg">
-                        <div className="space-y-8 flex-1 flex flex-col justify-center max-w-4xl mx-auto w-full">
+                        <div className="space-y-5 md:space-y-6 flex-1 flex flex-col justify-center max-w-4xl mx-auto w-full">
                             <div className="flex justify-between items-start gap-4">
                                 <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider bg-zinc-900 border border-zinc-800 px-3 py-1 rounded-lg">
                                     Question {currentIdx + 1} of {questions.length}
@@ -901,8 +901,12 @@ export default function LockdownExamPage() {
                             </div>
 
                             {/* Question Text */}
-                            <div className="space-y-4">
-                                <h3 className="text-xl md:text-2xl font-extrabold text-white leading-relaxed whitespace-pre-wrap">
+                            <div className="max-h-[25vh] overflow-y-auto modern-scrollbar pr-2 select-text">
+                                <h3 className={`leading-relaxed whitespace-pre-wrap text-white ${
+                                    activeQuestion.questionText.length > 120 || activeQuestion.questionText.includes('\n')
+                                        ? "text-sm md:text-base font-semibold"
+                                        : "text-lg md:text-xl font-bold"
+                                }`}>
                                     {cleanQuestionText(activeQuestion.questionText)}
                                 </h3>
                             </div>
