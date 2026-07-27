@@ -1126,7 +1126,7 @@ export default function AdminExamsPage() {
                                             <div className="flex flex-wrap items-center gap-6">
                                                 <div className="text-center min-w-[70px]">
                                                     <p className="text-[10px] text-zinc-500 uppercase">Score</p>
-                                                    <p className="text-lg font-extrabold text-emerald-400 mt-0.5">{att.score}%</p>
+                                                    <p className="text-lg font-extrabold text-emerald-400 mt-0.5">{att.score} pts</p>
                                                 </div>
                                                 <div className="text-center min-w-[70px]">
                                                     <p className="text-[10px] text-zinc-500 uppercase">Marks</p>

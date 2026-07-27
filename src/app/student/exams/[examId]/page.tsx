@@ -693,13 +693,15 @@ export default function LockdownExamPage() {
 
                                 <div className="flex gap-4 items-center justify-center w-full max-w-sm mb-6">
                                     <div className="flex-1 bg-zinc-900/60 px-4 py-3 border border-zinc-800/60 rounded-xl text-center">
-                                        <p className="text-[10px] text-zinc-500 uppercase font-semibold">Percentage</p>
-                                        <p className="text-2xl font-extrabold text-white mt-1">{results.score}%</p>
+                                        <p className="text-[10px] text-zinc-500 uppercase font-semibold">Marks Obtained</p>
+                                        <p className="text-2xl font-extrabold text-white mt-1">
+                                            {results.score} / {results.totalQuestions}
+                                        </p>
                                     </div>
                                     <div className="flex-1 bg-zinc-900/60 px-4 py-3 border border-zinc-800/60 rounded-xl text-center">
-                                        <p className="text-[10px] text-zinc-500 uppercase font-semibold">Marks</p>
+                                        <p className="text-[10px] text-zinc-500 uppercase font-semibold">Correct Answers</p>
                                         <p className="text-2xl font-extrabold text-white mt-1">
-                                            {results.correctCount} / {results.totalQuestions}
+                                            {results.correctCount}
                                         </p>
                                     </div>
                                 </div>

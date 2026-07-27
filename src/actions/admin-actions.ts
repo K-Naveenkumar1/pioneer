@@ -1438,12 +1438,11 @@ export async function adminForceSubmitExamAttemptAction(attemptId: string) {
         if (attempt.exam.type === "CODING") {
             const codingSubmissionsMap = JSON.parse(attempt.codingSubmissions || "{}")
             let earned = 0
-            const total = questions.length * 100
             questions.forEach(q => {
                 const sub = codingSubmissionsMap[q.id]
                 if (sub) earned += sub.marks || 0
             })
-            finalScore = total > 0 ? Math.round((earned / total) * 100) : 0
+            finalScore = earned
         } else {
             const answersMap = JSON.parse(attempt.answers || "{}")
             let correctCount = 0
@@ -1453,7 +1452,7 @@ export async function adminForceSubmitExamAttemptAction(attemptId: string) {
                     correctCount++
                 }
             })
-            finalScore = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0
+            finalScore = correctCount
         }
 
         await client.examAttempt.update({
@@ -1694,7 +1693,7 @@ export async function adminGetLeaderboardAction(classId: string) {
                 }
             })
 
-            const totalScore = completedTasksCount * 10
+            const totalScore = (completedTasksCount * 10) + examScoreSum
 
             return {
                 id: c.id,

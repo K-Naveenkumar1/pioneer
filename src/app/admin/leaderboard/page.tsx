@@ -69,7 +69,7 @@ export default function AdminLeaderboardPage() {
                     <h1 className="text-3xl font-bold tracking-tight text-white flex items-center gap-2">
                         <Trophy className="text-white animate-pulse" /> Class Leaderboard
                     </h1>
-                    <p className="text-sm text-themeTextGrey">View student ranks and tasks completed by class. Ranks are based on task marks only.</p>
+                    <p className="text-sm text-themeTextGrey">View student ranks and scores by class. Ranks are calculated by approved task marks (10 pts each) and exam scores.</p>
                 </div>
 
                 <div className="flex items-center gap-3">
@@ -111,7 +111,7 @@ export default function AdminLeaderboardPage() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end pt-4">
                         {/* 2nd Place */}
                         {podium[1] && (
-                            <GlassCard className="p-6 border border-zinc-800/80 bg-zinc-950/40 text-center space-y-4 order-2 md:order-1 min-h-[220px] flex flex-col justify-end relative">
+                            <GlassCard className="p-6 border border-zinc-800/80 bg-zinc-950/40 text-center space-y-4 order-2 md:order-1 min-h-[240px] flex flex-col justify-end relative">
                                 <div className="absolute top-4 left-4 text-xs font-bold text-zinc-400">#2</div>
                                 <div className="w-12 h-12 rounded-full bg-zinc-300/10 border border-zinc-300/20 text-zinc-300 font-bold text-lg flex items-center justify-center mx-auto shadow-md">
                                     2
@@ -120,16 +120,20 @@ export default function AdminLeaderboardPage() {
                                     <h3 className="font-bold text-white text-base truncate">{podium[1].name}</h3>
                                     <p className="text-[10px] text-zinc-500 font-mono mt-0.5">Roll: {podium[1].rollNo}</p>
                                 </div>
-                                <div className="pt-2 border-t border-zinc-800/40">
+                                <div className="pt-2 border-t border-zinc-800/40 space-y-1">
                                     <p className="text-lg font-black text-white">{podium[1].totalScore} pts</p>
-                                    <p className="text-[9px] text-zinc-500">{podium[1].tasksCompleted} tasks completed</p>
+                                    <div className="flex justify-center gap-1.5 text-[10px] text-zinc-400 font-medium">
+                                        <span>Tasks: {podium[1].tasksCompleted * 10} pts</span>
+                                        <span>•</span>
+                                        <span>Exams: {podium[1].examScoreSum} pts</span>
+                                    </div>
                                 </div>
                             </GlassCard>
                         )}
 
                         {/* 1st Place */}
                         {podium[0] && (
-                            <GlassCard className="p-8 border border-amber-500/30 bg-amber-500/5 text-center space-y-4 order-1 md:order-2 min-h-[260px] flex flex-col justify-end relative shadow-2xl">
+                            <GlassCard className="p-8 border border-amber-500/30 bg-amber-500/5 text-center space-y-4 order-1 md:order-2 min-h-[280px] flex flex-col justify-end relative shadow-2xl">
                                 <div className="absolute top-4 left-4 text-xs font-bold text-amber-400">#1</div>
                                 <Trophy className="absolute top-4 right-4 text-amber-400 animate-bounce size-6" />
                                 <div className="w-16 h-16 rounded-full bg-amber-400/10 border border-amber-400/20 text-amber-400 font-bold text-2xl flex items-center justify-center mx-auto shadow-lg">
@@ -139,16 +143,20 @@ export default function AdminLeaderboardPage() {
                                     <h3 className="font-extrabold text-white text-lg truncate">{podium[0].name}</h3>
                                     <p className="text-[10px] text-amber-300/60 font-mono mt-0.5">Roll: {podium[0].rollNo}</p>
                                 </div>
-                                <div className="pt-2 border-t border-amber-500/20">
+                                <div className="pt-2 border-t border-amber-500/20 space-y-1">
                                     <p className="text-2xl font-black text-amber-400">{podium[0].totalScore} pts</p>
-                                    <p className="text-[10px] text-amber-300/80">{podium[0].tasksCompleted} tasks completed</p>
+                                    <div className="flex justify-center gap-1.5 text-[10px] text-amber-300/80 font-medium">
+                                        <span>Tasks: {podium[0].tasksCompleted * 10} pts</span>
+                                        <span>•</span>
+                                        <span>Exams: {podium[0].examScoreSum} pts</span>
+                                    </div>
                                 </div>
                             </GlassCard>
                         )}
 
                         {/* 3rd Place */}
                         {podium[2] && (
-                            <GlassCard className="p-6 border border-zinc-800/80 bg-zinc-950/40 text-center space-y-4 order-3 min-h-[190px] flex flex-col justify-end relative">
+                            <GlassCard className="p-6 border border-zinc-800/80 bg-zinc-950/40 text-center space-y-4 order-3 min-h-[210px] flex flex-col justify-end relative">
                                 <div className="absolute top-4 left-4 text-xs font-bold text-orange-400">#3</div>
                                 <div className="w-10 h-10 rounded-full bg-orange-400/10 border border-orange-400/20 text-orange-400 font-bold text-base flex items-center justify-center mx-auto shadow-md">
                                     3
@@ -157,9 +165,13 @@ export default function AdminLeaderboardPage() {
                                     <h3 className="font-bold text-white text-base truncate">{podium[2].name}</h3>
                                     <p className="text-[10px] text-zinc-500 font-mono mt-0.5">Roll: {podium[2].rollNo}</p>
                                 </div>
-                                <div className="pt-2 border-t border-zinc-800/40">
+                                <div className="pt-2 border-t border-zinc-800/40 space-y-1">
                                     <p className="text-lg font-black text-white">{podium[2].totalScore} pts</p>
-                                    <p className="text-[9px] text-zinc-500">{podium[2].tasksCompleted} tasks completed</p>
+                                    <div className="flex justify-center gap-1.5 text-[10px] text-zinc-400 font-medium">
+                                        <span>Tasks: {podium[2].tasksCompleted * 10} pts</span>
+                                        <span>•</span>
+                                        <span>Exams: {podium[2].examScoreSum} pts</span>
+                                    </div>
                                 </div>
                             </GlassCard>
                         )}
@@ -175,7 +187,8 @@ export default function AdminLeaderboardPage() {
                                             <th className="p-4 pl-6 w-16">Rank</th>
                                             <th className="p-4">Student</th>
                                             <th className="p-4">Roll Number</th>
-                                            <th className="p-4">Tasks Completed</th>
+                                            <th className="p-4">Task Marks</th>
+                                            <th className="p-4">Exam Marks</th>
                                             <th className="p-4 text-right pr-6">Total Score</th>
                                         </tr>
                                     </thead>
@@ -185,13 +198,14 @@ export default function AdminLeaderboardPage() {
                                             return (
                                                 <tr 
                                                     key={player.id}
-                                                    className="border-b border-zinc-800/40 transition-all font-medium text-zinc-305 hover:bg-white/[0.01]"
+                                                    className="border-b border-zinc-800/40 transition-all font-medium text-zinc-300 hover:bg-white/[0.01]"
                                                 >
                                                     <td className="p-4 pl-6 font-bold">{actualRank}</td>
                                                     <td className="p-4 font-semibold text-white">{player.name}</td>
                                                     <td className="p-4 font-mono">{player.rollNo}</td>
-                                                    <td className="p-4">{player.tasksCompleted}</td>
-                                                    <td className="p-4 text-right pr-6 font-bold text-white">{player.totalScore} pts</td>
+                                                    <td className="p-4 font-mono">{player.tasksCompleted * 10} pts <span className="text-[10px] text-zinc-500 font-sans">({player.tasksCompleted} tasks)</span></td>
+                                                    <td className="p-4 font-mono text-zinc-300">{player.examScoreSum} pts</td>
+                                                    <td className="p-4 text-right pr-6 font-bold text-white font-mono">{player.totalScore} pts</td>
                                                 </tr>
                                             )
                                         })}

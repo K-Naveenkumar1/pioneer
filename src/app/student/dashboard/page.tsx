@@ -395,7 +395,7 @@ export default function StudentDashboard() {
                                                 <td className="py-3.5 px-2 text-zinc-500">{ex.duration} mins</td>
                                                 <td className="py-3.5 pl-2 text-right">
                                                     <span className="font-extrabold text-emerald-400 font-mono">
-                                                        {ex.score}%
+                                                        {ex.score} / {ex.type === "CODING" ? ex.totalQuestions * 100 : ex.totalQuestions}
                                                     </span>
                                                 </td>
                                             </tr>

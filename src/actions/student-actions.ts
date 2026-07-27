@@ -579,7 +579,7 @@ export async function submitExamAttemptAction(attemptId: string, answers: Record
             }
         })
 
-        const finalScore = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0
+        const finalScore = correctCount
 
         const updatedAttempt = await client.examAttempt.update({
             where: { id: attemptId },
@@ -986,7 +986,7 @@ export async function getStudentLeaderboardAction() {
                 }
             })
 
-            const totalScore = completedTasksCount * 10
+            const totalScore = (completedTasksCount * 10) + examScoreSum
 
             return {
                 id: c.id,
@@ -1180,8 +1180,8 @@ export async function submitCodingExamAction(attemptId: string) {
             }
         })
 
-        // Final score percentage
-        const finalScore = questions.length > 0 ? Math.round((totalMarks / (questions.length * 100)) * 100) : 0
+        // Final score marks
+        const finalScore = totalMarks
 
         await client.examAttempt.update({
             where: { id: attemptId },

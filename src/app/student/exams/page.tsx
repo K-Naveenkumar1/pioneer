@@ -122,7 +122,9 @@ export default function StudentExamsPage() {
                                         <Award size={18} className="text-emerald-400" />
                                         <div>
                                             <p className="text-xs text-themeTextGrey">Your Score</p>
-                                            <p className="text-sm font-bold text-white">{exam.score}%</p>
+                                            <p className="text-sm font-bold text-white">
+                                                {exam.score} / {exam.type === "CODING" ? exam.totalQuestions * 100 : exam.totalQuestions}
+                                            </p>
                                         </div>
                                     </div>
                                     <div className="flex flex-col items-end gap-1.5">
