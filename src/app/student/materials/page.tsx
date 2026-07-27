@@ -47,7 +47,7 @@ export default function StudentMaterialsPage() {
             return
         }
         if (!material.pages || material.pages.length === 0) {
-            toast.info("This material does not have any slides/pages to view yet.")
+            toast.info("This material does not have any pages to view yet.")
             return
         }
         setSelectedMaterial(material)
@@ -81,7 +81,7 @@ export default function StudentMaterialsPage() {
                     <h1 className="text-3xl font-bold tracking-tight text-white flex items-center gap-2">
                         <BookOpen size={28} /> Course Materials
                     </h1>
-                    <p className="text-sm text-themeTextGrey">Access learning resources, view lecture slides, and download materials uploaded by the instructor.</p>
+                    <p className="text-sm text-themeTextGrey">Access learning resources, view course pages, and download materials uploaded by the instructor.</p>
                 </div>
                 <button
                     onClick={loadMaterials}
@@ -168,7 +168,7 @@ export default function StudentMaterialsPage() {
                                             onClick={() => openViewer(material)}
                                             className="py-1.5 px-3 rounded-lg text-xs font-semibold bg-white hover:bg-zinc-200 text-black flex items-center gap-1"
                                         >
-                                            <Eye size={12} /> View Slides
+                                            <Eye size={12} /> View Pages
                                         </Button>
                                     )}
                                 </div>
@@ -186,7 +186,7 @@ export default function StudentMaterialsPage() {
                         {/* Modal Header */}
                         <div className="flex items-center justify-between border-b border-zinc-800 p-4 bg-zinc-900/40">
                             <div>
-                                <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">Student Slide Viewer</span>
+                                <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">Student Page Viewer</span>
                                 <h3 className="text-sm font-bold text-white truncate max-w-md md:max-w-xl">
                                     {selectedMaterial.title}
                                 </h3>
@@ -228,32 +228,33 @@ export default function StudentMaterialsPage() {
                                         : ""
                                 }`}
                             >
-                                {/* Slide Heading */}
+                                {/* Page Heading */}
                                 {activePage.title && (
                                     <h4 className="text-xl md:text-2xl font-bold text-white text-center border-b border-zinc-800 pb-3">
                                         {activePage.title}
                                     </h4>
                                 )}
 
-                                {/* Slide Image */}
+                                {/* Page Image */}
                                 {activePage.imageUrl && (
                                     <div className="border border-zinc-800 rounded-xl overflow-hidden bg-zinc-900/20 max-h-[40vh] flex items-center justify-center">
                                         <img
                                             src={activePage.imageUrl}
-                                            alt={activePage.title || "Slide Image"}
+                                            alt={activePage.title || "Page Image"}
                                             className="object-contain max-h-[40vh] w-full"
                                         />
                                     </div>
                                 )}
 
-                                {/* Slide Notes / Content */}
+                                {/* Page Content */}
                                 {activePage.content ? (
-                                    <div className="bg-zinc-950/80 border border-zinc-900/60 p-5 rounded-xl text-sm leading-relaxed text-zinc-300 font-normal whitespace-pre-wrap">
-                                        {activePage.content}
-                                    </div>
+                                    <div 
+                                        className="bg-zinc-950/80 border border-zinc-900/60 p-5 rounded-xl text-sm leading-relaxed text-zinc-300 font-normal whitespace-pre-wrap prose prose-invert max-w-none"
+                                        dangerouslySetInnerHTML={{ __html: activePage.content }}
+                                    />
                                 ) : (
                                     !activePage.imageUrl && (
-                                        <p className="text-zinc-500 text-center text-xs italic">No additional notes on this slide.</p>
+                                        <p className="text-zinc-500 text-center text-xs italic">No additional notes on this page.</p>
                                     )
                                 )}
                             </div>
@@ -271,7 +272,7 @@ export default function StudentMaterialsPage() {
                             </Button>
 
                             <span className="text-xs text-zinc-400 font-medium">
-                                Slide <strong className="text-white font-bold">{currentPageIndex + 1}</strong> of <strong className="text-white font-bold">{selectedMaterial.pages.length}</strong>
+                                Page <strong className="text-white font-bold">{currentPageIndex + 1}</strong> of <strong className="text-white font-bold">{selectedMaterial.pages.length}</strong>
                             </span>
 
                             <Button

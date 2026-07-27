@@ -27,7 +27,8 @@ import {
     adminUploadFileAction,
     adminAddPageAction,
     adminDeletePageAction,
-    adminToggleLockPageAction
+    adminToggleLockPageAction,
+    adminGeneratePagesFromAttachmentAction
 } from "@/actions/material-actions"
 
 export default function AdminMaterialsPage() {
@@ -50,6 +51,7 @@ export default function AdminMaterialsPage() {
     const [pageImage, setPageImage] = useState<File | null>(null)
     const [pageLocked, setPageLocked] = useState(false)
     const [uploadingPageImage, setUploadingPageImage] = useState(false)
+    const [isGeneratingPages, setIsGeneratingPages] = useState(false)
 
     useEffect(() => {
         loadMaterials()
@@ -132,6 +134,22 @@ export default function AdminMaterialsPage() {
                 toast.error(res.error || "Failed to delete course material")
             }
         })
+    }
+
+    const handleGeneratePagesFromAttachment = async () => {
+        if (!activeMaterial) return
+        if (!confirm("Are you sure you want to auto-generate pages from the uploaded Word Document? This will replace any existing manually added pages for this material.")) return
+
+        setIsGeneratingPages(true)
+        const res = await adminGeneratePagesFromAttachmentAction(activeMaterial.id)
+        setIsGeneratingPages(false)
+
+        if (res.success) {
+            toast.success(res.message || "Pages generated successfully!")
+            loadMaterials()
+        } else {
+            toast.error(res.error || "Failed to generate pages")
+        }
     }
 
     const handleToggleLockMaterial = async (id: string, currentLocked: boolean) => {
@@ -512,10 +530,23 @@ export default function AdminMaterialsPage() {
 
                         {/* Page list */}
                         <div className="space-y-3">
-                            <h4 className="font-bold text-sm text-white">Pages Outline</h4>
+                            <div className="flex justify-between items-center select-none">
+                                <h4 className="font-bold text-sm text-white">Pages Outline</h4>
+                                {activeMaterial.fileUrl && activeMaterial.fileUrl.endsWith(".docx") && (
+                                    <button
+                                        type="button"
+                                        onClick={handleGeneratePagesFromAttachment}
+                                        disabled={isGeneratingPages}
+                                        className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-[10px] py-1.5 px-3 rounded-lg flex items-center gap-1.5 transition-all disabled:opacity-50"
+                                    >
+                                        <RefreshCw size={10} className={isGeneratingPages ? "animate-spin" : ""} />
+                                        {isGeneratingPages ? "Generating..." : "Auto-Generate from Docx"}
+                                    </button>
+                                )}
+                            </div>
                             {!activeMaterial.pages || activeMaterial.pages.length === 0 ? (
                                 <div className="p-6 text-center text-zinc-500 text-xs italic bg-zinc-950/20 border border-themeGrey/40 rounded-xl">
-                                    No pages added yet. Add pages using the form above.
+                                    No pages added yet. Click "Auto-Generate" or use the form above to add pages.
                                 </div>
                             ) : (
                                 <div className="space-y-3">
@@ -534,7 +565,7 @@ export default function AdminMaterialsPage() {
                                                     )}
                                                     {page.content && (
                                                         <p className="text-[10px] text-zinc-400 line-clamp-2 font-mono bg-black/20 p-2 rounded border border-themeGrey/20">
-                                                            {page.content}
+                                                            {page.content.replace(/<[^>]*>/g, '')}
                                                         </p>
                                                     )}
                                                     {page.imageUrl && (

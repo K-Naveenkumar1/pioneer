@@ -5,6 +5,61 @@ import { getAdminUser, getStudentUser } from "./custom-auth"
 import fs from "fs"
 import path from "path"
 import { revalidatePath } from "next/cache"
+import mammoth from "mammoth"
+
+/**
+ * Helper to auto-generate pages from a Word (.docx) document.
+ */
+async function autoGeneratePagesFromDocx(materialId: string, fileUrl: string) {
+    try {
+        const filePath = path.join(process.cwd(), "public", fileUrl)
+        if (!fs.existsSync(filePath)) return
+
+        const buffer = await fs.promises.readFile(filePath)
+        const result = await mammoth.convertToHtml({ buffer })
+        const html = result.value
+
+        // Split by headings (h1, h2, h3)
+        let parts = html.split(/(?=<h[1-3][^>]*>)/i).map(p => p.trim()).filter(p => p.length > 0)
+
+        // Fallback: If no headings are present, chunk by paragraphs (4 paragraphs per page)
+        if (parts.length <= 1) {
+            const paragraphs = html.split("</p>").map(p => p.trim()).filter(p => p.length > 0)
+            parts = []
+            for (let i = 0; i < paragraphs.length; i += 4) {
+                const chunk = paragraphs.slice(i, i + 4).join("</p>") + (paragraphs[i + 3] ? "</p>" : "")
+                if (chunk.trim()) parts.push(chunk)
+            }
+        }
+
+        // Add pages to database
+        for (let i = 0; i < parts.length; i++) {
+            const part = parts[i]
+            let pageTitle = `Page ${i + 1}`
+            let pageContent = part
+
+            // Try to extract slide/page title from header tag
+            const headingMatch = part.match(/<h[1-3][^>]*>(.*?)<\/h[1-3]>/i)
+            if (headingMatch) {
+                pageTitle = headingMatch[1].replace(/<[^>]*>/g, "").trim()
+                // Remove header tag from page content to avoid duplicate headings
+                pageContent = part.replace(/<h[1-3][^>]*>.*?<\/h[1-3]>/i, "").trim()
+            }
+
+            await client.courseMaterialPage.create({
+                data: {
+                    courseMaterialId: materialId,
+                    pageNumber: i + 1,
+                    title: pageTitle || `Page ${i + 1}`,
+                    content: pageContent,
+                    isLocked: false
+                }
+            })
+        }
+    } catch (err) {
+        console.error("Failed to auto-generate pages from Word docx:", err)
+    }
+}
 
 /**
  * Uploads a file to public/uploads/ and returns the relative path and original name.
@@ -67,6 +122,11 @@ export async function adminCreateMaterialAction(
                 isLocked: false
             }
         })
+
+        // Auto-generate pages if Word Document is uploaded
+        if (fileUrl && fileUrl.endsWith(".docx")) {
+            await autoGeneratePagesFromDocx(material.id, fileUrl)
+        }
 
         revalidatePath("/admin/materials")
         revalidatePath("/student/materials")
@@ -286,6 +346,40 @@ export async function adminToggleLockPageAction(pageId: string, isLocked: boolea
         return { success: true, message: isLocked ? "Page locked" : "Page unlocked" }
     } catch (e: any) {
         return { success: false, error: e.message || "Failed to update page lock status" }
+    }
+}
+
+/**
+ * Auto-generates pages from an uploaded .docx file for an existing course material.
+ */
+export async function adminGeneratePagesFromAttachmentAction(materialId: string) {
+    try {
+        const admin = await getAdminUser()
+        if (!admin) return { success: false, error: "Unauthorized" }
+
+        const material = await client.courseMaterial.findUnique({
+            where: { id: materialId },
+            include: { pages: true }
+        })
+
+        if (!material) return { success: false, error: "Material not found" }
+        if (!material.fileUrl) return { success: false, error: "No file attachment found on this material" }
+        if (!material.fileUrl.endsWith(".docx")) {
+            return { success: false, error: "Only Word Document (.docx) files are supported for auto-page generation." }
+        }
+
+        // Delete existing pages to prevent duplicates
+        await client.courseMaterialPage.deleteMany({
+            where: { courseMaterialId: materialId }
+        })
+
+        await autoGeneratePagesFromDocx(materialId, material.fileUrl)
+
+        revalidatePath("/admin/materials")
+        revalidatePath("/student/materials")
+        return { success: true, message: "Pages generated successfully from document!" }
+    } catch (e: any) {
+        return { success: false, error: e.message || "Failed to generate pages" }
     }
 }
 
