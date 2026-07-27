@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react"
 import { 
-    BookOpen, 
     FileText, 
     FileDown, 
     Lock, 
@@ -78,8 +77,8 @@ export default function StudentMaterialsPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-white flex items-center gap-2">
-                        <BookOpen size={28} /> Course Materials
+                    <h1 className="text-5xl font-extrabold tracking-tight text-white pb-4">
+                        Course Materials
                     </h1>
                     <p className="text-sm text-themeTextGrey">Access learning resources, view course pages, and download materials uploaded by the instructor.</p>
                 </div>
