@@ -963,27 +963,7 @@ export async function getStudentLeaderboardAction() {
 
             let examScoreSum = 0
             c.attempts.forEach(attempt => {
-                const d = new Date(attempt.startedAt)
-                const offset = d.getTimezoneOffset()
-                const attemptDate = new Date(d.getTime() - (offset*60*1000)).toISOString().split('T')[0]
-
-                // Is there a task for this date?
-                const tasksForDate = taskDates[attemptDate] || []
-
-                let isAllowed = false
-                if (tasksForDate.length === 0 || noTaskDates.has(attemptDate)) {
-                    isAllowed = true
-                } else {
-                    // There is a task assigned on this date. Did classmate complete it (APPROVED)?
-                    const completedTasksForDate = approvedSubmissions.filter(s => tasksForDate.includes(s.taskId))
-                    if (completedTasksForDate.length > 0) {
-                        isAllowed = true
-                    }
-                }
-
-                if (isAllowed) {
-                    examScoreSum += attempt.score
-                }
+                examScoreSum += attempt.score
             })
 
             const totalScore = (completedTasksCount * 10) + examScoreSum
@@ -1219,7 +1199,18 @@ export async function studentGetActiveTypingSessionAction() {
             orderBy: { createdAt: "desc" }
         })
 
-        return { success: true, session }
+        if (session) {
+            const { password, ...sessionWithoutPassword } = session
+            return { 
+                success: true, 
+                session: {
+                    ...sessionWithoutPassword,
+                    hasPassword: !!password && password.trim() !== ""
+                }
+            }
+        }
+
+        return { success: true, session: null }
     } catch (e: any) {
         return { success: false, error: e.message }
     }
@@ -1228,10 +1219,16 @@ export async function studentGetActiveTypingSessionAction() {
 /**
  * Starts a student run for the active typing session.
  */
-export async function studentStartTypingRunAction(sessionId: string) {
+export async function studentStartTypingRunAction(sessionId: string, passwordInput?: string) {
     try {
         const student = await getStudentUser()
         if (!student) return { success: false, error: "Unauthorized" }
+
+        const session = await client.typingGameSession.findUnique({
+            where: { id: sessionId }
+        })
+
+        if (!session) return { success: false, error: "Session not found" }
 
         const existingRun = await client.typingGameRun.findFirst({
             where: {
@@ -1242,6 +1239,12 @@ export async function studentStartTypingRunAction(sessionId: string) {
 
         if (existingRun) {
             return { success: true, runId: existingRun.id }
+        }
+
+        if (session.password && session.password.trim() !== "") {
+            if (!passwordInput || passwordInput.trim() !== session.password.trim()) {
+                return { success: false, error: "Incorrect password. Please try again." }
+            }
         }
 
         const run = await client.typingGameRun.create({

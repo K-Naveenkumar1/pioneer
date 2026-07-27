@@ -24,7 +24,6 @@ import {
     adminCreateMaterialAction, 
     adminDeleteMaterialAction, 
     adminToggleLockMaterialAction,
-    adminUploadFileAction,
     adminAddPageAction,
     adminDeletePageAction,
     adminToggleLockPageAction,
@@ -81,41 +80,50 @@ export default function AdminMaterialsPage() {
         }
 
         setUploadingFile(true)
-        let fileUrl: string | null = null
-        let fileName: string | null = null
+        try {
+            let fileUrl: string | null = null
+            let fileName: string | null = null
 
-        if (selectedFile) {
-            const formData = new FormData()
-            formData.append("file", selectedFile)
-            const uploadRes = await adminUploadFileAction(formData)
-            if (uploadRes.success) {
-                fileUrl = uploadRes.fileUrl || null
-                fileName = uploadRes.fileName || null
-            } else {
-                toast.error(uploadRes.error || "Failed to upload file")
-                setUploadingFile(false)
-                return
+            if (selectedFile) {
+                const formData = new FormData()
+                formData.append("file", selectedFile)
+                const uploadRes = await fetch("/api/upload", {
+                    method: "POST",
+                    body: formData
+                }).then(r => r.json())
+                
+                if (uploadRes.success) {
+                    fileUrl = uploadRes.fileUrl || null
+                    fileName = uploadRes.fileName || null
+                } else {
+                    toast.error(uploadRes.error || "Failed to upload file")
+                    setUploadingFile(false)
+                    return
+                }
             }
-        }
 
-        const res = await adminCreateMaterialAction(
-            newTitle,
-            newDescription || null,
-            fileUrl,
-            fileName
-        )
+            const res = await adminCreateMaterialAction(
+                newTitle,
+                newDescription || null,
+                fileUrl,
+                fileName
+            )
 
-        setUploadingFile(false)
-
-        if (res.success) {
-            toast.success("Course material created successfully")
-            setNewTitle("")
-            setNewDescription("")
-            setSelectedFile(null)
-            setIsCreateOpen(false)
-            loadMaterials()
-        } else {
-            toast.error(res.error || "Failed to create course material")
+            if (res.success) {
+                toast.success("Course material created successfully")
+                setNewTitle("")
+                setNewDescription("")
+                setSelectedFile(null)
+                setIsCreateOpen(false)
+                loadMaterials()
+            } else {
+                toast.error(res.error || "Failed to create course material")
+            }
+        } catch (error: any) {
+            console.error(error)
+            toast.error(error.message || "An unexpected error occurred during creation")
+        } finally {
+            setUploadingFile(false)
         }
     }
 
@@ -168,43 +176,52 @@ export default function AdminMaterialsPage() {
         if (!activeMaterial) return
 
         setUploadingPageImage(true)
-        let imageUrl: string | null = null
+        try {
+            let imageUrl: string | null = null
 
-        if (pageImage) {
-            const formData = new FormData()
-            formData.append("file", pageImage)
-            const uploadRes = await adminUploadFileAction(formData)
-            if (uploadRes.success) {
-                imageUrl = uploadRes.fileUrl || null
-            } else {
-                toast.error(uploadRes.error || "Failed to upload page image")
-                setUploadingPageImage(false)
-                return
+            if (pageImage) {
+                const formData = new FormData()
+                formData.append("file", pageImage)
+                const uploadRes = await fetch("/api/upload", {
+                    method: "POST",
+                    body: formData
+                }).then(r => r.json())
+                
+                if (uploadRes.success) {
+                    imageUrl = uploadRes.fileUrl || null
+                } else {
+                    toast.error(uploadRes.error || "Failed to upload page image")
+                    setUploadingPageImage(false)
+                    return
+                }
             }
-        }
 
-        const res = await adminAddPageAction(
-            activeMaterial.id,
-            pageNumber,
-            pageTitle || null,
-            pageContent || null,
-            imageUrl,
-            pageLocked
-        )
+            const res = await adminAddPageAction(
+                activeMaterial.id,
+                pageNumber,
+                pageTitle || null,
+                pageContent || null,
+                imageUrl,
+                pageLocked
+            )
 
-        setUploadingPageImage(false)
-
-        if (res.success) {
-            toast.success("Page added successfully")
-            setPageTitle("")
-            setPageContent("")
-            setPageImage(null)
-            setPageLocked(false)
-            // Auto increment page number
-            setPageNumber(prev => prev + 1)
-            loadMaterials()
-        } else {
-            toast.error(res.error || "Failed to add page")
+            if (res.success) {
+                toast.success("Page added successfully")
+                setPageTitle("")
+                setPageContent("")
+                setPageImage(null)
+                setPageLocked(false)
+                // Auto increment page number
+                setPageNumber(prev => prev + 1)
+                loadMaterials()
+            } else {
+                toast.error(res.error || "Failed to add page")
+            }
+        } catch (error: any) {
+            console.error(error)
+            toast.error(error.message || "An unexpected error occurred while adding page")
+        } finally {
+            setUploadingPageImage(false)
         }
     }
 

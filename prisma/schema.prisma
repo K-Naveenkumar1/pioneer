@@ -343,6 +343,7 @@ model TypingGameSession {
   isActive  Boolean  @default(false)
   passage   String   @db.Text
   timeLimit Int      @default(60) // time limit in seconds
+  password  String?
   createdAt DateTime @default(now())
   runs      TypingGameRun[]
   classId   String?

@@ -26,6 +26,7 @@ export default function StudentTypingGamePage() {
     const [session, setSession] = useState<any>(null)
     const [runId, setRunId] = useState<string | null>(null)
     const [loading, setLoading] = useState(true)
+    const [passwordInput, setPasswordInput] = useState("")
 
     // Game States
     const [inputText, setInputText] = useState("")
@@ -66,17 +67,23 @@ export default function StudentTypingGamePage() {
             setIsStarted(false)
             setIsFinished(false)
             setInputText("")
+            setPasswordInput("")
             setLoading(false)
         }
     }
 
     const startTypingGame = async () => {
         if (!session) return
+        if (session.hasPassword && !passwordInput.trim()) {
+            toast.error("Please enter the game password.")
+            return
+        }
         setLoading(true)
-        const res = await studentStartTypingRunAction(session.id)
+        const res = await studentStartTypingRunAction(session.id, passwordInput)
         setLoading(false)
 
         if (res.success && res.runId) {
+            setPasswordInput("")
             setRunId(res.runId)
             runIdRef.current = res.runId
             setIsStarted(true)
@@ -375,10 +382,26 @@ export default function StudentTypingGamePage() {
                                 </ul>
                             </div>
 
+                            {session.hasPassword && (
+                                <div className="space-y-2 max-w-md mx-auto text-left border-t border-themeGrey/40 pt-4">
+                                    <label className="block text-xs font-semibold text-themeTextGrey uppercase">
+                                        Enter Game Password
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="e.g. RACE123 (provided by instructor)"
+                                        value={passwordInput}
+                                        onChange={(e) => setPasswordInput(e.target.value)}
+                                        className="w-full px-4 py-3 bg-black/40 border border-themeGrey rounded-xl text-white placeholder-zinc-700 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all text-sm font-medium"
+                                    />
+                                </div>
+                            )}
+
                             <div className="flex justify-center w-full">
                                 <Button
                                     onClick={startTypingGame}
                                     className="w-full max-w-md py-6 rounded-xl bg-white hover:bg-zinc-200 text-black font-bold text-sm flex items-center justify-center gap-2 group transition-all"
+                                    disabled={session.hasPassword && !passwordInput.trim()}
                                 >
                                     <Play size={16} fill="currentColor" /> Start typing test
                                 </Button>

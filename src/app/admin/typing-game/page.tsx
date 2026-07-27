@@ -46,6 +46,7 @@ export default function AdminTypingGamePage() {
     const [timeLimit, setTimeLimit] = useState(60)
     const [classes, setClasses] = useState<any[]>([])
     const [selectedClassId, setSelectedClassId] = useState("")
+    const [password, setPassword] = useState("")
 
     const runsRef = useRef<any[]>([])
     const pollingRef = useRef<NodeJS.Timeout | null>(null)
@@ -92,15 +93,15 @@ export default function AdminTypingGamePage() {
     const loadLeaderboard = async (sid: string) => {
         const res = await adminGetTypingLeaderboardAction(sid)
         if (res.success && res.runs) {
-            // Sort runs by progress percentage first, then WPM, then accuracy to determine race rank
+            // Sort runs by WPM first, then accuracy, then progress percentage to determine race rank
             const sortedRuns = [...res.runs].sort((a, b) => {
-                if (b.progressPercentage !== a.progressPercentage) {
-                    return b.progressPercentage - a.progressPercentage
-                }
                 if (b.wpm !== a.wpm) {
                     return b.wpm - a.wpm
                 }
-                return b.accuracy - a.accuracy
+                if (b.accuracy !== a.accuracy) {
+                    return b.accuracy - a.accuracy
+                }
+                return b.progressPercentage - a.progressPercentage
             })
             setRuns(sortedRuns)
             runsRef.current = sortedRuns
@@ -121,7 +122,7 @@ export default function AdminTypingGamePage() {
         }
 
         setLoading(true)
-        const res = await adminStartTypingSessionAction(passage, timeLimit, selectedClassId)
+        const res = await adminStartTypingSessionAction(passage, timeLimit, selectedClassId, password)
         setLoading(false)
 
         if (res.success && res.sessionId) {
@@ -129,6 +130,7 @@ export default function AdminTypingGamePage() {
             setSessionId(res.sessionId)
             setIsActive(true)
             setRuns([])
+            setPassword("")
             localStorage.setItem("active_typing_session_id", res.sessionId)
             startPolling(res.sessionId)
         } else {
@@ -276,6 +278,20 @@ export default function AdminTypingGamePage() {
                                 max={600}
                                 value={timeLimit}
                                 onChange={(e) => setTimeLimit(parseInt(e.target.value) || 60)}
+                                className="w-full p-4 bg-black/40 border border-themeGrey rounded-xl text-white placeholder-zinc-800 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all text-sm"
+                            />
+                        </div>
+
+                        {/* Password Input */}
+                        <div className="space-y-2">
+                            <label className="block text-xs font-semibold text-themeTextGrey uppercase">
+                                Game Password / Code (Optional)
+                            </label>
+                            <input
+                                type="text"
+                                placeholder="e.g. RACE123 (leave empty for no password)"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
                                 className="w-full p-4 bg-black/40 border border-themeGrey rounded-xl text-white placeholder-zinc-800 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all text-sm"
                             />
                         </div>

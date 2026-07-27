@@ -1531,7 +1531,7 @@ export async function adminCreateCodingExamAction(
     }
 }
 
-export async function adminStartTypingSessionAction(passage: string, timeLimit: number = 60, classId: string) {
+export async function adminStartTypingSessionAction(passage: string, timeLimit: number = 60, classId: string, password?: string) {
     try {
         const admin = await getAdminUser()
         if (!admin) return { success: false, error: "Unauthorized" }
@@ -1554,7 +1554,8 @@ export async function adminStartTypingSessionAction(passage: string, timeLimit: 
                 isActive: true,
                 passage: passage.trim(),
                 timeLimit,
-                classId
+                classId,
+                password: password && password.trim() !== "" ? password.trim() : null
             }
         })
 
@@ -1602,9 +1603,9 @@ export async function adminGetTypingLeaderboardAction(sessionId: string) {
                 }
             },
             orderBy: [
-                { progressPercentage: "desc" },
                 { wpm: "desc" },
-                { accuracy: "desc" }
+                { accuracy: "desc" },
+                { progressPercentage: "desc" }
             ]
         })
 
@@ -1672,25 +1673,7 @@ export async function adminGetLeaderboardAction(classId: string) {
 
             let examScoreSum = 0
             c.attempts.forEach(attempt => {
-                const d = new Date(attempt.startedAt)
-                const offset = d.getTimezoneOffset()
-                const attemptDate = new Date(d.getTime() - (offset*60*1000)).toISOString().split('T')[0]
-
-                const tasksForDate = taskDates[attemptDate] || []
-
-                let isAllowed = false
-                if (tasksForDate.length === 0 || noTaskDates.has(attemptDate)) {
-                    isAllowed = true
-                } else {
-                    const completedTasksForDate = approvedSubmissions.filter(s => tasksForDate.includes(s.taskId))
-                    if (completedTasksForDate.length > 0) {
-                        isAllowed = true
-                    }
-                }
-
-                if (isAllowed) {
-                    examScoreSum += attempt.score
-                }
+                examScoreSum += attempt.score
             })
 
             const totalScore = (completedTasksCount * 10) + examScoreSum
