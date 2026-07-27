@@ -671,11 +671,8 @@ export async function getExamSessionDetails(attemptId: string) {
         const isCompleted = !!attempt.completedAt
 
         let questions = attempt.exam.questions.map(q => {
-            if (!isCompleted) {
-                const { correctAnswer, ...rest } = q
-                return rest
-            }
-            return q
+            const { correctAnswer, ...rest } = q
+            return rest
         })
 
         if (attempt.exam.type === "MCQ" && questions.length > 0) {

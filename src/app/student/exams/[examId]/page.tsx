@@ -144,7 +144,11 @@ export default function LockdownExamPage() {
             if (res.success) {
                 toast.success("Exam synced and submitted successfully!")
                 localStorage.removeItem(`pioneer_offline_exam_${attemptId}`)
-                setResults(res)
+                setResults({
+                    score: res.score,
+                    totalQuestions: res.totalQuestions,
+                    correctCount: res.correctCount
+                })
                 setCompleted(true)
                 setIsOfflinePending(false)
             } else {
@@ -185,14 +189,8 @@ export default function LockdownExamPage() {
                     }))
 
                     if (res.isCompleted) {
-                        setCompleted(true)
-                        setResults({
-                            score: res.score,
-                            totalQuestions: res.questions.length,
-                            correctCount: res.questions.filter((q: any) => res.studentAnswers?.[q.id]?.trim().toUpperCase() === q.correctAnswer?.trim().toUpperCase()).length
-                        })
-                        setAnswers(res.studentAnswers || {})
-                        setLoading(false)
+                        toast.info("You have already completed this exam.")
+                        router.push("/student/exams")
                         return
                     }
 
@@ -509,10 +507,15 @@ export default function LockdownExamPage() {
             try {
                 const res = await submitExamAttemptAction(attemptId, currentAnswers)
                 if (res.success) {
-                    setResults(res)
+                    setResults({
+                        score: res.score,
+                        totalQuestions: res.totalQuestions,
+                        correctCount: res.correctCount
+                    })
                     toast.success("Exam submitted successfully!")
                     
-                    if (res.score !== undefined && res.score >= 50) {
+                    const finalScore = res.score
+                    if (finalScore !== undefined && finalScore >= 50) {
                         confetti({
                             particleCount: 100,
                             spread: 70,
@@ -661,155 +664,56 @@ export default function LockdownExamPage() {
     // Completion View
     if (completed) {
         return (
-            <div className="fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-6 md:p-12 overflow-y-auto backdrop-blur-sm animate-fade-in">
-                <div className="w-full max-w-4xl p-6 md:p-8 bg-zinc-900/90 border border-zinc-800 rounded-3xl space-y-6 shadow-2xl relative my-auto max-h-[90vh] flex flex-col overflow-hidden animate-scale-up">
+            <div className="fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-6 backdrop-blur-sm animate-fade-in">
+                <div className="w-full max-w-2xl p-8 bg-zinc-900/90 border border-zinc-800 rounded-3xl space-y-6 shadow-2xl relative animate-scale-up">
                     
                     {/* Close Button */}
                     <button 
                         onClick={() => router.push("/student/exams")}
                         className="absolute top-4 right-4 p-2 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 rounded-full text-zinc-400 hover:text-white transition-all z-10"
-                        title="Close Review"
+                        title="Close"
                     >
                         <X size={16} />
                     </button>
 
                     {isPending ? (
-                        <div className="text-center py-8 flex-1 flex flex-col items-center justify-center">
+                        <div className="text-center py-8 flex flex-col items-center justify-center">
                             <span className="animate-spin rounded-full h-8 w-8 border-b-2 border-white inline-block"></span>
                             <p className="text-sm text-zinc-500 mt-4">Grading your exam attempt...</p>
                         </div>
                     ) : results ? (
-                        <div className="space-y-6 flex-1 flex flex-col overflow-hidden">
+                        <div className="space-y-6">
                             {/* Summary Card */}
-                            <div className="flex flex-col md:flex-row items-center justify-between gap-6 bg-zinc-950/40 p-5 border border-zinc-800/40 rounded-2xl shrink-0">
-                                <div className="flex items-center gap-4 text-left">
-                                    <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl">
-                                        <Award size={28} />
-                                    </div>
-                                    <div>
-                                        <h2 className="text-lg font-bold text-white tracking-tight">Exam Review: {examTitle}</h2>
-                                        <p className="text-[11px] text-zinc-500">Review your questions and graded answers below.</p>
-                                    </div>
+                            <div className="flex flex-col items-center text-center p-6 bg-zinc-950/40 border border-zinc-800/40 rounded-2xl">
+                                <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full mb-4">
+                                    <Award size={40} />
                                 </div>
+                                <h2 className="text-xl font-bold text-white tracking-tight mb-2">Exam Completed!</h2>
+                                <p className="text-sm text-zinc-400 mb-6">Your answers for <span className="text-white font-semibold">{examTitle}</span> have been submitted successfully.</p>
 
-                                <div className="flex gap-3 items-center">
-                                    <div className="bg-zinc-900/60 px-4 py-2 border border-zinc-800/60 rounded-xl text-center min-w-[90px]">
-                                        <p className="text-[9px] text-zinc-500 uppercase font-semibold">Percentage</p>
-                                        <p className="text-lg font-extrabold text-white mt-0.5">{results.score}%</p>
+                                <div className="flex gap-4 items-center justify-center w-full max-w-sm mb-6">
+                                    <div className="flex-1 bg-zinc-900/60 px-4 py-3 border border-zinc-800/60 rounded-xl text-center">
+                                        <p className="text-[10px] text-zinc-500 uppercase font-semibold">Percentage</p>
+                                        <p className="text-2xl font-extrabold text-white mt-1">{results.score}%</p>
                                     </div>
-                                    <div className="bg-zinc-900/60 px-4 py-2 border border-zinc-800/60 rounded-xl text-center min-w-[90px]">
-                                        <p className="text-[9px] text-zinc-500 uppercase font-semibold">Marks</p>
-                                        <p className="text-lg font-extrabold text-white mt-0.5">
+                                    <div className="flex-1 bg-zinc-900/60 px-4 py-3 border border-zinc-800/60 rounded-xl text-center">
+                                        <p className="text-[10px] text-zinc-500 uppercase font-semibold">Marks</p>
+                                        <p className="text-2xl font-extrabold text-white mt-1">
                                             {results.correctCount} / {results.totalQuestions}
                                         </p>
                                     </div>
-                                    <Button
-                                        onClick={() => router.push("/student/exams")}
-                                        className="bg-white hover:bg-zinc-200 text-black font-semibold rounded-xl px-5 h-10 text-xs shrink-0"
-                                    >
-                                        Return to Portal
-                                    </Button>
                                 </div>
-                            </div>
 
-                            {/* Detailed Answers Review */}
-                            <div className="space-y-4 flex-1 flex flex-col overflow-hidden">
-                                <h3 className="text-base font-bold text-white border-b border-zinc-800 pb-2 shrink-0">Questions & Answers Detail</h3>
-                                <div className="space-y-4 overflow-y-auto pr-2 flex-1">
-                                    {questions.map((q: any, idx: number) => {
-                                        const studentAns = answers[q.id] || ""
-                                        const correctAns = q.correctAnswer || ""
-                                        const isCorrect = studentAns.trim().toUpperCase() === correctAns.trim().toUpperCase()
-
-                                        return (
-                                            <div key={q.id} className="p-4 bg-zinc-950/20 border border-zinc-800/80 rounded-2xl space-y-3">
-                                                <div className="flex items-start justify-between gap-4">
-                                                    <div>
-                                                        <span className="text-[9px] uppercase font-bold text-zinc-500 block mb-1">
-                                                            Question {idx + 1}
-                                                        </span>
-                                                        <h4 className="text-xs font-semibold text-white leading-relaxed whitespace-pre-wrap">
-                                                            {q.questionText}
-                                                        </h4>
-                                                    </div>
-                                                    {studentAns ? (
-                                                        isCorrect ? (
-                                                            <span className="shrink-0 flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-2 py-0.5 rounded-lg">
-                                                                ✓ Correct
-                                                            </span>
-                                                        ) : (
-                                                            <span className="shrink-0 flex items-center gap-1 text-[10px] font-bold text-rose-400 bg-rose-400/10 border border-rose-400/20 px-2 py-0.5 rounded-lg">
-                                                                ✗ Incorrect
-                                                            </span>
-                                                        )
-                                                    ) : (
-                                                        <span className="shrink-0 flex items-center gap-1 text-[10px] font-bold text-zinc-400 bg-zinc-800/30 border border-zinc-800/40 px-2 py-0.5 rounded-lg">
-                                                            Unanswered
-                                                        </span>
-                                                    )}
-                                                </div>
-
-                                                {/* Options List */}
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-                                                    {[
-                                                        { key: "A", label: q.optionA },
-                                                        { key: "B", label: q.optionB },
-                                                        { key: "C", label: q.optionC },
-                                                        { key: "D", label: q.optionD }
-                                                    ].map((opt) => {
-                                                        const isSelected = studentAns.trim().toUpperCase() === opt.key
-                                                        const isRight = correctAns.trim().toUpperCase() === opt.key
-
-                                                        let borderStyle = "border-zinc-800/60"
-                                                        let bgStyle = "bg-zinc-900/40"
-                                                        let textStyle = "text-zinc-300"
-
-                                                        if (isRight) {
-                                                            borderStyle = "border-emerald-500/30"
-                                                            bgStyle = "bg-emerald-500/10"
-                                                            textStyle = "text-emerald-300 font-semibold"
-                                                        } else if (isSelected && !isRight) {
-                                                            borderStyle = "border-rose-500/30"
-                                                            bgStyle = "bg-rose-500/10"
-                                                            textStyle = "text-rose-300 font-semibold"
-                                                        }
-
-                                                        return (
-                                                            <div
-                                                                key={opt.key}
-                                                                className={`p-2.5 border rounded-xl flex items-center gap-2.5 text-[11px] ${borderStyle} ${bgStyle} ${textStyle}`}
-                                                            >
-                                                                <span className="w-4 h-4 rounded bg-black/40 flex items-center justify-center font-bold text-[9px]">
-                                                                    {opt.key}
-                                                                </span>
-                                                                <span>{opt.label}</span>
-                                                                {isRight && (
-                                                                    <span className="ml-auto text-[8px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1 py-0.5 rounded font-bold uppercase">
-                                                                        Correct
-                                                                    </span>
-                                                                )}
-                                                                {isSelected && !isRight && (
-                                                                    <span className="ml-auto text-[8px] bg-rose-500/20 text-rose-400 border border-rose-500/30 px-1 py-0.5 rounded font-bold uppercase">
-                                                                        Your Answer
-                                                                    </span>
-                                                                )}
-                                                                {isSelected && isRight && (
-                                                                    <span className="ml-auto text-[8px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1 py-0.5 rounded font-bold uppercase">
-                                                                        Selected
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        )
-                                                    })}
-                                                </div>
-                                            </div>
-                                        )
-                                    })}
-                                </div>
+                                <Button
+                                    onClick={() => router.push("/student/exams")}
+                                    className="w-full bg-white hover:bg-zinc-200 text-black font-semibold rounded-xl py-4 h-12 text-sm transition-all"
+                                >
+                                    Return to Portal
+                                </Button>
                             </div>
                         </div>
                     ) : (
-                        <p className="text-sm text-red-400">Failed to grade attempt. Please contact an admin.</p>
+                        <p className="text-sm text-red-400 text-center">Failed to grade attempt. Please contact an admin.</p>
                     )}
                 </div>
             </div>
