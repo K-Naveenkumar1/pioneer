@@ -1200,12 +1200,25 @@ export async function studentGetActiveTypingSessionAction() {
         })
 
         if (session) {
+            const existingRun = await client.typingGameRun.findFirst({
+                where: {
+                    sessionId: session.id,
+                    studentId: student.id
+                }
+            })
+
             const { password, ...sessionWithoutPassword } = session
             return { 
                 success: true, 
                 session: {
                     ...sessionWithoutPassword,
-                    hasPassword: !!password && password.trim() !== ""
+                    hasPassword: !!password && password.trim() !== "",
+                    hasAttempted: !!existingRun,
+                    pastRun: existingRun ? {
+                        wpm: existingRun.wpm,
+                        accuracy: existingRun.accuracy,
+                        isCompleted: existingRun.isCompleted
+                    } : null
                 }
             }
         }
@@ -1238,7 +1251,7 @@ export async function studentStartTypingRunAction(sessionId: string, passwordInp
         })
 
         if (existingRun) {
-            return { success: true, runId: existingRun.id }
+            return { success: false, error: "You have already attempted this typing test." }
         }
 
         if (session.password && session.password.trim() !== "") {

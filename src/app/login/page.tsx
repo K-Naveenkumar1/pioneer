@@ -2,10 +2,10 @@
 
 import { Eye, EyeOff } from "lucide-react"
 import { useRouter } from "next/navigation"
-import React, { useState, useTransition } from "react"
+import React, { useState, useTransition, useEffect } from "react"
 import { toast } from "sonner"
 
-import { checkRollNoAction, loginAction, studentFirstResetAction } from "@/actions/custom-auth"
+import { checkRollNoAction, getStudentUser, loginAction, studentFirstResetAction } from "@/actions/custom-auth"
 import BackdropGradient from "@/components/global/backdrop-gradient"
 import { Button } from "@/components/ui/button"
 
@@ -17,6 +17,16 @@ export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false)
     const [isPending, startTransition] = useTransition()
     const [showPasswordStep, setShowPasswordStep] = useState(false)
+
+    useEffect(() => {
+        const checkSession = async () => {
+            const user = await getStudentUser()
+            if (user) {
+                router.replace("/student/dashboard")
+            }
+        }
+        checkSession()
+    }, [router])
 
     // First Time Password Reset states
     const [isFirstLogin, setIsFirstLogin] = useState(false)
@@ -146,6 +156,8 @@ export default function LoginPage() {
                                     {!showPasswordStep ? (
                                         <input
                                             type="text"
+                                            name="rollNo"
+                                            autoComplete="username"
                                             required
                                             placeholder="Roll Number"
                                             value={identity}
@@ -154,7 +166,14 @@ export default function LoginPage() {
                                         />
                                     ) : (
                                         <div className="flex items-center justify-between px-4 py-3 bg-zinc-950/40">
-                                            <span className="text-white text-base font-medium">{identity}</span>
+                                            <input
+                                                type="text"
+                                                name="rollNo"
+                                                autoComplete="username"
+                                                value={identity}
+                                                readOnly
+                                                className="bg-transparent text-white text-base font-medium focus:outline-none w-2/3 border-none p-0 cursor-default"
+                                            />
                                             <button
                                                 type="button"
                                                 onClick={() => {
@@ -173,6 +192,8 @@ export default function LoginPage() {
                                         <div className="relative w-full">
                                             <input
                                                 type={showPassword ? "text" : "password"}
+                                                name="password"
+                                                autoComplete="current-password"
                                                 required={showPasswordStep}
                                                 autoFocus={showPasswordStep}
                                                 placeholder="Password"

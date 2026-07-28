@@ -17,7 +17,7 @@ import {
 import GlassCard from "@/components/global/glass-card"
 import BackdropGradient from "@/components/global/backdrop-gradient"
 import { Button } from "@/components/ui/button"
-import { loginAction } from "@/actions/custom-auth"
+import { loginAction, getAdminUser } from "@/actions/custom-auth"
 
 export default function AdminLoginPage() {
     const router = useRouter()
@@ -25,6 +25,16 @@ export default function AdminLoginPage() {
     const [password, setPassword] = useState("")
     const [showPassword, setShowPassword] = useState(false)
     const [isPending, startTransition] = useTransition()
+
+    useEffect(() => {
+        const checkSession = async () => {
+            const user = await getAdminUser()
+            if (user) {
+                router.replace("/admin/dashboard")
+            }
+        }
+        checkSession()
+    }, [router])
 
     // GSAP Refs
     const titleRef = useRef<HTMLHeadingElement>(null)
@@ -134,6 +144,8 @@ export default function AdminLoginPage() {
                                     </span>
                                     <input
                                         type="text"
+                                        name="username"
+                                        autoComplete="username"
                                         required
                                         placeholder="e.g., admin"
                                         value={identity}
@@ -153,6 +165,8 @@ export default function AdminLoginPage() {
                                     </span>
                                     <input
                                         type={showPassword ? "text" : "password"}
+                                        name="password"
+                                        autoComplete="current-password"
                                         required
                                         placeholder="••••••••"
                                         value={password}

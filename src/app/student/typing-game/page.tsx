@@ -27,6 +27,8 @@ export default function StudentTypingGamePage() {
     const [runId, setRunId] = useState<string | null>(null)
     const [loading, setLoading] = useState(true)
     const [passwordInput, setPasswordInput] = useState("")
+    const [hasAttempted, setHasAttempted] = useState(false)
+    const [pastRunStats, setPastRunStats] = useState<{wpm: number, accuracy: number} | null>(null)
 
     // Game States
     const [inputText, setInputText] = useState("")
@@ -61,6 +63,18 @@ export default function StudentTypingGamePage() {
         const res = await studentGetActiveTypingSessionAction()
         if (res.success && res.session) {
             setSession(res.session)
+            if (res.session.hasAttempted) {
+                setHasAttempted(true)
+                if (res.session.pastRun) {
+                    setPastRunStats({
+                        wpm: res.session.pastRun.wpm,
+                        accuracy: res.session.pastRun.accuracy
+                    })
+                }
+            } else {
+                setHasAttempted(false)
+                setPastRunStats(null)
+            }
             if (loading) setLoading(false)
         } else {
             setSession(null)
@@ -68,6 +82,8 @@ export default function StudentTypingGamePage() {
             setIsFinished(false)
             setInputText("")
             setPasswordInput("")
+            setHasAttempted(false)
+            setPastRunStats(null)
             setLoading(false)
         }
     }
@@ -134,7 +150,7 @@ export default function StudentTypingGamePage() {
         const textLength = currentInputText.length
         const totalPassageLength = session?.passage?.length || 1
         const currentProgress = Math.min(100, Math.round((textLength / totalPassageLength) * 100))
-        const isCompleted = completedForce || currentProgress >= 100
+        const isCompleted = completedForce || (currentInputText === (session?.passage || ""))
 
         // Accuracy Calculation
         let correctCount = 0
@@ -186,7 +202,7 @@ export default function StudentTypingGamePage() {
         setWpm(currentWpm)
 
         // Check if game finished
-        if (val.length === passage.length) {
+        if (val === passage) {
             finishTypingGame()
         }
     }
@@ -349,6 +365,41 @@ export default function StudentTypingGamePage() {
                             </div>
 
 
+                        </GlassCard>
+                    </motion.div>
+                ) : hasAttempted ? (
+                    /* Attempted/Completed Block Screen */
+                    <motion.div
+                        key="attempted-block"
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -15 }}
+                    >
+                        <GlassCard className="p-12 border border-red-500/20 text-center space-y-6 max-w-md mx-auto shadow-2xl">
+                            <div className="flex justify-center text-red-400">
+                                <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-full">
+                                    <Award size={48} />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <h3 className="text-xl font-bold text-white">Test Already Attempted</h3>
+                                <p className="text-xs text-themeTextGrey max-w-sm mx-auto leading-relaxed">
+                                    You have already participated in this typing speed test. Multiple attempts are not permitted for this session.
+                                </p>
+                            </div>
+                            
+                            {pastRunStats && (
+                                <div className="grid grid-cols-2 gap-4 max-w-xs mx-auto border-t border-themeGrey/40 pt-4">
+                                    <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl">
+                                        <p className="text-xl font-extrabold text-white">{pastRunStats.wpm} WPM</p>
+                                        <p className="text-[9px] text-themeTextGrey uppercase font-semibold mt-0.5">Your Speed</p>
+                                    </div>
+                                    <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl">
+                                        <p className="text-xl font-extrabold text-white">{pastRunStats.accuracy}%</p>
+                                        <p className="text-[9px] text-themeTextGrey uppercase font-semibold mt-0.5">Your Accuracy</p>
+                                    </div>
+                                </div>
+                            )}
                         </GlassCard>
                     </motion.div>
                 ) : !isStarted ? (
