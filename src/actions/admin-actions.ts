@@ -1597,6 +1597,11 @@ export async function adminGetTypingLeaderboardAction(sessionId: string) {
         const admin = await getAdminUser()
         if (!admin) return { success: false, error: "Unauthorized" }
 
+        const session = await client.typingGameSession.findUnique({
+            where: { id: sessionId },
+            select: { isActive: true }
+        })
+
         const runs = await client.typingGameRun.findMany({
             where: { sessionId },
             include: {
@@ -1614,7 +1619,7 @@ export async function adminGetTypingLeaderboardAction(sessionId: string) {
             ]
         })
 
-        return { success: true, runs }
+        return { success: true, runs, isActive: session ? session.isActive : false }
     } catch (e: any) {
         return { success: false, error: e.message }
     }

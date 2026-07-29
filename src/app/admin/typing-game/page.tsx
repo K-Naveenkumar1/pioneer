@@ -92,19 +92,32 @@ export default function AdminTypingGamePage() {
 
     const loadLeaderboard = async (sid: string) => {
         const res = await adminGetTypingLeaderboardAction(sid)
-        if (res.success && res.runs) {
-            // Sort runs by WPM first, then accuracy, then progress percentage to determine race rank
-            const sortedRuns = [...res.runs].sort((a, b) => {
-                if (b.wpm !== a.wpm) {
-                    return b.wpm - a.wpm
-                }
-                if (b.accuracy !== a.accuracy) {
-                    return b.accuracy - a.accuracy
-                }
-                return b.progressPercentage - a.progressPercentage
-            })
-            setRuns(sortedRuns)
-            runsRef.current = sortedRuns
+        if (res.success) {
+            if (res.isActive === false) {
+                setIsActive(false)
+                setSessionId(null)
+                stopPolling()
+                localStorage.removeItem("active_typing_session_id")
+                toast.info("This session has been ended.")
+                return
+            }
+
+            if (res.runs) {
+                // Filter out students with 0 WPM so only active typers appear on the leaderboard
+                const activeRuns = res.runs.filter((run: any) => run.wpm > 0)
+                // Sort runs by WPM first, then accuracy, then progress percentage to determine race rank
+                const sortedRuns = [...activeRuns].sort((a, b) => {
+                    if (b.wpm !== a.wpm) {
+                        return b.wpm - a.wpm
+                    }
+                    if (b.accuracy !== a.accuracy) {
+                        return b.accuracy - a.accuracy
+                    }
+                    return b.progressPercentage - a.progressPercentage
+                })
+                setRuns(sortedRuns)
+                runsRef.current = sortedRuns
+            }
         } else if (!res.success) {
             console.error("Leaderboard poll error:", res.error)
         }

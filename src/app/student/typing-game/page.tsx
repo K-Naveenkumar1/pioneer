@@ -59,6 +59,29 @@ export default function StudentTypingGamePage() {
         }
     }, [])
 
+    useEffect(() => {
+        setIsStarted(false)
+        setIsFinished(false)
+        setInputText("")
+        setRunId(null)
+        runIdRef.current = null
+        setWpm(0)
+        setAccuracy(100)
+        setProgress(0)
+        setElapsedSeconds(0)
+        elapsedSecondsRef.current = 0
+        inputTextRef.current = ""
+        setPasswordInput("")
+        if (timerRef.current) {
+            clearInterval(timerRef.current)
+            timerRef.current = null
+        }
+        if (syncRef.current) {
+            clearInterval(syncRef.current)
+            syncRef.current = null
+        }
+    }, [session?.id])
+
     const checkSession = async () => {
         const res = await studentGetActiveTypingSessionAction()
         if (res.success && res.session) {
@@ -146,15 +169,20 @@ export default function StudentTypingGamePage() {
         const currentInputText = inputTextRef.current
         const currentElapsedSeconds = elapsedSecondsRef.current
 
-        // Compute current WPM, Accuracy, Progress
         const textLength = currentInputText.length
-        const totalPassageLength = session?.passage?.length || 1
-        const currentProgress = Math.min(100, Math.round((textLength / totalPassageLength) * 100))
-        const isCompleted = completedForce || (currentInputText === (session?.passage || ""))
+        const passage = session?.passage || ""
+
+        // Compute current WPM, Accuracy, Progress
+        let correctPrefixLength = 0
+        while (correctPrefixLength < textLength && currentInputText[correctPrefixLength] === passage[correctPrefixLength]) {
+            correctPrefixLength++
+        }
+        const totalPassageLength = passage.length || 1
+        const currentProgress = Math.min(100, Math.round((correctPrefixLength / totalPassageLength) * 100))
+        const isCompleted = completedForce || (currentInputText === passage)
 
         // Accuracy Calculation
         let correctCount = 0
-        const passage = session?.passage || ""
         for (let i = 0; i < textLength; i++) {
             if (currentInputText[i] === passage[i]) correctCount++
         }
@@ -186,8 +214,11 @@ export default function StudentTypingGamePage() {
         inputTextRef.current = val
 
         // Calculate dynamic stats
-        const textLength = val.length
-        const currentProgress = Math.min(100, Math.round((textLength / passage.length) * 100))
+        let correctPrefixLength = 0
+        while (correctPrefixLength < val.length && val[correctPrefixLength] === passage[correctPrefixLength]) {
+            correctPrefixLength++
+        }
+        const currentProgress = Math.min(100, Math.round((correctPrefixLength / passage.length) * 100))
         setProgress(currentProgress)
 
         let correctCount = 0
@@ -367,7 +398,7 @@ export default function StudentTypingGamePage() {
 
                         </GlassCard>
                     </motion.div>
-                ) : hasAttempted ? (
+                ) : (hasAttempted && !isStarted && !isFinished) ? (
                     /* Attempted/Completed Block Screen */
                     <motion.div
                         key="attempted-block"
