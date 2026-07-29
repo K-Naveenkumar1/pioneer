@@ -735,6 +735,8 @@ export async function adminGetAttendanceReportAction(date: string, classId: stri
                     name: true,
                     rollNo: true,
                     department: true,
+                    isAllowedInClass: true,
+                    allowedClassDate: true,
                     attendance: {
                         where: { date },
                         orderBy: { checkIn: "asc" }
@@ -802,7 +804,10 @@ export async function adminGetAttendanceReportAction(date: string, classId: stri
             const meetsHours = totalHours >= 8
             const meetsTask = (taskStatus === "NO_TASK" || taskStatus === "NO_TASK_DECLARED" || taskStatus === "COMPLETED")
             
-            const isPresent = meetsHours && meetsTask
+            const isAllowed = student.isAllowedInClass && 
+                (student.allowedClassDate === date || student.allowedClassDate === "PENDING_" + date)
+            const hasLogs = student.attendance.length > 0
+            const isPresent = isAllowed || hasLogs
 
             return {
                 studentId: student.id,
