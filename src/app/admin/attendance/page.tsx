@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useTransition } from "react"
-import { Calendar, Clock, RefreshCw, UserCheck, AlertTriangle, CheckCircle, UploadCloud, Plus, Lock, Unlock } from "lucide-react"
+import { Calendar, Clock, RefreshCw, UserCheck, AlertTriangle, CheckCircle, UploadCloud, Plus, Lock, Unlock, Users } from "lucide-react"
 import { toast } from "sonner"
 
 import GlassCard from "@/components/global/glass-card"
@@ -119,15 +119,15 @@ export default function AdminAttendancePage() {
         }
     }
 
-    const loadAttendanceReport = async () => {
-        setLoading(true)
+    const loadAttendanceReport = async (silent = false) => {
+        if (!silent) setLoading(true)
         const res = await adminGetAttendanceReportAction(selectedDate, selectedClassId)
         if (res.success) {
             setReport(res.report || [])
         } else {
             toast.error(res.error || "Failed to load attendance report")
         }
-        setLoading(false)
+        if (!silent) setLoading(false)
     }
 
     const handleStartEditAttendance = (log: any) => {
@@ -169,10 +169,10 @@ export default function AdminAttendancePage() {
         const res = await adminSetAttendanceStatusAction(studentId, selectedDate, markPresent)
         if (res.success) {
             toast.success(res.message || "Attendance status updated.")
-            loadAttendanceReport()
+            loadAttendanceReport(true)
         } else {
             toast.error(res.error || "Failed to update attendance status.")
-            loadAttendanceReport()
+            loadAttendanceReport(true)
         }
     }
 
@@ -186,10 +186,10 @@ export default function AdminAttendancePage() {
         const res = await adminBatchSetAttendanceStatusAction(studentIds, selectedDate, markPresent)
         if (res.success) {
             toast.success(res.message || "All student attendance statuses updated.")
-            loadAttendanceReport()
+            loadAttendanceReport(true)
         } else {
             toast.error(res.error || "Failed to update batch attendance.")
-            loadAttendanceReport()
+            loadAttendanceReport(true)
         }
     }
 
@@ -228,7 +228,7 @@ export default function AdminAttendancePage() {
                         <Unlock size={14} /> Give Access
                     </Button>
                     <button
-                        onClick={loadAttendanceReport}
+                        onClick={() => loadAttendanceReport()}
                         className="p-2.5 bg-zinc-900 border border-themeGrey rounded-xl text-themeTextGrey hover:text-white hover:border-zinc-700 transition-all"
                     >
                         <RefreshCw size={16} />
@@ -236,7 +236,44 @@ export default function AdminAttendancePage() {
                 </div>
             </div>
 
+            {/* Stats Cards */}
+            {!loading && selectedClassId && report.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <GlassCard className="p-5 border border-themeGrey flex items-center gap-4 relative overflow-hidden">
+                        <div className="p-3 bg-zinc-900 border border-themeGrey rounded-xl text-white">
+                            <Users size={22} />
+                        </div>
+                        <div>
+                            <p className="text-xs text-themeTextGrey font-semibold uppercase tracking-wider">Total Strength</p>
+                            <p className="text-2xl font-bold text-white mt-1">{report.length}</p>
+                        </div>
+                    </GlassCard>
 
+                    <GlassCard className="p-5 border border-themeGrey flex items-center gap-4 relative overflow-hidden">
+                        <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400">
+                            <UserCheck size={22} />
+                        </div>
+                        <div>
+                            <p className="text-xs text-themeTextGrey font-semibold uppercase tracking-wider">Present</p>
+                            <p className="text-2xl font-bold text-emerald-400 mt-1">
+                                {report.filter((r: any) => r.isPresent).length}
+                            </p>
+                        </div>
+                    </GlassCard>
+
+                    <GlassCard className="p-5 border border-themeGrey flex items-center gap-4 relative overflow-hidden">
+                        <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400">
+                            <AlertTriangle size={22} />
+                        </div>
+                        <div>
+                            <p className="text-xs text-themeTextGrey font-semibold uppercase tracking-wider">Absent</p>
+                            <p className="text-2xl font-bold text-rose-400 mt-1">
+                                {report.filter((r: any) => !r.isPresent).length}
+                            </p>
+                        </div>
+                    </GlassCard>
+                </div>
+            )}
 
             {/* Filters Bar */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end bg-zinc-950/40 p-5 rounded-2xl border border-themeGrey/40">
