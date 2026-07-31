@@ -92,7 +92,7 @@ export default function AdminLoginPage() {
         <div className="relative min-h-screen bg-black flex flex-col items-center justify-center p-4 overflow-hidden select-none">
             {/* Background Glow */}
             <div ref={bgRef} className="absolute inset-0 pointer-events-none flex items-center justify-center -z-10">
-                <BackdropGradient className="w-[500px] h-[500px] opacity-25" container="absolute">
+                <BackdropGradient className="w-[800px] h-[800px] opacity-35" container="absolute">
                     <></>
                 </BackdropGradient>
             </div>
@@ -103,15 +103,17 @@ export default function AdminLoginPage() {
                     <div className="size-8 rounded-full bg-black" />
                 </div>
                 <div className="flex flex-col items-start leading-none">
-                    <h1 ref={titleRef} className="text-4xl md:text-5xl font-bold text-themeTextWhite flex items-center justify-center gap-2 tracking-tight">
+                    <h1 ref={titleRef} className="text-4xl font-bold text-themeTextWhite flex items-center justify-center gap-1.5 tracking-tight">
                         {"Naveo.".split("").map((char, index) => (
                             <span key={index} className="inline-block">{char}</span>
                         ))}
                     </h1>
-                    <p className="text-sm text-themeTextGrey mt-2">
-                        Secure Exam Portal - Administrative Entrance
-                    </p>
-                    <p className="text-xs text-zinc-500 font-medium select-none mt-1.5">by Naveen</p>
+                    <div className="flex flex-col items-start gap-1 leading-none mt-1">
+                        <p className="text-xs text-themeTextGrey">
+                            Secure Exam Portal - Administrative Entrance
+                        </p>
+                        <p className="text-[11px] text-zinc-500 font-medium select-none">Created by Naveen</p>
+                    </div>
                 </div>
             </div>
 

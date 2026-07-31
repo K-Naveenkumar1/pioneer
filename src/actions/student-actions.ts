@@ -11,6 +11,14 @@ function getLocalDateString() {
     return localDate.toISOString().split('T')[0]
 }
 
+function getYesterdayLocalDateString() {
+    const d = new Date()
+    d.setDate(d.getDate() - 1)
+    const offset = d.getTimezoneOffset()
+    const localDate = new Date(d.getTime() - (offset*60*1000))
+    return localDate.toISOString().split('T')[0]
+}
+
 /**
  * Checks in a student for attendance tracking.
  */
@@ -271,21 +279,34 @@ export async function getAttendanceStatus() {
             activeRecord = null
         }
 
-        const todayRecords = await client.attendance.findMany({
+        const allRecords = await client.attendance.findMany({
             where: {
-                studentId: student.id,
-                date: dateStr
+                studentId: student.id
             },
-            orderBy: { checkIn: "asc" }
+            orderBy: { checkIn: "desc" }
+        })
+
+        const todayRecords = allRecords.filter(rec => rec.date === dateStr).reverse() // reverse to maintain asc order for today records clock logic
+        const yesterdayDateStr = getYesterdayLocalDateString()
+
+        let yesterdayTotalMs = 0
+        allRecords.forEach(rec => {
+            if (rec.date === yesterdayDateStr && rec.checkIn) {
+                const checkInTime = new Date(rec.checkIn).getTime()
+                const checkOutTime = rec.checkOut ? new Date(rec.checkOut).getTime() : checkInTime
+                yesterdayTotalMs += (checkOutTime - checkInTime)
+            }
         })
 
         return {
             isCheckedIn: !!activeRecord,
             activeRecord,
-            todayRecords
+            todayRecords,
+            allRecords,
+            yesterdayTotalMs
         }
     } catch (e) {
-        return { isCheckedIn: false, activeRecord: null, todayRecords: [] }
+        return { isCheckedIn: false, activeRecord: null, todayRecords: [], allRecords: [], yesterdayTotalMs: 0 }
     }
 }
 

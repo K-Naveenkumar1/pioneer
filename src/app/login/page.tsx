@@ -115,8 +115,8 @@ export default function LoginPage() {
     return (
         <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 select-none relative overflow-hidden text-radial--circle">
             {/* Ambient background glow using website's radial--blur */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-[50%] radial--blur opacity-25 pointer-events-none -z-10" />
-
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-[50%] radial--blur opacity-35 pointer-events-none -z-10" />
+ 
             {/* Header Brand */}
             <div className="mb-8 text-center z-10 flex items-center justify-center gap-3 leading-none">
                 <div className="flex aspect-square size-9 items-center justify-center rounded-lg bg-white shrink-0">
@@ -126,14 +126,14 @@ export default function LoginPage() {
                     <h1 className="text-[28px] font-bold text-white tracking-tight select-none leading-none">
                         Naveo.
                     </h1>
-                    <p className="text-sm text-zinc-500 font-medium select-none mt-1">by Naveen</p>
+                    <span className="text-xs text-zinc-500 font-medium select-none mt-0.5">Created by Naveen</span>
                 </div>
             </div>
-
+ 
             {/* Card Container */}
             <BackdropGradient
-                className="w-[350px] h-[350px] opacity-50 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-10"
-                container="z-10 w-full max-w-[400px] flex flex-col relative"
+                className="w-[500px] h-[500px] opacity-60 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-10"
+                container="z-10 w-full max-w-[450px] flex flex-col relative"
             >
                 <div className="w-full bg-[#09090b] border border-zinc-900 rounded-[24px] p-8 shadow-2xl min-h-[380px] flex flex-col justify-center relative">
                     {!isFirstLogin ? (
