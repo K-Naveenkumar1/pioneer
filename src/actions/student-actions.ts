@@ -1267,7 +1267,8 @@ export async function studentStartTypingRunAction(sessionId: string, passwordInp
                 wpm: 0,
                 accuracy: 0,
                 progressPercentage: 0,
-                isCompleted: false
+                isCompleted: false,
+                createdAt: new Date()
             }
         })
 
@@ -1301,16 +1302,16 @@ export async function studentUpdateTypingProgressAction(
 
         // Server-side validation against cheating
         const elapsedMs = Date.now() - run.createdAt.getTime()
-        const elapsedSeconds = Math.max(1, elapsedMs / 1000)
+        const elapsedSeconds = Math.max(0.1, elapsedMs / 1000)
 
-        // Calculate maximum possible progress based on an extremely fast speed of 216 WPM (18 characters per second)
-        const maxCharsPerSecond = 18
+        // Calculate maximum possible progress based on an extremely fast speed of 264 WPM (22 characters per second)
+        const maxCharsPerSecond = 22
         const maxAllowedCharacters = elapsedSeconds * maxCharsPerSecond
         const passageLength = run.session.passage?.length || 1
         const currentTypedCharacters = Math.round(passageLength * (progressPercentage / 100))
 
-        // If they have typed more characters than physically possible, flag it (skip check for very early runs with < 10 characters)
-        if (currentTypedCharacters > 10 && currentTypedCharacters > maxAllowedCharacters) {
+        // If they have typed more characters than physically possible, flag it (skip check for very early runs with < 15 characters)
+        if (currentTypedCharacters > 15 && currentTypedCharacters > maxAllowedCharacters) {
             return { success: false, error: "Cheating detected: typing speed exceeds human limits." }
         }
 
