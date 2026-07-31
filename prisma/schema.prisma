@@ -362,6 +362,8 @@ model TypingGameRun {
   accuracy           Float    @default(0)
   progressPercentage Float    @default(0) // 0 to 100
   isCompleted        Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @default(now()) @updatedAt
   completedAt        DateTime?
 
   @@index([sessionId])

@@ -210,6 +210,12 @@ export default function StudentTypingGamePage() {
         // Prevent typing beyond the passage length
         if (val.length > passage.length) return
 
+        // Prevent pasting / batch input insertions
+        if (val.length - inputText.length > 2) {
+            toast.error("Pasting text is not allowed!")
+            return
+        }
+
         setInputText(val)
         inputTextRef.current = val
 
@@ -544,6 +550,11 @@ export default function StudentTypingGamePage() {
                             <textarea
                                 value={inputText}
                                 onChange={handleInputChange}
+                                onPaste={(e) => e.preventDefault()}
+                                onCopy={(e) => e.preventDefault()}
+                                onCut={(e) => e.preventDefault()}
+                                onDrop={(e) => e.preventDefault()}
+                                onContextMenu={(e) => e.preventDefault()}
                                 placeholder="Type the passage here..."
                                 className="w-full min-h-[120px] p-5 bg-zinc-950 border border-themeGrey rounded-2xl text-white placeholder-zinc-700 font-mono text-base focus:outline-none focus:ring-2 focus:ring-white/20 transition-all resize-none shadow-inner"
                                 autoFocus

@@ -1291,10 +1291,39 @@ export async function studentUpdateTypingProgressAction(
         const student = await getStudentUser()
         if (!student) return { success: false, error: "Unauthorized" }
 
+        const run = await client.typingGameRun.findUnique({
+            where: { id: runId },
+            include: { session: true }
+        })
+
+        if (!run) return { success: false, error: "Run not found" }
+        if (run.studentId !== student.id) return { success: false, error: "Unauthorized" }
+
+        // Server-side validation against cheating
+        const elapsedMs = Date.now() - run.createdAt.getTime()
+        const elapsedSeconds = Math.max(1, elapsedMs / 1000)
+
+        // Calculate maximum possible progress based on an extremely fast speed of 216 WPM (18 characters per second)
+        const maxCharsPerSecond = 18
+        const maxAllowedCharacters = elapsedSeconds * maxCharsPerSecond
+        const passageLength = run.session.passage?.length || 1
+        const currentTypedCharacters = Math.round(passageLength * (progressPercentage / 100))
+
+        // If they have typed more characters than physically possible, flag it (skip check for very early runs with < 10 characters)
+        if (currentTypedCharacters > 10 && currentTypedCharacters > maxAllowedCharacters) {
+            return { success: false, error: "Cheating detected: typing speed exceeds human limits." }
+        }
+
+        // Also cap WPM to 200 WPM
+        let finalWpm = Number(wpm)
+        if (finalWpm > 200) {
+            finalWpm = 200
+        }
+
         const updatedRun = await client.typingGameRun.update({
             where: { id: runId },
             data: {
-                wpm: Number(wpm),
+                wpm: finalWpm,
                 accuracy: Number(accuracy),
                 progressPercentage: Number(progressPercentage),
                 isCompleted,

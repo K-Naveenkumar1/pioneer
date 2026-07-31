@@ -53,17 +53,44 @@ export default function AdminStudentsPage() {
 
     // Search query state
     const [searchQuery, setSearchQuery] = useState("")
+    // Class filter state
+    const [classFilter, setClassFilter] = useState("all")
 
     const filteredStudents = React.useMemo(() => {
-        if (!searchQuery.trim()) return students
-        const q = searchQuery.toLowerCase().trim()
-        return students.filter(student => 
-            (student.name || "").toLowerCase().includes(q) || 
-            (student.rollNo || "").toLowerCase().includes(q) ||
-            (student.department || "").toLowerCase().includes(q) ||
-            (student.class?.name || "").toLowerCase().includes(q)
-        )
-    }, [students, searchQuery])
+        let list = students
+
+        if (classFilter !== "all") {
+            list = list.filter(student => {
+                if (classFilter === "none") {
+                    return !student.classId
+                }
+                return student.classId === classFilter
+            })
+        }
+
+        if (searchQuery.trim()) {
+            const q = searchQuery.toLowerCase().trim()
+            list = list.filter(student => 
+                (student.name || "").toLowerCase().includes(q) || 
+                (student.rollNo || "").toLowerCase().includes(q) ||
+                (student.department || "").toLowerCase().includes(q) ||
+                (student.class?.name || "").toLowerCase().includes(q)
+            )
+        }
+
+        // Sort class-wise first, then by rollNo
+        return [...list].sort((a, b) => {
+            const classA = a.class?.name || ""
+            const classB = b.class?.name || ""
+
+            if (classA !== classB) {
+                if (!classA) return 1
+                if (!classB) return -1
+                return classA.localeCompare(classB)
+            }
+            return (a.rollNo || "").localeCompare(b.rollNo || "")
+        })
+    }, [students, searchQuery, classFilter])
 
     useEffect(() => {
         loadData()
@@ -460,13 +487,26 @@ export default function AdminStudentsPage() {
                                 Registered Profiles ({searchQuery ? `${filteredStudents.length} of ${students.length}` : students.length})
                             </h3>
                         </div>
-                        <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+                        <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end flex-wrap">
+                            <select
+                                value={classFilter}
+                                onChange={(e) => setClassFilter(e.target.value)}
+                                className="px-3 py-2 bg-black/40 border border-themeGrey rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-white/20 transition-all text-xs cursor-pointer h-9"
+                            >
+                                <option value="all" className="bg-zinc-950 text-white">All Classes</option>
+                                <option value="none" className="bg-zinc-950 text-white">No Class</option>
+                                {classes.map((cls: any) => (
+                                    <option key={cls.id} value={cls.id} className="bg-zinc-950 text-white">
+                                        {cls.name}
+                                    </option>
+                                ))}
+                            </select>
                             <input
                                 type="text"
                                 placeholder="Search by name, roll no, class..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="px-4 py-2 bg-black/40 border border-themeGrey rounded-xl text-white placeholder-themeTextGrey focus:outline-none focus:ring-2 focus:ring-white/20 transition-all text-xs w-full sm:w-60"
+                                className="px-4 py-2 bg-black/40 border border-themeGrey rounded-xl text-white placeholder-themeTextGrey focus:outline-none focus:ring-2 focus:ring-white/20 transition-all text-xs w-full sm:w-60 h-9"
                             />
                             {selectedStudentIds.length > 0 && (
                                 <Button
