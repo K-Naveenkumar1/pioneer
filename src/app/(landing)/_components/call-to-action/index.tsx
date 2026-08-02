@@ -7,12 +7,9 @@ type Props = {}
 
 const CallToAction = (props: Props) => {
   return (
-    <div className="flex flex-col items-start md:items-center gap-y-5 md:gap-y-0">
+    <div className="flex flex-col items-start md:items-center gap-y-5 md:gap-y-0 text-left md:text-center">
         <GradientText className="text-[35px] md:text-[40px] lg:text-[55px] xl:text-[70px] 2xl:text-[80px] leading-tight font-semibold" element="H1">
-        Bringing Communities <br className="md:hidden"/>Together
-        </GradientText>
-        <GradientText className="text-[35px] md:text-[40px] lg:text-[55px] xl:text-[70px] 2xl:text-[80px] leading-tight font-semibold" element="H1">
-        Every Students <br className="md:hidden"/>Deserve
+        Bringing Communities Together <br className="hidden md:block"/> Every Student Deserves
         </GradientText>
         <p className="text-sm md:text-center text-left text-muted-foreground text-themeTextGrey">
           Naveo is vibrant online community platform that empowers

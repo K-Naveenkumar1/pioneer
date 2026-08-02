@@ -1,6 +1,12 @@
 import dynamic from "next/dynamic";
 import CallToAction from "./_components/call-to-action";
 import DasboardSnippet from "./_components/dashboard-snippet";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+    title: "Home - Naveo",
+    description: "Welcome to Naveo. Explore modern community platforms, interactive classrooms, secure online testing and robust learning tools all in one premium workspace.",
+}
 
 const PricingSection = dynamic(
     () => 

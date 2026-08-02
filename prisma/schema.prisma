@@ -237,6 +237,8 @@ model Attendance {
   type      String    @default("CLASS") // CLASS or WFH
 
   @@index([studentId])
+  @@index([date])
+  @@index([studentId, date])
 }
 
 model Task {

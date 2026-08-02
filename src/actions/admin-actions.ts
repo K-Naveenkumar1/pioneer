@@ -726,26 +726,8 @@ export async function adminGetAttendanceReportAction(date: string, classId: stri
         const admin = await getAdminUser()
         if (!admin) return { success: false, error: "Unauthorized" }
 
-        // Fetch students, dayTasks, and noTaskDecl concurrently to optimize load speed
-        const [students, dayTasks, noTaskDecl] = await Promise.all([
-            client.student.findMany({
-                where: { classId: classId || undefined },
-                select: {
-                    id: true,
-                    name: true,
-                    rollNo: true,
-                    department: true,
-                    isAllowedInClass: true,
-                    allowedClassDate: true,
-                    attendance: {
-                        where: { date },
-                        orderBy: { checkIn: "asc" }
-                    },
-                    submissions: {
-                        include: { task: true }
-                    }
-                }
-            }),
+        // 1. Fetch dayTasks and noTaskDecl first
+        const [dayTasks, noTaskDecl] = await Promise.all([
             client.task.findMany({
                 select: { id: true, createdAt: true }
             }),
@@ -767,6 +749,31 @@ export async function adminGetAttendanceReportAction(date: string, classId: stri
         }).map(t => t.id)
 
         const hasNoTaskDecl = !!noTaskDecl
+
+        // 2. Fetch students, filtering their submissions to only contain the relevant tasks for this date
+        const students = await client.student.findMany({
+            where: { classId: classId || undefined },
+            select: {
+                id: true,
+                name: true,
+                rollNo: true,
+                department: true,
+                isAllowedInClass: true,
+                allowedClassDate: true,
+                attendance: {
+                    where: { date },
+                    orderBy: { checkIn: "asc" }
+                },
+                submissions: {
+                    where: tasksForDate.length > 0 ? {
+                        taskId: { in: tasksForDate }
+                    } : {
+                        id: "none" // empty result
+                    },
+                    include: { task: true }
+                }
+            }
+        })
 
         const report = students.map(student => {
             let totalMs = 0
