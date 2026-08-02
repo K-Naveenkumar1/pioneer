@@ -35,7 +35,8 @@ import {
     adminResetExamAttemptAction,
     adminForceSubmitExamAttemptAction,
     adminCreateCodingExamAction,
-    adminGetClassesAction
+    adminGetClassesAction,
+    adminEndExamAction
 } from "@/actions/admin-actions"
 
 export default function AdminExamsPage() {
@@ -48,7 +49,7 @@ export default function AdminExamsPage() {
     const [isPending, startTransition] = useTransition()
 
     // Tab control
-    const [activeTab, setActiveTab] = useState<"creator" | "submissions" | "monitoring">("creator")
+    const [activeTab, setActiveTab] = useState<"published" | "creator" | "submissions" | "monitoring">("published")
 
     // Creator Type Toggle
     const [examType, setExamType] = useState<"MCQ" | "CODING">("MCQ")
@@ -219,6 +220,19 @@ export default function AdminExamsPage() {
                 loadExams()
             } else {
                 toast.error(res.error || "Failed to delete exam.")
+            }
+        })
+    }
+
+    const handleEndExam = async (examId: string) => {
+        if (!confirm("Are you sure you want to end this exam? Students will not be able to attend it anymore.")) return
+        startTransition(async () => {
+            const res = await adminEndExamAction(examId)
+            if (res.success) {
+                toast.success(res.message || "Exam ended successfully.")
+                loadExams()
+            } else {
+                toast.error(res.error || "Failed to end exam.")
             }
         })
     }
@@ -513,6 +527,16 @@ export default function AdminExamsPage() {
             {/* Tabs Navigation */}
             <div className="flex border-b border-themeGrey/60">
                 <button
+                    onClick={() => setActiveTab("published")}
+                    className={`px-5 py-3 text-sm font-bold border-b-2 transition-all flex items-center gap-2 ${
+                        activeTab === "published"
+                            ? "border-white text-white bg-white/[0.02]"
+                            : "border-transparent text-themeTextGrey hover:text-white"
+                    }`}
+                >
+                    <FileText size={16} /> Published Exams
+                </button>
+                <button
                     onClick={() => setActiveTab("creator")}
                     className={`px-5 py-3 text-sm font-bold border-b-2 transition-all flex items-center gap-2 ${
                         activeTab === "creator"
@@ -520,7 +544,7 @@ export default function AdminExamsPage() {
                             : "border-transparent text-themeTextGrey hover:text-white"
                     }`}
                 >
-                    <BookOpen size={16} /> MCQ Exam Creator
+                    <Plus size={16} /> MCQ/Coding Creator
                 </button>
                 <button
                     onClick={() => {
@@ -585,7 +609,108 @@ export default function AdminExamsPage() {
                 </div>
             )}
 
-            {activeTab === "creator" ? (
+            {activeTab === "published" && (
+                <div className="space-y-6">
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                                <FileText size={20} /> Published Exams ({exams.length})
+                            </h3>
+                            <p className="text-xs text-themeTextGrey mt-1">Manage your active, scheduled, and ended MCQ or coding exams.</p>
+                        </div>
+                        <Button 
+                            onClick={() => setActiveTab("creator")}
+                            className="bg-white hover:bg-zinc-200 text-black font-bold rounded-xl flex items-center gap-1.5 px-4 py-2.5 text-xs transition-all shadow-lg"
+                        >
+                            <Plus size={14} /> Create New Exam
+                        </Button>
+                    </div>
+
+                    {loadingExams ? (
+                        <div className="flex justify-center py-12">
+                            <span className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></span>
+                        </div>
+                    ) : exams.length === 0 ? (
+                        <GlassCard className="p-12 text-center text-themeTextGrey text-sm border border-themeGrey/60 space-y-3">
+                            <BookOpen className="mx-auto text-zinc-600 mb-2" size={32} />
+                            <p className="font-semibold text-white">No exams published yet</p>
+                            <p className="text-xs text-themeTextGrey">Get started by creating a new exam from the creator tab.</p>
+                            <Button 
+                                onClick={() => setActiveTab("creator")}
+                                className="bg-zinc-900 border border-zinc-800 text-white font-semibold rounded-xl text-xs px-4 py-2 hover:bg-zinc-800 transition-all mt-2"
+                            >
+                                Open Creator
+                            </Button>
+                        </GlassCard>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {exams.map((ex: any) => (
+                                <GlassCard key={ex.id} className="p-6 border border-themeGrey/40 flex flex-col justify-between hover:border-zinc-700 hover:bg-white/[0.01] transition-all duration-300">
+                                    <div className="space-y-4">
+                                        <div className="flex justify-between items-start gap-4">
+                                            <h4 className="font-bold text-base text-white tracking-tight line-clamp-1" title={ex.title}>
+                                                {ex.title}
+                                            </h4>
+                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded shrink-0 border ${
+                                                ex.isActive === false
+                                                    ? "bg-red-500/10 text-red-400 border-red-500/20"
+                                                    : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                                            }`}>
+                                                {ex.isActive === false ? "Ended" : "Active"}
+                                            </span>
+                                        </div>
+
+                                        <div className="flex flex-wrap gap-2.5 pt-1">
+                                            <span className="text-[10px] bg-white/10 text-zinc-300 font-bold px-2 py-0.5 rounded">
+                                                {ex.type || "MCQ"}
+                                            </span>
+                                            <span className="text-[10px] bg-zinc-900 border border-zinc-800/80 text-zinc-400 font-medium px-2 py-0.5 rounded flex items-center gap-1">
+                                                <Clock size={10} /> {ex.duration}m
+                                            </span>
+                                            <span className="text-[10px] bg-zinc-900 border border-zinc-800/80 text-zinc-400 font-medium px-2 py-0.5 rounded flex items-center gap-1">
+                                                <BookOpen size={10} /> Qs: {ex.questions?.length || 0}
+                                            </span>
+                                            {ex.class?.name && (
+                                                <span className="text-[10px] text-emerald-400 font-semibold bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
+                                                    {ex.class.name}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-end gap-2 mt-6 pt-4 border-t border-themeGrey/30">
+                                        {ex.isActive !== false && (
+                                            <button
+                                                onClick={() => handleEndExam(ex.id)}
+                                                className="px-3 py-1.5 bg-red-950/40 border border-red-900/50 rounded-xl text-red-400 hover:bg-red-950/80 hover:text-red-300 hover:border-red-500/40 transition-all flex items-center gap-1 text-[11px] font-bold"
+                                                title="End Exam"
+                                            >
+                                                <X size={12} /> End Exam
+                                            </button>
+                                        )}
+                                        <button
+                                            onClick={() => handleStartEditExam(ex.id)}
+                                            className="p-2 bg-zinc-900 border border-zinc-800 rounded-xl text-zinc-400 hover:text-white hover:border-zinc-700 transition-all flex items-center justify-center"
+                                            title="Edit Exam"
+                                        >
+                                            <Pencil size={13} />
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteExam(ex.id)}
+                                            className="p-2 bg-zinc-900 border border-zinc-800 rounded-xl text-zinc-400 hover:text-red-400 hover:border-red-500/30 transition-all flex items-center justify-center"
+                                            title="Delete Exam"
+                                        >
+                                            <Trash2 size={13} />
+                                        </button>
+                                    </div>
+                                </GlassCard>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {activeTab === "creator" && (
                 /* Split layout */
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Form & Setup Column */}
@@ -737,61 +862,6 @@ export default function AdminExamsPage() {
                                 </Button>
                             )}
                         </GlassCard>
-
-                        {/* Active Exams List */}
-                        <div className="space-y-6 pt-4">
-                            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                <BookOpen size={18} /> Published Exams ({exams.length})
-                            </h3>
-                            {loadingExams ? (
-                                <div className="flex justify-center p-4">
-                                    <span className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></span>
-                                </div>
-                            ) : exams.length === 0 ? (
-                                <GlassCard className="p-6 text-center text-themeTextGrey text-xs border border-themeGrey">
-                                    No exams published yet. Create one above.
-                                </GlassCard>
-                            ) : (
-                                <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
-                                    {exams.map((ex: any) => (
-                                        <GlassCard key={ex.id} className="p-4 border border-themeGrey/40 flex items-center justify-between hover:border-zinc-700 transition-all">
-                                            <div className="overflow-hidden mr-2">
-                                                <h4 className="font-bold text-sm text-white truncate">{ex.title}</h4>
-                                                <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                                                    <span className="text-[9px] bg-white/10 text-zinc-300 font-bold px-1.5 py-0.5 rounded">
-                                                        {ex.type || "MCQ"}
-                                                    </span>
-                                                    <span className="text-[10px] text-themeTextGrey">
-                                                        {ex.duration}m | Qs: {ex.questions?.length || 0}
-                                                    </span>
-                                                    {ex.class?.name && (
-                                                        <span className="text-[10px] text-emerald-400 font-semibold bg-emerald-500/10 px-1.5 py-0.5 rounded">
-                                                            {ex.class.name}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center gap-1.5 shrink-0">
-                                                <button
-                                                    onClick={() => handleStartEditExam(ex.id)}
-                                                    className="p-2 bg-zinc-900 border border-zinc-800 rounded-xl text-zinc-400 hover:text-white hover:border-zinc-700 transition-all flex items-center justify-center"
-                                                    title="Edit Exam"
-                                                >
-                                                    <Pencil size={13} />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDeleteExam(ex.id)}
-                                                    className="p-2 bg-zinc-900 border border-zinc-800 rounded-xl text-zinc-400 hover:text-red-400 hover:border-red-500/30 transition-all flex items-center justify-center"
-                                                    title="Delete Exam"
-                                                >
-                                                    <Trash2 size={13} />
-                                                </button>
-                                            </div>
-                                        </GlassCard>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
                     </div>
 
                     {/* Right column view: MCQ Preview vs Coding Questions manual builder */}
@@ -1025,7 +1095,9 @@ export default function AdminExamsPage() {
                         )}
                     </div>
                 </div>
-            ) : (
+            )}
+
+            {(activeTab === "submissions" || activeTab === "monitoring") && (
                 /* Submissions & Monitoring Tab Panel Grid */
                 <div className="space-y-8">
                     {/* Selector Row */}

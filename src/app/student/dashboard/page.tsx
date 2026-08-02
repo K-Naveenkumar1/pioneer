@@ -84,7 +84,7 @@ export default function StudentDashboard() {
             const totalExams = (examList || []).length
             setStats({
                 pendingTasks: (taskList || []).filter((t: any) => t.status === "PENDING" || t.status === "REJECTED").length,
-                availableExams: (examList || []).filter((e: any) => !e.attempted).length,
+                availableExams: (examList || []).filter((e: any) => !e.attempted && e.isActive !== false).length,
                 completedTasks,
                 totalTasks,
                 attemptedExams,

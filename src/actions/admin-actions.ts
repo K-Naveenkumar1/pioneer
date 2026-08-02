@@ -1734,10 +1734,27 @@ export async function adminDeleteStudentsAction(studentIds: string[]) {
             client.typingGameRun.deleteMany({ where: { studentId: { in: studentIds } } }),
             client.student.deleteMany({ where: { id: { in: studentIds } } })
         ])
-
         return { success: true, message: `${studentIds.length} student(s) deleted successfully.` }
     } catch (e: any) {
         return { success: false, error: e.message || "Failed to delete students" }
     }
 }
 
+/**
+ * Ends a published exam, preventing new student attempts.
+ */
+export async function adminEndExamAction(examId: string) {
+    try {
+        const admin = await getAdminUser()
+        if (!admin) return { success: false, error: "Unauthorized" }
+
+        await client.exam.update({
+            where: { id: examId },
+            data: { isActive: false }
+        })
+
+        return { success: true, message: "Exam ended successfully. Students can no longer attend this exam." }
+    } catch (e: any) {
+        return { success: false, error: e.message || "Failed to end exam" }
+    }
+}

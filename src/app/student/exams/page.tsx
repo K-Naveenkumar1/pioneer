@@ -99,8 +99,12 @@ export default function StudentExamsPage() {
                                         <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-2 py-1 rounded-md">
                                             <CheckCircle2 size={12} /> Attempted
                                         </span>
+                                    ) : exam.isActive === false ? (
+                                        <span className="flex items-center gap-1 text-[11px] font-bold text-red-400 bg-red-400/10 border border-red-400/20 px-2 py-1 rounded-md">
+                                            Ended
+                                        </span>
                                     ) : (
-                                        <span className="flex items-center gap-1 text-[11px] font-bold text-amber-400 bg-amber-400/10 border border-amber-400/20 px-2 py-1 rounded-md">
+                                        <span className="flex items-center gap-1 text-[11px] font-bold text-amber-400 bg-amber-400/10 border border-amber-400/20 px-2 py-1 rounded-md animate-pulse">
                                             Available
                                         </span>
                                     )}
@@ -132,6 +136,15 @@ export default function StudentExamsPage() {
                                             Completed: {new Date(exam.completedAt).toLocaleDateString()}
                                         </p>
                                     </div>
+                                </div>
+                            ) : exam.isActive === false ? (
+                                <div className="mt-8 pt-4">
+                                    <Button
+                                        disabled
+                                        className="w-full bg-zinc-800 text-zinc-500 font-semibold rounded-xl flex items-center justify-center gap-1.5 py-5 cursor-not-allowed border border-zinc-700"
+                                    >
+                                        Exam Ended
+                                    </Button>
                                 </div>
                             ) : (
                                 <div className="mt-8 pt-4">

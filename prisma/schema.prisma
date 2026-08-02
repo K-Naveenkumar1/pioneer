@@ -272,6 +272,7 @@ model Exam {
   createdAt DateTime       @default(now())
   questions ExamQuestion[]
   attempts  ExamAttempt[]
+  isActive  Boolean        @default(true)
 
   @@index([classId])
 }

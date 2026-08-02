@@ -196,6 +196,7 @@ export async function getDashboardDataAction() {
                 title: exam.title,
                 type: exam.type,
                 duration: exam.duration,
+                isActive: exam.isActive,
                 totalQuestions: exam._count.questions,
                 attempted: !!attempt,
                 score: attempt ? attempt.score : null,
@@ -483,6 +484,7 @@ export async function getStudentExams(type?: string) {
                 type: exam.type,
                 duration: exam.duration,
                 examCode: exam.examCode, // Include exam code
+                isActive: exam.isActive,
                 totalQuestions: exam._count.questions,
                 attempted: !!attempt,
                 attemptId: attempt ? attempt.id : null,
@@ -510,6 +512,10 @@ export async function startExamAttemptAction(examId: string, inputCode: string) 
         })
 
         if (!exam) return { success: false, error: "Exam not found" }
+
+        if (!exam.isActive) {
+            return { success: false, error: "This exam has ended and is no longer available to attend." }
+        }
 
         // Enforce class level security
         if (exam.classId) {

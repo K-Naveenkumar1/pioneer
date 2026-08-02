@@ -98,6 +98,10 @@ export default function StudentCodingExamsPage() {
                                         <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-2 py-1 rounded-md">
                                             <CheckCircle2 size={12} /> Attempted
                                         </span>
+                                    ) : exam.isActive === false ? (
+                                        <span className="flex items-center gap-1 text-[11px] font-bold text-red-400 bg-red-400/10 border border-red-500/20 px-2 py-1 rounded-md">
+                                            Ended
+                                        </span>
                                     ) : (
                                         <span className="flex items-center gap-1 text-[11px] font-bold text-amber-400 bg-amber-400/10 border border-amber-400/20 px-2 py-1 rounded-md animate-pulse">
                                             <Play size={12} fill="currentColor" /> Active
@@ -120,6 +124,13 @@ export default function StudentCodingExamsPage() {
                                     <div className="flex items-center gap-1 text-xs font-semibold text-emerald-400">
                                         <Award size={16} /> Score: {exam.score} / 100
                                     </div>
+                                ) : exam.isActive === false ? (
+                                    <Button
+                                        disabled
+                                        className="bg-zinc-800 text-zinc-500 font-semibold text-xs rounded-xl px-5 py-4 w-full cursor-not-allowed border border-zinc-700"
+                                    >
+                                        Exam Ended
+                                    </Button>
                                 ) : (
                                     <Button
                                         onClick={() => handleStartExam(exam)}
