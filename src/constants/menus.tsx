@@ -1,6 +1,6 @@
 import { BsFillCreditCardFill } from "react-icons/bs";
 import { HiHome } from "react-icons/hi2";
-import { MdExplore } from "react-icons/md";
+import { MdMail, MdFeaturedPlayList } from "react-icons/md";
 
 export type MenuProps =  
  {
@@ -22,16 +22,24 @@ export const LANDING_PAGE_MENU:MenuProps[] =[
     },
     {
         id:1,
+        lable: "Features",
+        icon: <MdFeaturedPlayList />,
+        path: "#features",
+        section: true,
+    },
+    {
+        id:2,
         lable: "Pricing",
         icon: <BsFillCreditCardFill />,
         path: "#pricing",
         section: true,
     },
     {
-        id:2,
-        lable: "Explore",
-        icon: <MdExplore />,
-        path: "/explore",
+        id:3,
+        lable: "Contact Us",
+        icon: <MdMail />,
+        path: "#contact",
+        section: true,
     },
 
     
