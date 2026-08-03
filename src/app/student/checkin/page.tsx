@@ -469,9 +469,9 @@ export default function StudentCheckInPage() {
                 {/* Right Column (lg:col-span-1): Everyday Activity Log */}
                 <div className="lg:col-span-1">
                     {/* Everyday Activity Log */}
-                    <div className="bg-[#121212] border border-zinc-800/80 rounded-2xl shadow-lg p-6 flex flex-col justify-between hover:border-zinc-700/80 transition-all duration-300 h-full min-h-[350px]">
-                        <div className="h-full flex flex-col justify-between">
-                            <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5 mb-4">
+                    <div className="bg-[#121212] border border-zinc-800/80 rounded-2xl shadow-lg p-6 hover:border-zinc-700/80 transition-all duration-300 h-full min-h-[350px] ">
+                        <div className="h-full flex flex-col">
+                            <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5 mb-4 pb-5">
                                 <Clock size={14} className="text-indigo-400" /> Everyday Activity Log
                             </span>
 
