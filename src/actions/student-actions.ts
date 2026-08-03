@@ -801,7 +801,8 @@ export async function runCodeAction(languageId: number, code: string, stdin: str
                 source_code: code,
                 language_id: languageId,
                 stdin: stdin
-            })
+            }),
+            cache: "no-store"
         })
 
         const result = await response.json()
@@ -1095,15 +1096,14 @@ export async function gradeCodingQuestionAction(
                         body: JSON.stringify({
                             source_code: code,
                             language_id: languageId,
-                            stdin: tc.input
-                        })
+                            stdin: String(tc.input || ""),
+                            expected_output: String(tc.output || "")
+                        }),
+                        cache: "no-store"
                     })
 
                     const result = await response.json()
-                    
-                    const stdout = (result.stdout || "").trim()
-                    const expected = (tc.output || "").trim()
-                    const passed = stdout === expected && !result.stderr && !result.compile_output
+                    const passed = result.status?.id === 3
 
                     return {
                         index,

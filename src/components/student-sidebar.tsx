@@ -177,7 +177,7 @@ export function StudentSidebar({ student, ...props }: StudentSidebarProps & Reac
                           <SidebarMenuSubButton asChild isActive={isActive} className={`flex items-center gap-2.5 px-3 rounded-xl transition-all text-sm font-medium ${
                             isActive
                               ? "bg-zinc-900 border border-zinc-800 text-white font-semibold py-5"
-                              : "text-white hover:bg-zinc-900/40 py-3"
+                              : "text-white hover:bg-transparent hover:text-white active:bg-transparent active:text-white cursor-pointer py-3"
                           }`}>
                             <Link href={subItem.url} className="flex items-center gap-2.5 w-full">
                               <Icon className={`h-4 w-4 ${isActive ? "text-white" : "text-white"}`} />
