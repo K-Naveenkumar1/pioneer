@@ -1765,3 +1765,22 @@ export async function adminEndExamAction(examId: string) {
         return { success: false, error: e.message || "Failed to end exam" }
     }
 }
+
+/**
+ * Reactivates an ended exam, allowing students to take it again.
+ */
+export async function adminPublishExamAgainAction(examId: string) {
+    try {
+        const admin = await getAdminUser()
+        if (!admin) return { success: false, error: "Unauthorized" }
+
+        await client.exam.update({
+            where: { id: examId },
+            data: { isActive: true }
+        })
+
+        return { success: true, message: "Exam republished successfully. Students can now attend this exam again." }
+    } catch (e: any) {
+        return { success: false, error: e.message || "Failed to republish exam" }
+    }
+}

@@ -36,7 +36,8 @@ import {
     adminForceSubmitExamAttemptAction,
     adminCreateCodingExamAction,
     adminGetClassesAction,
-    adminEndExamAction
+    adminEndExamAction,
+    adminPublishExamAgainAction
 } from "@/actions/admin-actions"
 
 export default function AdminExamsPage() {
@@ -233,6 +234,19 @@ export default function AdminExamsPage() {
                 loadExams()
             } else {
                 toast.error(res.error || "Failed to end exam.")
+            }
+        })
+    }
+
+    const handlePublishAgain = async (examId: string) => {
+        if (!confirm("Are you sure you want to publish this exam again? Students will be able to take it.")) return
+        startTransition(async () => {
+            const res = await adminPublishExamAgainAction(examId)
+            if (res.success) {
+                toast.success(res.message || "Exam republished successfully.")
+                loadExams()
+            } else {
+                toast.error(res.error || "Failed to republish exam.")
             }
         })
     }
@@ -679,13 +693,21 @@ export default function AdminExamsPage() {
                                     </div>
 
                                     <div className="flex items-center justify-end gap-2 mt-6 pt-4 border-t border-themeGrey/30">
-                                        {ex.isActive !== false && (
+                                        {ex.isActive !== false ? (
                                             <button
                                                 onClick={() => handleEndExam(ex.id)}
                                                 className="px-3 py-1.5 bg-red-950/40 border border-red-900/50 rounded-xl text-red-400 hover:bg-red-950/80 hover:text-red-300 hover:border-red-500/40 transition-all flex items-center gap-1 text-[11px] font-bold"
                                                 title="End Exam"
                                             >
                                                 <X size={12} /> End Exam
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={() => handlePublishAgain(ex.id)}
+                                                className="px-3 py-1.5 bg-emerald-950/40 border border-emerald-900/50 rounded-xl text-emerald-400 hover:bg-emerald-950/80 hover:text-emerald-300 hover:border-emerald-500/40 transition-all flex items-center gap-1 text-[11px] font-bold"
+                                                title="Publish Again"
+                                            >
+                                                <RefreshCw size={12} /> Publish Again
                                             </button>
                                         )}
                                         <button
