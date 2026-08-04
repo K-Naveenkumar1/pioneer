@@ -2,7 +2,11 @@
 
 import React, { useState, useEffect } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
+import { Montserrat } from "next/font/google"
+
+const logoFont = Montserrat({ subsets: ["latin"], weight: ["700"] })
 import { 
     LayoutDashboard, 
     Users, 
@@ -65,16 +69,17 @@ export default function AdminSidebar({ admin }: AdminSidebarProps) {
             <div className="flex flex-col gap-8 w-full">
                 {/* Brand logo & Collapse Button */}
                 <div className={`flex items-center justify-between ${isCollapsed ? "flex-col gap-4" : ""}`}>
-                    <div className="flex items-center gap-3">
-                        <div className="flex aspect-square size-9 items-center justify-center rounded-lg bg-white shrink-0">
-                            <div className="size-8 rounded-full bg-black" />
+                    <div className="flex flex-col items-start">
+                        <div className="flex items-center">
+                            <Image src="/nk-logo.png" alt="Logo" width={30} height={22} className="object-contain shrink-0" />
+                            {!isCollapsed && (
+                                <div className="animate-slide-name flex items-center">
+                                    <h2 className={`${logoFont.className} font-bold text-[1.5rem] tracking-tight leading-none text-white`}>Naveo.</h2>
+                                </div>
+                            )}
                         </div>
                         {!isCollapsed && (
-                            <div>
-                                <h2 className="font-extrabold text-lg tracking-tight leading-tight">Naveo.</h2>
-                                <p className="text-[10px] text-themeTextGrey">Administrator Portal</p>
-                                <p className="text-[10px] text-zinc-500 font-medium leading-none mt-1">by Naveen</p>
-                            </div>
+                            <p className="text-[10px] text-themeTextGrey mt-1 ml-[38px] animate-slide-name">Administrator Portal</p>
                         )}
                     </div>
                     

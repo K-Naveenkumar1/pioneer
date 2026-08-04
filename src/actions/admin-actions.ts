@@ -843,7 +843,8 @@ export async function adminUpdateStudentAction(
     rollNo: string, 
     name: string, 
     department: string, 
-    classId: string
+    classId: string,
+    newPassword?: string
 ) {
     try {
         const admin = await getAdminUser()
@@ -860,14 +861,21 @@ export async function adminUpdateStudentAction(
             return { success: false, error: `Roll number ${rollNo} is already registered to another student.` }
         }
 
+        const updateData: any = {
+            rollNo: rollNo.trim(),
+            name: name.trim(),
+            department: department.trim() || null,
+            classId: classId && classId.trim() !== "" ? classId.trim() : null
+        }
+
+        if (newPassword && newPassword.trim() !== "") {
+            updateData.password = hashPassword(newPassword.trim())
+            updateData.isFirstLogin = true
+        }
+
         await client.student.update({
             where: { id: studentId },
-            data: {
-                rollNo: rollNo.trim(),
-                name: name.trim(),
-                department: department.trim() || null,
-                classId: classId && classId.trim() !== "" ? classId.trim() : null
-            }
+            data: updateData
         })
 
         return { success: true, message: "Student details updated successfully." }

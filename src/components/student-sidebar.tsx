@@ -39,7 +39,11 @@ import {
   Library
 } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
+import { Montserrat } from "next/font/google"
+
+const logoFont = Montserrat({ subsets: ["latin"], weight: ["700"] })
 import React, { useTransition } from "react"
 import { toast } from "sonner"
 
@@ -145,13 +149,10 @@ export function StudentSidebar({ student, ...props }: StudentSidebarProps & Reac
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link href="/student/dashboard">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-white">
-                  <div className="size-7 rounded-full bg-black" />
-                </div>
-                <div className="flex flex-col leading-none">
-                  <span className="font-bold text-[19px] text-white tracking-tight leading-none mt-1">Naveo.</span>
-                  <span className="text-xs text-zinc-500 font-medium mt-0.80 select-none">Created by Naveen</span>
+              <Link href="/student/dashboard" className="flex items-center gap-0">
+                <Image src="/nk-logo.png" alt="Logo" width={30} height={22} className="object-contain" />
+                <div className="animate-slide-name flex items-center">
+                  <span className={`${logoFont.className} font-bold text-[1.5rem] text-white tracking-tight leading-none`}>Naveo.</span>
                 </div>
               </Link>
             </SidebarMenuButton>

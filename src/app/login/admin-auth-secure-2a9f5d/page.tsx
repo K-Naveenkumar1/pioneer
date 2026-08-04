@@ -15,9 +15,12 @@ import {
 } from "lucide-react"
 
 import GlassCard from "@/components/global/glass-card"
-import BackdropGradient from "@/components/global/backdrop-gradient"
 import { Button } from "@/components/ui/button"
+import Image from "next/image"
+import { Montserrat } from "next/font/google"
 import { loginAction, getAdminUser } from "@/actions/custom-auth"
+
+const logoFont = Montserrat({ subsets: ["latin"], weight: ["700"] })
 
 export default function AdminLoginPage() {
     const router = useRouter()
@@ -90,31 +93,20 @@ export default function AdminLoginPage() {
 
     return (
         <div className="relative min-h-screen bg-black flex flex-col items-center justify-center p-4 overflow-hidden select-none">
-            {/* Background Glow */}
-            <div ref={bgRef} className="absolute inset-0 pointer-events-none flex items-center justify-center -z-10">
-                <BackdropGradient className="w-[800px] h-[800px] opacity-35" container="absolute">
-                    <></>
-                </BackdropGradient>
-            </div>
 
             {/* Header Brand */}
-            <div className="z-10 mb-8 text-center flex items-center justify-center gap-3">
-                <div className="flex aspect-square size-9 items-center justify-center rounded-lg bg-white shrink-0">
-                    <div className="size-8 rounded-full bg-black" />
-                </div>
-                <div className="flex flex-col items-start leading-none">
-                    <h1 ref={titleRef} className="text-4xl font-bold text-themeTextWhite flex items-center justify-center gap-1.5 tracking-tight">
-                        {"Naveo.".split("").map((char, index) => (
-                            <span key={index} className="inline-block">{char}</span>
-                        ))}
-                    </h1>
-                    <div className="flex flex-col items-start gap-1 leading-none mt-1">
-                        <p className="text-xs text-themeTextGrey">
-                            Secure Exam Portal - Administrative Entrance
-                        </p>
-                        <p className="text-[11px] text-zinc-500 font-medium select-none">Created by Naveen</p>
+            <div className="z-10 mb-8 text-center flex flex-col items-center justify-center leading-none">
+                <div className="flex items-center">
+                    <Image src="/nk-logo.png" alt="Logo" width={30} height={22} className="object-contain" />
+                    <div className="animate-slide-name flex items-center">
+                        <span className={`${logoFont.className} font-bold text-[1.5rem] text-white tracking-tight leading-none`}>
+                            Naveo.
+                        </span>
                     </div>
                 </div>
+                <p className="text-xs text-themeTextGrey mt-2.5 animate-slide-name">
+                    Secure Exam Portal - Administrative Entrance
+                </p>
             </div>
 
             <div ref={cardRef} className="z-10 w-full max-w-md">

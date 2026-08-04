@@ -50,7 +50,7 @@ export default function MobileBlocker() {
                 {/* Text Content */}
                 <div className="space-y-3">
                     {/* Main title styled with the website's custom text-gradiant */}
-                    <h1 className="text-xl font-bold tracking-tight uppercase sm:text-2xl text-gradiant inline-flex items-center">
+                    <h1 className="text-xl font-bold tracking-tight uppercase sm:text-2xl text-white inline-flex items-center">
                         Desktop Required
                     </h1>
                     <p className="text-sm leading-relaxed text-zinc-400">
@@ -59,7 +59,7 @@ export default function MobileBlocker() {
                 </div>
 
                 {/* Visual line */}
-                <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-zinc-800 to-transparent my-1" />
+                <div className="w-full h-[1px] bg-zinc-800 my-1" />
 
                 {/* Instructions */}
                 <div className="space-y-4 w-full">

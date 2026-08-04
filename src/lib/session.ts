@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { cookies, headers } from "next/headers"
 import crypto from "crypto"
 
@@ -64,14 +65,17 @@ export async function setSessionCookie(name: string, data: any, expiresDays = 7)
         const frontEndHttps = headersList.get("front-end-https")
         const xUrl = headersList.get("x-url")
         
+        const host = headersList.get("host") || ""
+        const isLocalhost = host.includes("localhost") || host.includes("127.0.0.1")
+
         const protocolIsHttps = 
             xForwardedProto === "https" || 
             xForwardedSsl === "on" || 
             frontEndHttps === "on" ||
             (xUrl && xUrl.startsWith("https://"))
         
-        // If we are on HTTPS, make it secure. If we are on HTTP, do not make it secure (so the browser can store it).
-        isSecure = !!protocolIsHttps
+        // If we are on localhost, do NOT make it secure (so HTTP stores it). Otherwise check if HTTPS protocol.
+        isSecure = !isLocalhost && !!protocolIsHttps
         
         console.log(`[session.ts:setSessionCookie] Setting cookie "${name}" with secure=${isSecure} (x-forwarded-proto: ${xForwardedProto}, x-url: ${xUrl})`)
     } catch (e: any) {

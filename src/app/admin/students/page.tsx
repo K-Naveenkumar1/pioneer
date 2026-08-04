@@ -47,6 +47,7 @@ export default function AdminStudentsPage() {
     const [editName, setEditName] = useState("")
     const [editDepartment, setEditDepartment] = useState("")
     const [editClassId, setEditClassId] = useState("")
+    const [editPassword, setEditPassword] = useState("")
 
     // Selection state for multi-delete
     const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([])
@@ -126,6 +127,7 @@ export default function AdminStudentsPage() {
         setEditName(student.name)
         setEditDepartment(student.department || "")
         setEditClassId(student.classId || "")
+        setEditPassword("")
     }
 
     const handleSaveEdit = (studentId: string) => {
@@ -135,7 +137,14 @@ export default function AdminStudentsPage() {
         }
 
         startTransition(async () => {
-            const res = await adminUpdateStudentAction(studentId, editRollNo, editName, editDepartment, editClassId)
+            const res = await adminUpdateStudentAction(
+                studentId, 
+                editRollNo, 
+                editName, 
+                editDepartment, 
+                editClassId,
+                editPassword.trim() !== "" ? editPassword : undefined
+            )
             if (res.success) {
                 toast.success(res.message || "Student details updated.")
                 setEditingStudentId(null)
@@ -576,6 +585,18 @@ export default function AdminStudentsPage() {
                                                             <option key={cls.id} value={cls.id} className="bg-zinc-950 text-white">{cls.name}</option>
                                                         ))}
                                                     </select>
+                                                </div>
+                                            </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                <div>
+                                                    <label className="block text-[10px] text-zinc-400 uppercase font-semibold mb-1">New Password (optional)</label>
+                                                    <input 
+                                                        type="password" 
+                                                        placeholder="Leave blank to keep unchanged"
+                                                        value={editPassword}
+                                                        onChange={(e) => setEditPassword(e.target.value)}
+                                                        className="w-full px-3 py-2 bg-black border border-themeGrey rounded-lg text-white text-xs focus:outline-none focus:ring-1 focus:ring-white/20"
+                                                    />
                                                 </div>
                                             </div>
                                             <div className="flex gap-2 justify-end pt-2">

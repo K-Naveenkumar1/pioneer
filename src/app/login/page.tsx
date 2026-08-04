@@ -6,8 +6,11 @@ import React, { useEffect, useState, useTransition } from "react"
 import { toast } from "sonner"
 
 import { checkRollNoAction, getStudentUser, loginAction, studentFirstResetAction } from "@/actions/custom-auth"
-import BackdropGradient from "@/components/global/backdrop-gradient"
 import { Button } from "@/components/ui/button"
+import Image from "next/image"
+import { Montserrat } from "next/font/google"
+
+const logoFont = Montserrat({ subsets: ["latin"], weight: ["700"] })
 
 export default function LoginPage() {
     const router = useRouter()
@@ -113,28 +116,19 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 select-none relative overflow-hidden text-radial--circle">
-            {/* Ambient background glow using website's radial--blur */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[720px] h-[720px] rounded-[50%] radial--blur opacity-20 pointer-events-none -z-10" />
- 
+        <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 select-none relative overflow-hidden">
             {/* Header Brand */}
-            <div className="mb-8 text-center z-10 flex items-center justify-center gap-3 leading-none">
-                <div className="flex aspect-square size-9 items-center justify-center rounded-lg bg-white shrink-0">
-                    <div className="size-8 rounded-full bg-black" />
-                </div>
-                <div className="flex flex-col items-start leading-none">
-                    <h1 className="text-[28px] font-bold text-white tracking-tight select-none leading-none">
+            <div className="mb-8 text-center z-10 flex items-center justify-center leading-none">
+                <Image src="/nk-logo.png" alt="Naveo Logo" width={30} height={22} className="object-contain" />
+                <div className="animate-slide-name flex items-center">
+                    <span className={`${logoFont.className} font-bold text-[1.5rem] tracking-tight leading-none text-white`}>
                         Naveo.
-                    </h1>
-                    <span className="text-xs text-zinc-500 font-medium select-none mt-0.5">Created by Naveen</span>
+                    </span>
                 </div>
             </div>
  
             {/* Card Container */}
-            <BackdropGradient
-                className="w-[400px] h-[400px] opacity-30 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-10"
-                container="z-10 w-full max-w-[450px] flex flex-col relative"
-            >
+            <div className="z-10 w-full max-w-[450px] flex flex-col relative">
                 <div className="w-full bg-[#09090b] border border-zinc-900 rounded-[24px] p-8 shadow-2xl min-h-[380px] flex flex-col justify-center relative">
                     {!isFirstLogin ? (
                         <div className="w-full">
@@ -286,7 +280,7 @@ export default function LoginPage() {
                         </div>
                     )}
                 </div>
-            </BackdropGradient>
+            </div>
 
             {/* Footer Agreement */}
             <div className="mt-8 text-center max-w-[320px] z-10">
