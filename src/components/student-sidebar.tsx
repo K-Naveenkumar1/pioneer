@@ -19,33 +19,32 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
-  useSidebar,
+  useSidebar
 } from "@/components/ui/sidebar"
 import {
   BookOpen,
   CheckSquare,
+  ChevronLeft,
+  ChevronRight,
   Clock,
   Code,
   FileText,
   Keyboard,
   LayoutDashboard,
+  Library,
   LogOut,
   MessageSquare,
   MoreVertical,
-  Trophy,
-  Library
+  Trophy
 } from "lucide-react"
-import Link from "next/link"
-import Image from "next/image"
-import { usePathname, useRouter } from "next/navigation"
 import { Montserrat } from "next/font/google"
-
-const logoFont = Montserrat({ subsets: ["latin"], weight: ["700"] })
+import Image from "next/image"
+import Link from "next/link"
+import { usePathname, useRouter } from "next/navigation"
 import React, { useTransition } from "react"
 import { toast } from "sonner"
+
+const logoFont = Montserrat({ subsets: ["latin"], weight: ["700"] })
 
 interface StudentSidebarProps {
   student: {
@@ -56,66 +55,56 @@ interface StudentSidebarProps {
 }
 
 const data = {
-  navMain: [
+  navItems: [
     {
-      title: "Overview",
-      items: [
-        {
-          title: "Dashboard",
-          url: "/student/dashboard",
-          icon: LayoutDashboard,
-        },
-        {
-          title: "Check-In",
-          url: "/student/checkin",
-          icon: Clock,
-        },
-        {
-          title: "Leaderboard",
-          url: "/student/leaderboard",
-          icon: Trophy,
-        },
-        {
-          title: "Doubts Chat",
-          url: "/student/chat",
-          icon: MessageSquare,
-        },
-      ],
+      title: "Dashboard",
+      url: "/student/dashboard",
+      icon: LayoutDashboard,
     },
     {
-      title: "Academics",
-      items: [
-        {
-          title: "Digital Notes",
-          url: "/student/notes",
-          icon: FileText,
-        },
-        {
-          title: "Course Materials",
-          url: "/student/materials",
-          icon: Library,
-        },
-        {
-          title: "Tasks",
-          url: "/student/tasks",
-          icon: CheckSquare,
-        },
-        {
-          title: "Exams",
-          url: "/student/exams",
-          icon: BookOpen,
-        },
-        {
-          title: "Coding Exam",
-          url: "/student/coding-exam",
-          icon: Code,
-        },
-        {
-          title: "Typing Game",
-          url: "/student/typing-game",
-          icon: Keyboard,
-        },
-      ],
+      title: "Check-In",
+      url: "/student/checkin",
+      icon: Clock,
+    },
+    {
+      title: "Leaderboard",
+      url: "/student/leaderboard",
+      icon: Trophy,
+    },
+    {
+      title: "Doubts Chat",
+      url: "/student/chat",
+      icon: MessageSquare,
+    },
+    {
+      title: "Digital Notes",
+      url: "/student/notes",
+      icon: FileText,
+    },
+    {
+      title: "Course Materials",
+      url: "/student/materials",
+      icon: Library,
+    },
+    {
+      title: "Tasks",
+      url: "/student/tasks",
+      icon: CheckSquare,
+    },
+    {
+      title: "Exams",
+      url: "/student/exams",
+      icon: BookOpen,
+    },
+    {
+      title: "Coding Exam",
+      url: "/student/coding-exam",
+      icon: Code,
+    },
+    {
+      title: "Typing Game",
+      url: "/student/typing-game",
+      icon: Keyboard,
     },
   ],
 }
@@ -124,7 +113,7 @@ export function StudentSidebar({ student, ...props }: StudentSidebarProps & Reac
   const pathname = usePathname()
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
-  const { isMobile } = useSidebar()
+  const { isMobile, state, toggleSidebar } = useSidebar()
   const [mounted, setMounted] = React.useState(false)
 
   React.useEffect(() => {
@@ -148,9 +137,9 @@ export function StudentSidebar({ student, ...props }: StudentSidebarProps & Reac
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
-              <Link href="/student/dashboard" className="flex items-center gap-0">
-                <Image src="/nk-logo.png" alt="Logo" width={30} height={22} className="object-contain" />
+            <SidebarMenuButton size="lg" asChild className="w-full">
+              <Link href="/student/dashboard" className="flex items-center gap-0 pl-3">
+                <Image src="/nk-logo.png" alt="Logo" width={30} height={22} className="object-contain shrink-0" />
                 <div className="animate-slide-name flex items-center">
                   <span className={`${logoFont.className} font-bold text-[1.5rem] text-white tracking-tight leading-none`}>Naveo.</span>
                 </div>
@@ -162,36 +151,25 @@ export function StudentSidebar({ student, ...props }: StudentSidebarProps & Reac
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarMenu className="gap-4">
-            {data.navMain.map((item) => (
-              <SidebarMenuItem key={item.title}>
-                <div className="px-3 py-2 text-xs font-bold text-zinc-400 uppercase tracking-wider select-none mb-1">
-                  {item.title}
-                </div>
-                {item.items?.length ? (
-                  <SidebarMenuSub className="ml-0 border-l-0 px-1.5 gap-2.5">
-                    {item.items.map((subItem) => {
-                      const isActive = mounted && pathname === subItem.url
-                      const Icon = subItem.icon
-                      return (
-                        <SidebarMenuSubItem key={subItem.title}>
-                          <SidebarMenuSubButton asChild isActive={isActive} className={`flex items-center gap-2.5 px-3 rounded-xl transition-all text-sm font-medium ${
-                            isActive
-                              ? "bg-zinc-900 border border-zinc-800 text-white font-semibold py-5"
-                              : "text-white hover:bg-transparent hover:text-white active:bg-transparent active:text-white cursor-pointer py-3"
-                          }`}>
-                            <Link href={subItem.url} className="flex items-center gap-2.5 w-full">
-                              <Icon className={`h-4 w-4 ${isActive ? "text-white" : "text-white"}`} />
-                              <span>{subItem.title}</span>
-                            </Link>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                      )
-                    })}
-                  </SidebarMenuSub>
-                ) : null}
-              </SidebarMenuItem>
-            ))}
+          <SidebarMenu className="gap-2.5 px-1">
+            {data.navItems.map((item) => {
+              const isActive = mounted && pathname === item.url
+              const Icon = item.icon
+              return (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild isActive={isActive} className={`flex items-center gap-2.5 px-3 rounded-xl transition-all text-sm font-medium ${
+                    isActive
+                      ? "bg-zinc-900 border border-zinc-800 text-white font-semibold py-5"
+                      : "text-white hover:bg-transparent hover:text-white active:bg-transparent active:text-white cursor-pointer py-3"
+                  }`}>
+                    <Link href={item.url} className="flex items-center gap-2.5 w-full">
+                      <Icon className="h-4 w-4 shrink-0" {...(isActive ? { fill: "currentColor" } : {})} />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )
+            })}
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
@@ -205,9 +183,9 @@ export function StudentSidebar({ student, ...props }: StudentSidebarProps & Reac
                   size="lg"
                   className="data-[state=open]:bg-zinc-900 data-[state=open]:text-white hover:bg-zinc-900/50 rounded-xl"
                 >
-                  <Avatar className="h-8 w-8 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center font-bold text-xs text-white">
+                  <Avatar className="h-8 w-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center font-bold text-xs text-white">
                     <AvatarFallback className="bg-transparent text-white font-bold">
-                      {student.name.substring(0, 2).toUpperCase()}
+                      {student.name.substring(0, 1).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
@@ -227,9 +205,9 @@ export function StudentSidebar({ student, ...props }: StudentSidebarProps & Reac
               >
                 <DropdownMenuLabel className="p-0 font-normal">
                   <div className="flex items-center gap-2 px-3 py-2 text-left text-sm">
-                    <Avatar className="h-8 w-8 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center font-bold text-xs text-white">
+                    <Avatar className="h-8 w-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center font-bold text-xs text-white">
                       <AvatarFallback className="bg-transparent text-white font-bold">
-                        {student.name.substring(0, 2).toUpperCase()}
+                        {student.name.substring(0, 1).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div className="grid flex-1 text-left text-sm leading-tight">

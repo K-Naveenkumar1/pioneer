@@ -193,9 +193,26 @@ h1 svg {
     background: #121212 !important;
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
-    border: 1px solid rgba(39, 39, 42, 0.8) !important; /* matches border-zinc-800/80 */
+    border: none !important;
+    padding: 8px !important;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.37), 0 4px 6px -4px rgba(0, 0, 0, 0.37) !important; /* matches shadow-lg */
     border-radius: 1rem !important; /* Matches rounded-2xl */
+}
+
+/* Remove borders for all card containers and sidebars globally */
+div[class*="border-zinc-"],
+div[class*="border-themeGrey"],
+div[class*="border-border"],
+aside[class*="border-"],
+[data-sidebar="sidebar"],
+[data-sidebar="rail"],
+[data-sidebar="trigger"],
+[data-sidebar="wrapper"] {
+    border: none !important;
+    border-right: none !important;
+    border-left: none !important;
+    border-top: none !important;
+    border-bottom: none !important;
 }
 
 /* Modern minimalist scrollbars globally */
@@ -255,7 +272,7 @@ h1 svg {
   to {
     max-width: 200px;
     opacity: 1;
-    margin-left: 8px;
+    margin-left: 4px;
   }
 }
 
@@ -268,6 +285,14 @@ h1 svg {
   opacity: 0;
   animation: slide-name 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   animation-delay: 0.1s;
+}
+
+/* Reduce spacing gap between floating sidebar and main content block */
+.group[data-variant="floating"] > div.fixed {
+    padding-left: 10px !important;
+    padding-right: 0px !important;
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
 }
 
 

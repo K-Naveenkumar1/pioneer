@@ -62,7 +62,7 @@ export default function AdminSidebar({ admin }: AdminSidebarProps) {
 
     return (
         <aside 
-            className={`bg-black border-r border-themeGrey/60 flex flex-col justify-between p-6 shrink-0 md:sticky md:top-0 md:h-screen z-40 transition-all duration-300 ${
+            className={`bg-black flex flex-col justify-between p-6 shrink-0 md:sticky md:top-0 md:h-screen z-40 transition-all duration-300 ${
                 isCollapsed ? "w-full md:w-24 items-center px-4" : "w-full md:w-64"
             }`}
         >

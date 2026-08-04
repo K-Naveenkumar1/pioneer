@@ -1,19 +1,10 @@
 "use client"
 
-import React from "react"
-import { usePathname } from "next/navigation"
-import { StudentSidebar } from "@/components/student-sidebar"
-import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
-import { Separator } from "@/components/ui/separator"
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
 import SidebarWrapper from "@/components/global/sidebar-wrapper"
+import { StudentSidebar } from "@/components/student-sidebar"
+import { SidebarInset, SidebarProvider, SidebarTrigger, useSidebar } from "@/components/ui/sidebar"
+import { usePathname } from "next/navigation"
+import React from "react"
 
 interface Props {
     student: {
@@ -56,35 +47,50 @@ export default function StudentLayoutClient({ student, children }: Props) {
         <SidebarProvider
             style={
                 {
-                    "--sidebar-width": "19rem",
+                    "--sidebar-width": "18.5rem",
                 } as React.CSSProperties
             }
         >
             <SidebarWrapper>
                 <StudentSidebar student={student} />
             </SidebarWrapper>
-            <SidebarInset className="bg-black text-white text-radial--circle">
-                <header className="flex h-16 shrink-0 items-center gap-2 px-4 border-b border-zinc-800/40">
-                    <SidebarTrigger className="-ml-1 text-zinc-400 hover:text-white" />
-                    <Separator orientation="vertical" className="mr-2 h-4 bg-zinc-800" />
-                    <Breadcrumb>
-                        <BreadcrumbList>
-                            <BreadcrumbItem className="hidden md:block">
-                                <BreadcrumbLink href="/student/dashboard" className="text-zinc-400 hover:text-white">
-                                    Portal
-                                </BreadcrumbLink>
-                            </BreadcrumbItem>
-                            <BreadcrumbSeparator className="hidden md:block text-zinc-600" />
-                            <BreadcrumbItem>
-                                <BreadcrumbPage className="text-white font-medium">{getBreadcrumbPage()}</BreadcrumbPage>
-                            </BreadcrumbItem>
-                        </BreadcrumbList>
-                    </Breadcrumb>
-                </header>
-                <main className="flex-1 p-6 md:p-8 overflow-y-auto w-full">
-                    {children}
-                </main>
-            </SidebarInset>
+            <StudentLayoutInner student={student}>{children}</StudentLayoutInner>
         </SidebarProvider>
+    )
+}
+
+function StudentLayoutInner({ student, children }: { student: any; children: React.ReactNode }) {
+    const { state } = useSidebar()
+    const pathname = usePathname()
+
+    const getPageName = () => {
+        if (pathname.includes("/student/dashboard")) return "Dashboard"
+        if (pathname.includes("/student/checkin")) return "Check-In"
+        if (pathname.includes("/student/leaderboard")) return "Leaderboard"
+        if (pathname.includes("/student/chat")) return "Doubts Chat"
+        if (pathname.includes("/student/notes")) return "Digital Notes"
+        if (pathname.includes("/student/materials")) return "Course Materials"
+        if (pathname.includes("/student/tasks")) return "Tasks"
+        if (pathname.includes("/student/exams")) return "Exams"
+        if (pathname.includes("/student/coding-exam")) return "Coding Exam"
+        if (pathname.includes("/student/typing-game")) return "Typing Game"
+        if (pathname.includes("/student/practice")) return "Practice Arena"
+        return "Workspace"
+    }
+
+    const pageName = getPageName()
+
+    return (
+        <SidebarInset className="bg-black text-white text-radial--circle">
+            <main className="flex-1 p-4 md:p-6 overflow-y-auto w-full">
+                {/* Header bar showing toggle and page name */}
+                <div className="flex items-center gap-3.5 mb-6 text-zinc-400">
+                    <SidebarTrigger className="hover:text-white transition-colors" />
+                    <span className="text-zinc-850 select-none">|</span>
+                    <span className="text-sm font-semibold text-zinc-200 select-none">{pageName}</span>
+                </div>
+                {children}
+            </main>
+        </SidebarInset>
     )
 }

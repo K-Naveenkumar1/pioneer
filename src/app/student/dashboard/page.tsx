@@ -1,17 +1,10 @@
 "use client"
 
 import {
-    TrendingDown,
-    TrendingUp,
-    Calendar,
-    Clock,
-    BookOpen,
-    CheckSquare,
-    Users,
-    Award
+    ChevronDown
 } from "lucide-react"
-import { useEffect, useState } from "react"
 import Link from "next/link"
+import { useEffect, useState } from "react"
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis } from "recharts"
 
 import {
@@ -160,9 +153,9 @@ export default function StudentDashboard() {
     }
 
     return (
-        <div className="space-y-8 select-none">
-            {/* Header Greeting */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-4 select-none">
+            {/* Header Greeting Card */}
+            <div className="bg-transparent rounded-[20px] pb-2 pr-2 pl-2 pt-1 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all duration-300 border border-zinc-800">
                 <div>
                     <h1 className="text-4xl font-extrabold tracking-tight text-white pb-1">
                         Welcome Back, {profile?.name || "Student"}
@@ -172,7 +165,7 @@ export default function StudentDashboard() {
                 <div>
                     <Link 
                         href="/student/checkin" 
-                        className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-white hover:bg-zinc-200 text-black font-semibold text-xs transition-all shadow-md"
+                        className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-white hover:bg-zinc-200 text-black font-semibold text-xs transition-all shadow-md shrink-0"
                     >
                         Check-In Portal
                     </Link>
@@ -180,95 +173,88 @@ export default function StudentDashboard() {
             </div>
 
             {/* Row of 4 Stats Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Attendance rate */}
-                <div className="bg-[#121212] border border-zinc-800/80 rounded-2xl p-6 flex flex-col justify-between min-h-[130px] shadow-lg hover:border-zinc-700/80 transition-all duration-300">
-                    <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
-                            <Clock size={12} className="text-zinc-500" />
-                            Attendance Rate
-                        </span>
-                        <span className={`flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border ${
-                            metrics.percentage >= 75 
-                                ? "bg-emerald-950/20 border-emerald-800/30 text-emerald-400" 
-                                : "bg-rose-950/20 border-rose-800/30 text-rose-400"
-                        }`}>
-                            {metrics.percentage >= 75 ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
-                            {metrics.percentage >= 75 ? "5.1%" : "5.4%"}
-                        </span>
+                <div className="bg-[#121212] rounded-[20px] p-6 flex flex-col justify-between min-h-[140px] shadow-lg transition-all duration-300">
+                    <div>
+                        <p className="text-xs text-zinc-500 font-medium tracking-tight">Attendance rate</p>
+                        <h3 className="text-3xl font-bold text-white tracking-tight mt-2">
+                            {metrics.percentage}%
+                        </h3>
                     </div>
-                    <h3 className="text-3xl font-extrabold text-white tracking-tight mt-3">
-                        {metrics.percentage}%
-                    </h3>
+                    {metrics.percentage < 75 ? (
+                        <div className="flex items-center gap-1 text-[11px] font-semibold text-rose-500 mt-4">
+                            <span>▼ 5.4%</span>
+                            <span className="text-zinc-500 font-normal">last 30 days</span>
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-1 text-[11px] font-semibold text-emerald-500 mt-4">
+                            <span>▲ 5.1%</span>
+                            <span className="text-zinc-500 font-normal">last 30 days</span>
+                        </div>
+                    )}
                 </div>
 
                 {/* Tasks Completed */}
-                <div className="bg-[#121212] border border-zinc-800/80 rounded-2xl p-6 flex flex-col justify-between min-h-[130px] shadow-lg hover:border-zinc-700/80 transition-all duration-300">
-                    <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
-                            <CheckSquare size={12} className="text-zinc-500" />
-                            Tasks Completed
-                        </span>
-                        <span className="flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-950/20 border-emerald-800/30 text-emerald-400">
-                            <TrendingUp size={10} />
-                            12.5%
-                        </span>
+                <div className="bg-[#121212] rounded-[20px] p-6 flex flex-col justify-between min-h-[140px] shadow-lg transition-all duration-300">
+                    <div>
+                        <p className="text-xs text-zinc-500 font-medium tracking-tight">Tasks Completed</p>
+                        <h3 className="text-3xl font-bold text-white tracking-tight mt-2">
+                            {stats.completedTasks} <span className="text-base text-zinc-500 font-normal">/ {stats.totalTasks}</span>
+                        </h3>
                     </div>
-                    <h3 className="text-3xl font-extrabold text-white tracking-tight mt-3">
-                        {stats.completedTasks} <span className="text-sm text-zinc-500 font-normal">/ {stats.totalTasks}</span>
-                    </h3>
+                    <div className="flex items-center gap-1 text-[11px] font-semibold text-emerald-500 mt-4">
+                        <span>▲ 12.5%</span>
+                        <span className="text-zinc-500 font-normal">last 30 days</span>
+                    </div>
                 </div>
 
                 {/* Exams stand */}
-                <div className="bg-[#121212] border border-zinc-800/80 rounded-2xl p-6 flex flex-col justify-between min-h-[130px] shadow-lg hover:border-zinc-700/80 transition-all duration-300">
-                    <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
-                            <BookOpen size={12} className="text-zinc-500" />
-                            Exams STANDING
-                        </span>
-                        <span className="flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-rose-950/20 border-rose-800/30 text-rose-400">
-                            <TrendingDown size={10} />
-                            2.3%
-                        </span>
+                <div className="bg-[#121212] rounded-[20px] p-6 flex flex-col justify-between min-h-[140px] shadow-lg transition-all duration-300">
+                    <div>
+                        <p className="text-xs text-zinc-500 font-medium tracking-tight">Exams Standing</p>
+                        <h3 className="text-3xl font-bold text-white tracking-tight mt-2">
+                            {stats.attemptedExams} <span className="text-base text-zinc-500 font-normal">/ {stats.totalExams}</span>
+                        </h3>
                     </div>
-                    <h3 className="text-3xl font-extrabold text-white tracking-tight mt-3">
-                        {stats.attemptedExams} <span className="text-sm text-zinc-500 font-normal">/ {stats.totalExams}</span>
-                    </h3>
+                    <div className="flex items-center gap-1 text-[11px] font-semibold text-rose-500 mt-4">
+                        <span>▼ 2.3%</span>
+                        <span className="text-zinc-500 font-normal">last 30 days</span>
+                    </div>
                 </div>
 
                 {/* Study Hours */}
-                <div className="bg-[#121212] border border-zinc-800/80 rounded-2xl p-6 flex flex-col justify-between min-h-[130px] shadow-lg hover:border-zinc-700/80 transition-all duration-300">
-                    <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
-                            <Award size={12} className="text-zinc-500" />
-                            Study Hours
-                        </span>
-                        <span className="flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-950/20 border-emerald-800/30 text-emerald-400">
-                            <TrendingUp size={10} />
-                            5.1%
-                        </span>
+                <div className="bg-[#121212] rounded-[20px] p-6 flex flex-col justify-between min-h-[140px] shadow-lg transition-all duration-300">
+                    <div>
+                        <p className="text-xs text-zinc-500 font-medium tracking-tight">Study Hours</p>
+                        <h3 className="text-3xl font-bold text-white tracking-tight mt-2">
+                            {totalHours} <span className="text-base text-zinc-500 font-normal">hrs</span>
+                        </h3>
                     </div>
-                    <h3 className="text-3xl font-extrabold text-white tracking-tight mt-3">
-                        {totalHours} <span className="text-sm text-zinc-500 font-normal">hrs</span>
-                    </h3>
+                    <div className="flex items-center gap-1 text-[11px] font-semibold text-emerald-500 mt-4">
+                        <span>▲ 5.1%</span>
+                        <span className="text-zinc-500 font-normal">last 30 days</span>
+                    </div>
                 </div>
             </div>
 
             {/* Main Double Column Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
                 
                 {/* Left Column: Chart and Tasks List */}
-                <div className="lg:col-span-7 space-y-6">
+                <div className="lg:col-span-7 space-y-4">
                     {/* Revenue (Study Hours) Chart Card */}
-                    <div className="bg-[#121212] border border-zinc-800/80 rounded-2xl p-6 shadow-lg flex flex-col">
+                    <div className="bg-[#121212] rounded-[20px] p-6 shadow-lg flex flex-col transition-all duration-300">
                         <div className="flex justify-between items-start pb-6">
                             <div>
-                                <h3 className="text-base font-bold text-white">Study Hours</h3>
-                                <p className="text-xs text-zinc-500 mt-0.5">Your study duration logs throughout this month</p>
+                                <p className="text-xs text-zinc-500 font-medium tracking-tight">Study Hours</p>
+                                <h3 className="text-3xl font-bold text-white tracking-tight mt-1.5">
+                                    {totalHours} <span className="text-base text-zinc-500 font-normal">hrs</span>
+                                </h3>
                             </div>
-                            <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 text-xs font-semibold text-zinc-300 hover:text-white transition-all">
-                                <Calendar size={12} />
-                                This Month
+                            <button className="flex items-center gap-1 text-[11px] font-semibold text-zinc-500 hover:text-white transition-all">
+                                <span>This Month</span>
+                                <ChevronDown size={14} />
                             </button>
                         </div>
                         
@@ -277,7 +263,7 @@ export default function StudentDashboard() {
                                 <AreaChart data={getChartData()} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                     <defs>
                                         <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#ffffff" stopOpacity={0.15}/>
+                                            <stop offset="5%" stopColor="#ffffff" stopOpacity={0.12}/>
                                             <stop offset="95%" stopColor="#ffffff" stopOpacity={0}/>
                                         </linearGradient>
                                     </defs>
@@ -285,9 +271,9 @@ export default function StudentDashboard() {
                                         dataKey="date" 
                                         tickLine={false} 
                                         axisLine={false} 
-                                        tick={{ fill: '#71717a', fontSize: 10 }}
+                                        tick={{ fill: '#52525b', fontSize: 10 }}
                                     />
-                                    <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#27272a', strokeWidth: 1 }} />
+                                    <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#1c1c1e', strokeWidth: 1 }} />
                                     <Area 
                                         type="monotone" 
                                         dataKey="hours" 
@@ -302,15 +288,15 @@ export default function StudentDashboard() {
                     </div>
 
                     {/* Daily Tasks Table Card */}
-                    <div className="bg-[#121212] border border-zinc-800/80 rounded-2xl p-6 shadow-lg flex flex-col">
+                    <div className="bg-[#121212] rounded-[20px] p-6 shadow-lg flex flex-col transition-all duration-300">
                         <div className="flex justify-between items-start pb-6">
                             <div>
-                                <h3 className="text-base font-bold text-white">Daily Tasks</h3>
+                                <h3 className="text-3xl font-bold text-white tracking-tight">Daily Tasks</h3>
                                 <p className="text-xs text-zinc-500 mt-0.5">Points and approval standings for assigned daily work</p>
                             </div>
-                            <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 text-xs font-semibold text-zinc-300 hover:text-white transition-all">
-                                <Calendar size={12} />
-                                This Month
+                            <button className="flex items-center gap-1 text-[11px] font-semibold text-zinc-500 hover:text-white transition-all">
+                                <span>This Month</span>
+                                <ChevronDown size={14} />
                             </button>
                         </div>
 
@@ -360,17 +346,17 @@ export default function StudentDashboard() {
                 </div>
 
                 {/* Right Column: Exams Standings and Geographic map */}
-                <div className="lg:col-span-5 space-y-6">
+                <div className="lg:col-span-5 space-y-4">
                     {/* MCQ Exams Table Card */}
-                    <div className="bg-[#121212] border border-zinc-800/80 rounded-2xl p-6 shadow-lg flex flex-col">
+                    <div className="bg-[#121212] rounded-[20px] p-6 shadow-lg flex flex-col transition-all duration-300">
                         <div className="flex justify-between items-start pb-6">
                             <div>
-                                <h3 className="text-base font-bold text-white">MCQ Exams</h3>
+                                <h3 className="text-3xl font-bold text-white tracking-tight">MCQ Exams</h3>
                                 <p className="text-xs text-zinc-500 mt-0.5">Your scores and standings of online tests</p>
                             </div>
-                            <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 text-xs font-semibold text-zinc-300 hover:text-white transition-all">
-                                <Calendar size={12} />
-                                This Month
+                            <button className="flex items-center gap-1 text-[11px] font-semibold text-zinc-500 hover:text-white transition-all">
+                                <span>This Month</span>
+                                <ChevronDown size={14} />
                             </button>
                         </div>
 
@@ -407,78 +393,63 @@ export default function StudentDashboard() {
                     </div>
 
                     {/* Geographic style Classroom stands Card */}
-                    <div className="bg-[#121212] border border-zinc-800/80 rounded-2xl p-6 shadow-lg flex flex-col">
-                        <div>
-                            <h3 className="text-base font-bold text-white">Geographic Stands</h3>
-                            <p className="text-xs text-zinc-500 mt-0.5">Your learning footprints around the global scope</p>
+                    <div className="bg-[#121212] rounded-[20px] p-6 shadow-lg flex flex-col transition-all duration-300">
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <p className="text-xs text-zinc-500 font-medium tracking-tight">Geographic Stands</p>
+                                <h3 className="text-3xl font-bold text-white tracking-tight mt-1.5">
+                                    85%
+                                </h3>
+                            </div>
+                            <button className="flex items-center gap-0.5 text-[11px] font-semibold text-zinc-500 hover:text-white transition-all">
+                                <span>View All</span>
+                                <span className="text-xs">↗</span>
+                            </button>
+                        </div>
+                        <div className="text-[11px] font-semibold text-emerald-500 mt-1">
+                            <span>▲ 12.02%</span>
+                            <span className="text-zinc-500 font-normal"> last month</span>
                         </div>
 
                         {/* Map and Stands Row */}
-                        <div className="flex flex-col sm:flex-row items-center gap-6 mt-4">
-                            <div className="flex-1 w-full h-[150px] relative flex items-center justify-center">
+                        <div className="flex flex-col sm:flex-row items-center gap-6 mt-6">
+                            <div className="flex-1 w-full h-[140px] relative flex items-center justify-center bg-zinc-950/20 rounded-xl overflow-hidden">
                                 <WorldMapSVG />
                             </div>
                             
                             {/* Stands stats */}
-                            <div className="w-full sm:w-[150px] space-y-4">
-                                {/* Attendance percent */}
-                                <div className="space-y-1">
-                                    <div className="flex justify-between items-center text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-                                        <span className="flex items-center gap-1.5">
-                                            <span className="w-2 h-2 rounded bg-zinc-400" />
-                                            ATT
-                                        </span>
-                                        <span className="text-white font-mono">{metrics.percentage}%</span>
+                            <div className="w-full sm:w-[180px] space-y-2.5">
+                                <div className="flex items-center justify-between text-xs py-1">
+                                    <div className="flex items-center gap-2">
+                                        <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                                        <span className="text-zinc-400 font-medium">Attendance</span>
                                     </div>
-                                    <div className="w-full bg-zinc-900 h-1 rounded-full overflow-hidden">
-                                        <div className="bg-white h-full transition-all duration-500" style={{ width: `${metrics.percentage}%` }} />
-                                    </div>
+                                    <span className="font-bold text-white text-[11px]">{metrics.percentage}%</span>
                                 </div>
-
-                                {/* Task Percent */}
-                                <div className="space-y-1">
-                                    <div className="flex justify-between items-center text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-                                        <span className="flex items-center gap-1.5">
-                                            <span className="w-2 h-2 rounded bg-zinc-400" />
-                                            TSK
-                                        </span>
-                                        <span className="text-white font-mono">
-                                            {stats.totalTasks > 0 ? Math.round((stats.completedTasks / stats.totalTasks) * 100) : 0}%
-                                        </span>
+                                <div className="flex items-center justify-between text-xs py-1 border-t border-zinc-900/60">
+                                    <div className="flex items-center gap-2">
+                                        <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
+                                        <span className="text-zinc-400 font-medium">Tasks</span>
                                     </div>
-                                    <div className="w-full bg-zinc-900 h-1 rounded-full overflow-hidden">
-                                        <div className="bg-white h-full transition-all duration-500" style={{ width: `${stats.totalTasks > 0 ? (stats.completedTasks / stats.totalTasks) * 100 : 0}%` }} />
-                                    </div>
+                                    <span className="font-bold text-white text-[11px]">
+                                        {stats.totalTasks > 0 ? Math.round((stats.completedTasks / stats.totalTasks) * 100) : 0}%
+                                    </span>
                                 </div>
-
-                                {/* Exam attempt percent */}
-                                <div className="space-y-1">
-                                    <div className="flex justify-between items-center text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-                                        <span className="flex items-center gap-1.5">
-                                            <span className="w-2 h-2 rounded bg-zinc-400" />
-                                            EXM
-                                        </span>
-                                        <span className="text-white font-mono">
-                                            {stats.totalExams > 0 ? Math.round((stats.attemptedExams / stats.totalExams) * 100) : 0}%
-                                        </span>
+                                <div className="flex items-center justify-between text-xs py-1 border-t border-zinc-900/60">
+                                    <div className="flex items-center gap-2">
+                                        <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+                                        <span className="text-zinc-400 font-medium">Exams</span>
                                     </div>
-                                    <div className="w-full bg-zinc-900 h-1 rounded-full overflow-hidden">
-                                        <div className="bg-white h-full transition-all duration-500" style={{ width: `${stats.totalExams > 0 ? (stats.attemptedExams / stats.totalExams) * 100 : 0}%` }} />
-                                    </div>
+                                    <span className="font-bold text-white text-[11px]">
+                                        {stats.totalExams > 0 ? Math.round((stats.attemptedExams / stats.totalExams) * 100) : 0}%
+                                    </span>
                                 </div>
-
-                                {/* Overall success */}
-                                <div className="space-y-1">
-                                    <div className="flex justify-between items-center text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-                                        <span className="flex items-center gap-1.5">
-                                            <span className="w-2 h-2 rounded bg-zinc-400" />
-                                            OVR
-                                        </span>
-                                        <span className="text-white font-mono">85%</span>
+                                <div className="flex items-center justify-between text-xs py-1 border-t border-zinc-900/60">
+                                    <div className="flex items-center gap-2">
+                                        <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0" />
+                                        <span className="text-zinc-400 font-medium">Overall</span>
                                     </div>
-                                    <div className="w-full bg-zinc-900 h-1 rounded-full overflow-hidden">
-                                        <div className="bg-white h-full transition-all duration-500" style={{ width: `85%` }} />
-                                    </div>
+                                    <span className="font-bold text-white text-[11px]">85%</span>
                                 </div>
                             </div>
                         </div>
