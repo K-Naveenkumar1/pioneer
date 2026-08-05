@@ -20,100 +20,34 @@ import {
 } from "@/actions/student-actions"
 import { Button } from "@/components/ui/button"
 
-const FlipDigit = ({ val }: { val: string }) => {
-    const [currentVal, setCurrentVal] = useState(val)
-    const [previousVal, setPreviousVal] = useState(val)
-
-    useEffect(() => {
-        if (val !== currentVal) {
-            setPreviousVal(currentVal)
-            setCurrentVal(val)
-        }
-    }, [val, currentVal])
-
+const SlidingDigit = ({ val }: { val: string }) => {
     return (
-        <div className="relative w-10 h-16 md:w-14 md:h-20 bg-[#1c1c1e] border border-zinc-800/80 rounded-xl select-none shadow-[0_6px_10px_rgba(0,0,0,0.5)] [perspective:400px] [transform-style:preserve-3d]">
-            {/* Top Half (Static) */}
-            <div className="absolute inset-x-0 top-0 h-1/2 overflow-hidden bg-[#1c1c1e] rounded-t-xl border-b border-black/40">
-                <div className="absolute top-0 inset-x-0 h-[200%] flex items-center justify-center">
-                    <span className="text-3xl md:text-5xl font-black font-mono text-zinc-200 leading-none">
-                        {currentVal}
-                    </span>
-                </div>
-            </div>
-
-            {/* Bottom Half (Static) */}
-            <div className="absolute inset-x-0 bottom-0 h-1/2 overflow-hidden bg-[#171719] rounded-b-xl border-t border-white/5">
-                <div className="absolute bottom-0 inset-x-0 h-[200%] flex items-center justify-center">
-                    <span className="text-3xl md:text-5xl font-black font-mono text-zinc-200 leading-none">
-                        {currentVal}
-                    </span>
-                </div>
-            </div>
-
-            {/* Flipping Top Card (folds down) */}
-            {currentVal !== previousVal && (
-                <motion.div
-                    key={`top-${currentVal}`}
-                    initial={{ rotateX: 0 }}
-                    animate={{ rotateX: -90 }}
-                    transition={{ duration: 0.18, ease: "easeIn" }}
-                    className="absolute inset-x-0 top-0 h-1/2 overflow-hidden bg-[#1c1c1e] rounded-t-xl border-b border-black/40 z-20"
-                    style={{ transformOrigin: "bottom", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", transformStyle: "preserve-3d" }}
+        <div className="relative h-16 md:h-24 lg:h-28 w-[28px] md:w-[48px] lg:w-[56px] overflow-hidden flex items-center justify-center font-sans">
+            <AnimatePresence mode="popLayout">
+                <motion.span
+                    key={val}
+                    initial={{ y: "100%", opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: "-100%", opacity: 0 }}
+                    transition={{
+                        type: "spring",
+                        stiffness: 150,
+                        damping: 15,
+                        mass: 0.8
+                    }}
+                    className="absolute text-5xl md:text-7xl lg:text-8xl font-black text-white select-none tracking-tighter"
                 >
-                    <div className="absolute top-0 inset-x-0 h-[200%] flex items-center justify-center">
-                        <span className="text-3xl md:text-5xl font-black font-mono text-zinc-200 leading-none">
-                            {previousVal}
-                        </span>
-                    </div>
-                    {/* Shadow overlay */}
-                    <motion.div 
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 0.8 }}
-                        transition={{ duration: 0.18 }}
-                        className="absolute inset-0 bg-black pointer-events-none"
-                    />
-                </motion.div>
-            )}
-
-            {/* Flipping Bottom Card (falls down) */}
-            {currentVal !== previousVal && (
-                <motion.div
-                    key={`bottom-${currentVal}`}
-                    initial={{ rotateX: 90 }}
-                    animate={{ rotateX: 0 }}
-                    transition={{ delay: 0.15, duration: 0.35, type: "spring", stiffness: 100, damping: 12 }}
-                    className="absolute inset-x-0 bottom-0 h-1/2 overflow-hidden bg-[#171719] rounded-b-xl border-t border-white/5 z-20"
-                    style={{ transformOrigin: "top", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", transformStyle: "preserve-3d" }}
-                >
-                    <div className="absolute bottom-0 inset-x-0 h-[200%] flex items-center justify-center">
-                        <span className="text-3xl md:text-5xl font-black font-mono text-zinc-200 leading-none">
-                            {currentVal}
-                        </span>
-                    </div>
-                    {/* Highlight/shading overlay */}
-                    <motion.div 
-                        initial={{ opacity: 0.8 }}
-                        animate={{ opacity: 0 }}
-                        transition={{ delay: 0.15, duration: 0.35 }}
-                        className="absolute inset-0 bg-black pointer-events-none"
-                    />
-                </motion.div>
-            )}
-
-            {/* Reflection shine and borders */}
-            <div className="absolute inset-0 rounded-xl pointer-events-none border border-white/[0.04] shadow-[inset_0_1px_3px_rgba(255,255,255,0.06)]" />
-            
-            {/* The horizontal split line */}
-            <div className="absolute inset-x-0 top-1/2 h-[1px] bg-black/80 z-30 shadow-sm pointer-events-none" />
+                    {val}
+                </motion.span>
+            </AnimatePresence>
         </div>
     )
 }
 
-const FlipSeparator = () => {
+const SlidingSeparator = () => {
     return (
-        <div className="flex flex-col justify-center items-center h-16 md:h-20 px-1.5 select-none">
-            <span className="text-2xl md:text-4xl font-black font-mono text-zinc-600 animate-pulse leading-none">
+        <div className="flex items-center justify-center h-16 md:h-24 lg:h-28 px-1 select-none">
+            <span className="text-4xl md:text-6xl lg:text-7xl font-black text-zinc-600 leading-none">
                 :
             </span>
         </div>
@@ -294,62 +228,64 @@ export default function StudentCheckInPage() {
                 <div className="lg:col-span-2 flex flex-col gap-6">
                     {/* Timer Control Card */}
                     <div className="bg-[#121212] border border-zinc-800/80 rounded-2xl shadow-lg p-5 flex flex-col gap-6 overflow-hidden relative hover:border-zinc-700/80 transition-all duration-300 h-fit">
-                        <div className="flex justify-between items-start z-10">
+                        <div className="flex justify-between items-start z-10 w-full">
                             <div>
-                                <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
-                                    <Clock size={14} /> Attendance Status
-                                </span>
-                                <h2 className="text-2xl font-bold text-white mt-1">
+                                <h2 className="text-3xl font-bold text-white tracking-tight mt-1">
                                     {isCheckedIn ? "Checked In" : "Checked Out"}
                                 </h2>
-                                
-                                {/* Attendance type/permission details */}
-                                <div className="flex flex-wrap gap-2 mt-2">
+                                <span className="text-xs font-semibold text-zinc-400 mt-1 block">
+                                    Attendance status
+                                </span>
+                            </div>
+                            
+                            <div className="flex flex-col items-end gap-2">
+                                <div className="flex items-center gap-2 bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-xl text-xs text-white font-medium">
+                                    {new Date().toLocaleDateString("en-US", { weekday: 'long', month: 'short', day: 'numeric' })}
+                                </div>
+                                <div className="flex flex-col items-end text-right">
                                     {profile?.isAllowedInClass && (
-                                        <span className="text-[10px] font-bold text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-2.5 py-1 rounded-lg">
+                                        <span className="text-[10px] font-bold text-emerald-400">
                                             In-Class Session Active
                                         </span>
                                     )}
                                     {profile?.isAssignedWFH && (
-                                        <span className="text-[10px] font-bold text-sky-400 bg-sky-400/10 border border-sky-400/20 px-2.5 py-1 rounded-lg flex flex-col gap-0.5">
-                                            <span>Work From Home Session</span>
+                                        <div className="flex flex-col items-end gap-0.5">
+                                            <span className="text-[10px] font-bold text-sky-400">
+                                                Work From Home Session
+                                            </span>
                                             {profile.wfhDeadline && (
                                                 <span className="text-[9px] text-sky-300/80 font-mono">
                                                     Task Deadline: {new Date(profile.wfhDeadline).toLocaleString("en-US", { dateStyle: 'short', timeStyle: 'short' })}
                                                 </span>
                                             )}
-                                        </span>
+                                        </div>
                                     )}
                                     {!profile?.isAllowedInClass && !profile?.isAssignedWFH && (
-                                        <span className="text-[10px] font-bold text-rose-400 bg-rose-400/10 border border-rose-400/20 px-2.5 py-1 rounded-lg">
+                                        <span className="text-[10px] font-bold text-rose-400">
                                             Check-in Blocked (No active permissions)
                                         </span>
                                     )}
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2 bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-xl text-xs text-white">
-                                <CalendarIcon size={14} />
-                                {new Date().toLocaleDateString("en-US", { weekday: 'long', month: 'short', day: 'numeric' })}
-                            </div>
                         </div>
 
                         {/* Elapsed Clock View */}
-                        <div ref={clockRef} className="my-3 flex flex-col items-center justify-center relative z-10">
-                            <span className="text-xs text-zinc-400 uppercase tracking-widest font-semibold mb-2">
+                        <div ref={clockRef} className="my-4 flex flex-col items-center justify-center relative z-10 w-full">
+                            <span className="text-xs text-zinc-500 uppercase tracking-widest font-semibold mb-3">
                                 Session Duration
                             </span>
                             
-                            <div className="flex items-center gap-1.5 md:gap-2">
+                            <div className="flex items-center gap-1 md:gap-1.5 bg-black border border-zinc-900 px-6 py-4 md:px-8 md:py-6 rounded-3xl shadow-2xl relative overflow-hidden">
                                 {elapsedTime.split("").map((char, idx) => {
                                     if (char === ":") {
-                                        return <FlipSeparator key={idx} />
+                                        return <SlidingSeparator key={idx} />
                                     }
-                                    return <FlipDigit key={idx} val={char} />
+                                    return <SlidingDigit key={idx} val={char} />
                                 })}
                             </div>
 
                             {isCheckedIn && (
-                                <span className="flex h-2.5 w-2.5 items-center justify-center mt-3">
+                                <span className="flex h-2.5 w-2.5 items-center justify-center mt-4">
                                     <span className="absolute inline-flex h-2.5 w-2.5 animate-ping rounded-full bg-emerald-400 opacity-75"></span>
                                     <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
                                 </span>
@@ -400,8 +336,11 @@ export default function StudentCheckInPage() {
                     {/* Daily Check-In Progress Card */}
                     <div className="bg-[#121212] border border-zinc-800/80 rounded-2xl shadow-lg p-6 hover:border-zinc-700/80 transition-all duration-300 flex flex-col justify-between">
                         <div>
-                            <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5 mb-4">
-                                <Clock size={14} className="text-indigo-400" /> Daily Check-In Hours
+                            <h2 className="text-3xl font-bold text-white tracking-tight mt-1">
+                                Study hours
+                            </h2>
+                            <span className="text-xs font-semibold text-zinc-400 mb-4 block mt-1">
+                                Daily check-in hours
                             </span>
 
                             <div className="space-y-4">
@@ -471,8 +410,11 @@ export default function StudentCheckInPage() {
                     {/* Everyday Activity Log */}
                     <div className="bg-[#121212] border border-zinc-800/80 rounded-2xl shadow-lg p-6 hover:border-zinc-700/80 transition-all duration-300 h-full min-h-[350px] ">
                         <div className="h-full flex flex-col">
-                            <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5 mb-4 pb-5">
-                                <Clock size={14} className="text-indigo-400" /> Everyday Activity Log
+                            <h2 className="text-3xl font-bold text-white tracking-tight mt-1 block">
+                                Activity log
+                            </h2>
+                            <span className="text-xs font-semibold text-zinc-400 mb-4 block mt-1">
+                                Everyday activity log
                             </span>
 
                             <div className="flex-1 overflow-y-auto space-y-3 max-h-[360px] pr-1">
@@ -499,9 +441,6 @@ export default function StudentCheckInPage() {
                                                 className="p-3 bg-black/40 border border-zinc-900 rounded-xl flex items-center justify-between hover:border-zinc-800 transition-all"
                                             >
                                                 <div className="flex items-center gap-3">
-                                                    <div className={`p-1.5 rounded-lg ${checkOutTime ? "bg-zinc-900 text-zinc-400" : "bg-emerald-500/10 text-emerald-400"}`}>
-                                                        <Clock size={14} />
-                                                    </div>
                                                     <div>
                                                         <div className="flex items-center gap-2">
                                                             <p className="text-xs font-semibold text-white">

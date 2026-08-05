@@ -93,6 +93,24 @@ export default function AdminAttendancePage() {
         })
     }
 
+    const handleUnblockAllCheckins = () => {
+        if (!selectedClassId) {
+            toast.error("Please select a class first.")
+            return
+        }
+        if (!confirm(`Are you sure you want to allow check-ins for ALL students in this class for the date ${selectedDate}?`)) return
+
+        startTransitionAction(async () => {
+            const res = await adminUnblockAllCheckinsAction(selectedClassId, selectedDate)
+            if (res.success) {
+                toast.success(res.message)
+                loadAttendanceReport()
+            } else {
+                toast.error(res.error || "Failed to allow check-ins.")
+            }
+        })
+    }
+
 
 
     useEffect(() => {
@@ -213,10 +231,16 @@ export default function AdminAttendancePage() {
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
                     <Button
+                        onClick={handleUnblockAllCheckins}
+                        disabled={isPendingAction || !selectedClassId}
+                        className="bg-emerald-600 hover:bg-emerald-750 text-white font-semibold flex items-center gap-1.5 py-2.5 px-4 rounded-xl text-xs transition-all"
+                    >
+                        <Unlock size={14} /> Allow Check-ins
+                    </Button>
+                    <Button
                         onClick={handleEndCheckin}
                         disabled={isPendingAction || !selectedClassId}
-                        variant="outline"
-                        className="border-red-500/20 hover:bg-red-500/10 text-red-400 font-semibold flex items-center gap-1.5 py-2.5 px-4 rounded-xl text-xs"
+                        className="bg-zinc-900 border border-themeGrey hover:border-zinc-700 text-zinc-300 hover:text-white font-semibold flex items-center gap-1.5 py-2.5 px-4 rounded-xl text-xs"
                     >
                         <Lock size={14} /> End Check-in
                     </Button>

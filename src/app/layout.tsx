@@ -1,4 +1,3 @@
-import ClerkClientProvider from "@/components/global/clerk-client-provider"
 import MobileBlocker from "@/components/global/mobile-blocker"
 import { ThemeProvider } from "@/components/theme"
 import { ReactQueryProvider } from "@/react-query/provider"
@@ -46,26 +45,24 @@ export default function RootLayout({
     children: React.ReactNode
 }>) {
     return (
-        <ClerkClientProvider>
-            <html lang="en" suppressHydrationWarning>
-                <body className={`${jakarta.className} bg-black`}>
-                    <ThemeProvider
-                        attribute="class"
-                        defaultTheme="dark"
-                        disableTransitionOnChange
-                    >
-                        <ReduxProvider>
-                            <ReactQueryProvider>
-                                <MobileBlocker />
-                                <div className="hidden lg:block min-h-screen">
-                                    {children}
-                                </div>
-                            </ReactQueryProvider>
-                        </ReduxProvider>
-                        <Toaster />
-                    </ThemeProvider>
-                </body>
-            </html>
-        </ClerkClientProvider>
+        <html lang="en" suppressHydrationWarning>
+            <body className={`${jakarta.className} bg-black`}>
+                <ThemeProvider
+                    attribute="class"
+                    defaultTheme="dark"
+                    disableTransitionOnChange
+                >
+                    <ReduxProvider>
+                        <ReactQueryProvider>
+                            <MobileBlocker />
+                            <div className="hidden lg:block min-h-screen">
+                                {children}
+                            </div>
+                        </ReactQueryProvider>
+                    </ReduxProvider>
+                    <Toaster />
+                </ThemeProvider>
+            </body>
+        </html>
     )
 }

@@ -35,8 +35,9 @@ export async function checkInAction() {
 
         // Determine check-in type and enforce admin permissions
         const dateStr = getLocalDateString()
+        console.log(`[checkInAction Debug] student: ${dbStudent.name}, isAllowedInClass: ${dbStudent.isAllowedInClass}, allowedClassDate: ${dbStudent.allowedClassDate}, dateStr: ${dateStr}`)
         let checkInType = ""
-        if (dbStudent.isAllowedInClass && dbStudent.allowedClassDate === dateStr) {
+        if (dbStudent.isAllowedInClass && (dbStudent.allowedClassDate === dateStr || dbStudent.allowedClassDate === "PENDING_" + dateStr)) {
             checkInType = "CLASS"
         } else if (dbStudent.isAssignedWFH) {
             // Check WFH deadline
@@ -168,6 +169,7 @@ export async function getDashboardDataAction() {
                 distinct: ["date"]
             }),
             client.attendance.findMany({
+                where: { student: { classId: dbStudent.classId } },
                 select: { date: true },
                 distinct: ["date"]
             }),
@@ -773,7 +775,9 @@ export async function getStudentProfileDetails() {
         if (!dbStudent) return { success: false, error: "Student profile not found" }
 
         const dateStr = getLocalDateString()
-        const isAllowedInClass = dbStudent.isAllowedInClass && dbStudent.allowedClassDate === dateStr
+        const isAllowedInClass = dbStudent.isAllowedInClass && 
+            (dbStudent.allowedClassDate === dateStr || dbStudent.allowedClassDate === "PENDING_" + dateStr)
+        console.log(`[getStudentProfileDetails Debug] student: ${dbStudent.name}, rollNo: ${dbStudent.rollNo}, isAllowedInClassDB: ${dbStudent.isAllowedInClass}, allowedClassDateDB: ${dbStudent.allowedClassDate}, dateStr: ${dateStr}, evaluatedIsAllowed: ${isAllowedInClass}`)
 
         const profile = {
             id: dbStudent.id,
@@ -940,32 +944,35 @@ export async function getStudentLeaderboardAction() {
             return { success: true, leaderboard: [], className: "No Class Assigned" }
         }
 
-        // Fetch class details and all students in the same class
-        const targetClass = await client.class.findUnique({
-            where: { id: dbStudent.classId },
-            select: { name: true }
-        })
-
-        const classmates = await client.student.findMany({
-            where: { classId: dbStudent.classId },
-            select: {
-                id: true,
-                name: true,
-                rollNo: true,
-                submissions: {
-                    include: { task: true }
-                },
-                attempts: {
-                    where: { completedAt: { not: null } },
-                    select: { score: true, startedAt: true, examId: true }
+        // Fetch class details, classmates, tasks, and no-task declarations in parallel
+        const [targetClass, classmates, allTasks, noTasks] = await Promise.all([
+            client.class.findUnique({
+                where: { id: dbStudent.classId },
+                select: { name: true }
+            }),
+            client.student.findMany({
+                where: { classId: dbStudent.classId },
+                select: {
+                    id: true,
+                    name: true,
+                    rollNo: true,
+                    submissions: {
+                        select: { status: true }
+                    },
+                    attempts: {
+                        where: { completedAt: { not: null } },
+                        select: { score: true, startedAt: true, examId: true }
+                    }
                 }
-            }
-        })
-
-        // Fetch all tasks to know when tasks were created
-        const allTasks = await client.task.findMany({
-            select: { id: true, createdAt: true }
-        })
+            }),
+            client.task.findMany({
+                select: { id: true, createdAt: true }
+            }),
+            client.noTaskDeclaration.findMany({
+                where: { classId: dbStudent.classId },
+                select: { date: true }
+            })
+        ])
 
         // Group tasks by date string
         const taskDates: { [dateStr: string]: string[] } = {}
@@ -975,12 +982,6 @@ export async function getStudentLeaderboardAction() {
             const dateStr = new Date(d.getTime() - (offset*60*1000)).toISOString().split('T')[0]
             if (!taskDates[dateStr]) taskDates[dateStr] = []
             taskDates[dateStr].push(t.id)
-        })
-
-        // Fetch NoTaskDeclaration for this class
-        const noTasks = await client.noTaskDeclaration.findMany({
-            where: { classId: dbStudent.classId },
-            select: { date: true }
         })
         const noTaskDates = new Set(noTasks.map(nt => nt.date))
 
@@ -1327,20 +1328,6 @@ export async function studentUpdateTypingProgressAction(
         if (!run) return { success: false, error: "Run not found" }
         if (run.studentId !== student.id) return { success: false, error: "Unauthorized" }
 
-        // Server-side validation against cheating
-        const elapsedMs = Date.now() - run.createdAt.getTime()
-        const elapsedSeconds = Math.max(0.1, elapsedMs / 1000)
-
-        // Calculate maximum possible progress based on an extremely fast speed of 264 WPM (22 characters per second)
-        const maxCharsPerSecond = 22
-        const maxAllowedCharacters = elapsedSeconds * maxCharsPerSecond
-        const passageLength = run.session.passage?.length || 1
-        const currentTypedCharacters = Math.round(passageLength * (progressPercentage / 100))
-
-        // If they have typed more characters than physically possible, flag it (skip check for very early runs with < 15 characters)
-        if (currentTypedCharacters > 15 && currentTypedCharacters > maxAllowedCharacters) {
-            return { success: false, error: "Cheating detected: typing speed exceeds human limits." }
-        }
 
         // Also cap WPM to 200 WPM
         let finalWpm = Number(wpm)

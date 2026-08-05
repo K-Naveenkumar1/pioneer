@@ -192,13 +192,16 @@ export default function StudentTypingGamePage() {
         const timeElapsedMin = Math.max(1, currentElapsedSeconds) / 60
         const currentWpm = Math.round((correctCount / 5) / timeElapsedMin)
 
-        await studentUpdateTypingProgressAction(
+        const res = await studentUpdateTypingProgressAction(
             currentRunId,
             currentWpm,
             currentAccuracy,
             currentProgress,
             isCompleted
         )
+        if (res && !res.success) {
+            console.error("Failed to sync typing progress:", res.error)
+        }
     }
 
     // Handle character input

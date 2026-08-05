@@ -672,54 +672,60 @@ export default function AdminStudentsPage() {
                                     )}
 
                                     {/* Permissions control panel inside student card */}
-                                    <div className="flex flex-col gap-3 pt-3.5 border-t border-themeGrey/40 text-xs text-themeTextGrey">
-                                        <h5 className="font-bold text-[10px] uppercase text-zinc-500 tracking-wider">Attendance & Session Permissions</h5>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            {/* In Class Checkin Permission */}
-                                            <div className="flex items-center justify-between bg-black/40 border border-themeGrey/30 p-2.5 rounded-xl">
-                                                <span className="font-medium text-white">In-Class Check-in</span>
-                                                <button
-                                                    onClick={() => handleToggleInClass(student.id, !student.isAllowedInClass)}
-                                                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                                                        student.isAllowedInClass 
-                                                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
-                                                            : 'bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white'
-                                                    }`}
-                                                >
-                                                    {student.isAllowedInClass ? 'Allowed' : 'Blocked'}
-                                                </button>
-                                            </div>
-
-                                            {/* WFH Checkin Permission */}
-                                            <div className="flex flex-col gap-2 bg-black/40 border border-themeGrey/30 p-2.5 rounded-xl">
-                                                <div className="flex items-center justify-between">
-                                                    <span className="font-medium text-white">Work From Home</span>
-                                                    <button
-                                                        onClick={() => handleToggleWFH(student.id, !student.isAssignedWFH)}
-                                                        className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                                                            student.isAssignedWFH 
-                                                                ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30' 
-                                                                : 'bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white'
-                                                        }`}
-                                                    >
-                                                        {student.isAssignedWFH ? 'Assigned' : 'Unassigned'}
-                                                    </button>
-                                                </div>
-
-                                                {student.isAssignedWFH && (
-                                                    <div className="flex flex-col gap-1.5 pt-1.5 border-t border-themeGrey/20">
-                                                        <span className="text-[10px] text-themeTextGrey">Assignment Deadline:</span>
-                                                        <input
-                                                            type="datetime-local"
-                                                            defaultValue={student.wfhDeadline ? new Date(new Date(student.wfhDeadline).getTime() - new Date().getTimezoneOffset()*60*1000).toISOString().slice(0, 16) : ""}
-                                                            onChange={(e) => handleSaveWFHDeadline(student.id, e.target.value)}
-                                                            className="w-full bg-zinc-950/80 border border-themeGrey rounded-lg px-2.5 py-1.5 text-xs text-white font-mono focus:outline-none focus:ring-1 focus:ring-white/20"
-                                                        />
+                                    {(() => {
+                                        const todayStr = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0]
+                                        const isAllowedToday = student.isAllowedInClass && 
+                                            (student.allowedClassDate === todayStr || student.allowedClassDate === "PENDING_" + todayStr)
+                                        return (
+                                            <div className="flex flex-col gap-3 pt-3.5 border-t border-themeGrey/40 text-xs text-themeTextGrey">
+                                                <h5 className="font-bold text-[10px] uppercase text-zinc-500 tracking-wider">Attendance & Session Permissions</h5>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    {/* In Class Checkin Permission */}
+                                                    <div className="flex items-center justify-between bg-black/40 border border-themeGrey/30 p-2.5 rounded-xl">
+                                                        <span className="font-medium text-white">In-Class Check-in</span>
+                                                        <button
+                                                            onClick={() => handleToggleInClass(student.id, !isAllowedToday)}
+                                                            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                                                isAllowedToday 
+                                                                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
+                                                                    : 'bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white'
+                                                            }`}
+                                                        >
+                                                            {isAllowedToday ? 'Allowed' : 'Blocked'}
+                                                        </button>
                                                     </div>
-                                                )}
+                                                    {/* WFH Checkin Permission */}
+                                                    <div className="flex flex-col gap-2 bg-black/40 border border-themeGrey/30 p-2.5 rounded-xl">
+                                                        <div className="flex items-center justify-between">
+                                                            <span className="font-medium text-white">Work From Home</span>
+                                                            <button
+                                                                onClick={() => handleToggleWFH(student.id, !student.isAssignedWFH)}
+                                                                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                                                    student.isAssignedWFH 
+                                                                        ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30' 
+                                                                        : 'bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white'
+                                                                }`}
+                                                            >
+                                                                {student.isAssignedWFH ? 'Assigned' : 'Unassigned'}
+                                                            </button>
+                                                        </div>
+
+                                                        {student.isAssignedWFH && (
+                                                            <div className="flex flex-col gap-1.5 pt-1.5 border-t border-themeGrey/20">
+                                                                <span className="text-[10px] text-themeTextGrey">Assignment Deadline:</span>
+                                                                <input
+                                                                    type="datetime-local"
+                                                                    defaultValue={student.wfhDeadline ? new Date(new Date(student.wfhDeadline).getTime() - new Date().getTimezoneOffset()*60*1000).toISOString().slice(0, 16) : ""}
+                                                                    onChange={(e) => handleSaveWFHDeadline(student.id, e.target.value)}
+                                                                    className="w-full bg-zinc-950/80 border border-themeGrey rounded-lg px-2.5 py-1.5 text-xs text-white font-mono focus:outline-none focus:ring-1 focus:ring-white/20"
+                                                                />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </div>
+                                        )
+                                    })()}
                                 </GlassCard>
                             ))}
                         </div>

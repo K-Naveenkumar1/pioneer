@@ -1,9 +1,7 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server"
 import { NextResponse } from "next/server"
+import type { NextRequest } from "next/server"
 
-const isProtectedRoute = createRouteMatcher([])
-
-export default clerkMiddleware(async (auth, req) => {
+export function middleware(req: NextRequest) {
     const requestHeaders = new Headers(req.headers)
     requestHeaders.set("x-url", req.url)
 
@@ -12,7 +10,7 @@ export default clerkMiddleware(async (auth, req) => {
             headers: requestHeaders,
         },
     })
-})
+}
 
 export const config = {
     matcher: ["/((?!.*\\..*|_next).*)", "/", "/(api|trpc)(.*)"],

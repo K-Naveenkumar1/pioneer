@@ -159,6 +159,7 @@ export async function adminGetStudentsList() {
                 department: true,
                 isFirstLogin: true,
                 isAllowedInClass: true,
+                allowedClassDate: true,
                 isAssignedWFH: true,
                 wfhDeadline: true,
                 createdAt: true,
@@ -770,7 +771,10 @@ export async function adminGetAttendanceReportAction(date: string, classId: stri
                     } : {
                         id: "none" // empty result
                     },
-                    include: { task: true }
+                    select: {
+                        taskId: true,
+                        status: true
+                    }
                 }
             }
         })
@@ -1652,30 +1656,35 @@ export async function adminGetLeaderboardAction(classId: string) {
             return { success: false, error: "Please select a valid class." }
         }
 
-        const classmates = await client.student.findMany({
-            where: { classId },
-            select: {
-                id: true,
-                name: true,
-                rollNo: true,
-                submissions: {
-                    include: { task: true }
-                },
-                attempts: {
-                    where: { completedAt: { not: null } },
-                    select: { score: true, startedAt: true, examId: true }
+        // Fetch target classmates, class details, tasks, and no-task declarations in parallel
+        const [classmates, targetClass, allTasks, noTasks] = await Promise.all([
+            client.student.findMany({
+                where: { classId },
+                select: {
+                    id: true,
+                    name: true,
+                    rollNo: true,
+                    submissions: {
+                        select: { status: true }
+                    },
+                    attempts: {
+                        where: { completedAt: { not: null } },
+                        select: { score: true, startedAt: true, examId: true }
+                    }
                 }
-            }
-        })
-
-        const targetClass = await client.class.findUnique({
-            where: { id: classId },
-            select: { name: true }
-        })
-
-        const allTasks = await client.task.findMany({
-            select: { id: true, createdAt: true }
-        })
+            }),
+            client.class.findUnique({
+                where: { id: classId },
+                select: { name: true }
+            }),
+            client.task.findMany({
+                select: { id: true, createdAt: true }
+            }),
+            client.noTaskDeclaration.findMany({
+                where: { classId },
+                select: { date: true }
+            })
+        ])
 
         const taskDates: { [dateStr: string]: string[] } = {}
         allTasks.forEach(t => {
@@ -1686,10 +1695,6 @@ export async function adminGetLeaderboardAction(classId: string) {
             taskDates[dateStr].push(t.id)
         })
 
-        const noTasks = await client.noTaskDeclaration.findMany({
-            where: { classId },
-            select: { date: true }
-        })
         const noTaskDates = new Set(noTasks.map(nt => nt.date))
 
         const leaderboard = classmates.map(c => {
