@@ -1,24 +1,25 @@
 "use client"
 
-import React, { useState, useTransition, useEffect, useRef } from "react"
-import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import gsap from "gsap"
-import { toast } from "sonner"
-import { 
-    Shield, 
-    Lock, 
-    User, 
-    ArrowRight, 
-    Eye, 
-    EyeOff
+import {
+    ArrowRight,
+    Eye,
+    EyeOff,
+    Lock,
+    Shield,
+    User
 } from "lucide-react"
+import { useRouter } from "next/navigation"
+import React, { useEffect, useRef, useState, useTransition } from "react"
+import { toast } from "sonner"
 
+import { getAdminUser, loginAction } from "@/actions/custom-auth"
 import GlassCard from "@/components/global/glass-card"
 import { Button } from "@/components/ui/button"
-import Image from "next/image"
+import { Spotlight } from "@/components/ui/spotlight"
 import { Montserrat } from "next/font/google"
-import { loginAction, getAdminUser } from "@/actions/custom-auth"
+import Image from "next/image"
 
 const logoFont = Montserrat({ subsets: ["latin"], weight: ["700"] })
 
@@ -93,13 +94,14 @@ export default function AdminLoginPage() {
 
     return (
         <div className="relative min-h-screen bg-black flex flex-col items-center justify-center p-4 overflow-hidden select-none">
+            <Spotlight className="-top-40 left-0 md:left-60 md:-top-20" fill="white" />
 
             {/* Header Brand */}
             <div className="z-10 mb-8 text-center flex flex-col items-center justify-center leading-none">
-                <div className="flex items-center">
-                    <Image src="/nk-logo.png" alt="Logo" width={30} height={22} className="object-contain" />
+                <div className="flex items-center gap-3">
+                    <Image src="/nk-logo.png" alt="Logo" width={34} height={26} className="object-contain" />
                     <div className="animate-slide-name flex items-center">
-                        <span className={`${logoFont.className} font-bold text-[1.5rem] text-white tracking-tight leading-none`}>
+                        <span className={`${logoFont.className} font-bold text-[1.6rem] text-white tracking-tight leading-none`}>
                             Naveo.
                         </span>
                     </div>

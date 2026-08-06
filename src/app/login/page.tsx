@@ -9,6 +9,7 @@ import { checkRollNoAction, getStudentUser, loginAction, studentFirstResetAction
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import { Montserrat } from "next/font/google"
+import { Spotlight } from "@/components/ui/spotlight"
 
 const logoFont = Montserrat({ subsets: ["latin"], weight: ["700"] })
 
@@ -117,11 +118,12 @@ export default function LoginPage() {
 
     return (
         <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 select-none relative overflow-hidden">
+            <Spotlight className="-top-40 left-0 md:left-60 md:-top-20" fill="white" />
             {/* Header Brand */}
-            <div className="mb-8 text-center z-10 flex items-center justify-center leading-none">
-                <Image src="/nk-logo.png" alt="Naveo Logo" width={30} height={22} className="object-contain" />
+            <div className="mb-8 text-center z-10 flex items-center justify-center leading-none gap-3">
+                <Image src="/nk-logo.png" alt="Naveo Logo" width={38} height={28} className="object-contain" />
                 <div className="animate-slide-name flex items-center">
-                    <span className={`${logoFont.className} font-bold text-[1.5rem] tracking-tight leading-none text-white`}>
+                    <span className={`${logoFont.className} font-bold text-[1.7rem] tracking-tight leading-none text-white`}>
                         Naveo.
                     </span>
                 </div>

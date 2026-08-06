@@ -1,26 +1,26 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
-import Link from "next/link"
-import Image from "next/image"
-import { usePathname } from "next/navigation"
-import { Montserrat } from "next/font/google"
-
-const logoFont = Montserrat({ subsets: ["latin"], weight: ["700"] })
-import { 
-    LayoutDashboard, 
-    Users, 
-    CheckSquare, 
-    BookOpen, 
-    Calendar, 
-    Trophy,
-    MessageSquare,
-    Keyboard,
+import {
+    BookOpen,
+    Calendar,
+    CheckSquare,
     ChevronLeft,
     ChevronRight,
-    FileText
+    FileText,
+    Keyboard,
+    LayoutDashboard,
+    MessageSquare,
+    Trophy,
+    Users
 } from "lucide-react"
+import { Montserrat } from "next/font/google"
+import Image from "next/image"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { useEffect, useState } from "react"
 import AdminLogoutButton from "./logout-button"
+
+const logoFont = Montserrat({ subsets: ["latin"], weight: ["700"] })
 
 interface AdminSidebarProps {
     admin: {
@@ -70,16 +70,16 @@ export default function AdminSidebar({ admin }: AdminSidebarProps) {
                 {/* Brand logo & Collapse Button */}
                 <div className={`flex items-center justify-between ${isCollapsed ? "flex-col gap-4" : ""}`}>
                     <div className="flex flex-col items-start">
-                        <div className="flex items-center">
-                            <Image src="/nk-logo.png" alt="Logo" width={30} height={22} className="object-contain shrink-0" />
+                        <div className="flex items-center gap-3">
+                            <Image src="/nk-logo.png" alt="Logo" width={34} height={26} className="object-contain shrink-0" />
                             {!isCollapsed && (
                                 <div className="animate-slide-name flex items-center">
-                                    <h2 className={`${logoFont.className} font-bold text-[1.5rem] tracking-tight leading-none text-white`}>Naveo.</h2>
+                                    <h2 className={`${logoFont.className} font-bold text-[1.6rem] tracking-tight leading-none text-white`}>Naveo.</h2>
                                 </div>
                             )}
                         </div>
                         {!isCollapsed && (
-                            <p className="text-[10px] text-themeTextGrey mt-1 ml-[38px] animate-slide-name">Administrator Portal</p>
+                            <p className="text-[10px] text-themeTextGrey mt-1 ml-[50px] animate-slide-name">Administrator Portal</p>
                         )}
                     </div>
                     

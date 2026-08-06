@@ -11,10 +11,10 @@ const logoFont = Montserrat({ subsets: ["latin"], weight: ["700"] })
 const LandingPageNavbar = () => {
   return (
     <div className="w-full flex justify-between sticky top-0 items-center py-5 z-50">
-        <div className="flex items-center">
-            <Image src="/nk-logo.png" alt="Naveo Logo" width={30} height={22} className="object-contain" />
+        <div className="flex items-center gap-2">
+            <Image src="/nk-logo.png" alt="Naveo Logo" width={34} height={26} className="object-contain" />
             <div className="animate-slide-name flex items-center">
-                <p className={`${logoFont.className} font-bold text-[1.5rem] tracking-tight leading-none text-white`}>Naveo.</p>
+                <p className={`${logoFont.className} font-bold text-[1.6rem] tracking-tight leading-none text-white`}>Naveo.</p>
             </div>
         </div>
         <Menu orientation="desktop"/>
