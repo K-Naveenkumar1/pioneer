@@ -272,7 +272,202 @@ aside[class*="border-"],
   to {
     max-width: 200px;
     opacity: 1;
-    margin-left: 4px;
+    margin-left: 0px;
+  }
+}
+
+.animate-slide-name {
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  vertical-align: middle;
+  max-width: 0;
+  opacity: 0;
+  animation: slide-name 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: 0.1s;
+}
+
+/* Reduce spacing gap between floating sidebar and main content block */
+.group[data-variant="floating"] > div.fixed {
+        #716778,
+        black
+    );
+    background-size: 100% 90%;
+    background-repeat: no-repeat;
+}
+
+.text-gradiant{
+    background: linear-gradient(to right,#4a4e58 , white,#716778);
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.text-radial{
+    background-image: radial-gradient(
+        ellipse farthest-side,
+        rgba(113,103,104,0.2) 30%,
+        black 70%,
+    );
+    background-size: 100% 50%;
+    background-repeat: no-repeat;
+}
+
+.text-radial--circle{
+    background-image: radial-gradient(
+        ellipse farthest-side,
+        rgba(113,103,104,0.35) 20%,
+        black 70%,
+    );
+    background-size: 50% 70%;
+    background-repeat: no-repeat;
+    background-position: top center;
+}
+
+.backdrop--blur__safari {
+    -webkit-backdrop-filter: blur(5px);
+}
+
+.radial--blur{
+    -webkit-backdrop-filter: blur(100px);
+    filter: blur(100px);
+    background: #877874;
+}
+
+
+@media only screen and (max-width: 800px){
+    .text-radial--circle {
+        background-image: radial-gradient(
+            circle farthest-side,
+            rgba(113,103,104,0.2) 20%,
+            black 70%
+        );
+        background-size: 100% 50%;
+        background-repeat: no-repeat;
+        background-position: top center;
+    }
+}
+
+.swiper-autoheight .swiper-slide{
+    height: 100% !important;
+    
+}
+
+/* Hide default browser reveal and clear buttons inside inputs (e.g., in Microsoft Edge) */
+input::-ms-reveal,
+input::-ms-clear {
+    display: none;
+}
+
+/* Premium heading text gradient */
+h1 {
+    background: linear-gradient(to right, #4a4e58, white, #716778) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    color: transparent !important;
+    width: fit-content;
+}
+
+/* Maintain original color for nested SVG icons in h1 headings */
+h1 svg {
+    color: white !important;
+    -webkit-text-fill-color: initial !important;
+}
+
+/* Solid dark gray design for cards */
+.glass-effect {
+    background: #121212 !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    border: 1px solid rgba(39, 39, 42, 0.8) !important; /* matches border-zinc-800/80 */
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.37), 0 4px 6px -4px rgba(0, 0, 0, 0.37) !important; /* matches shadow-lg */
+}
+
+/* Solid dark gray sidebar for floating variant to match cards */
+.group[data-variant="floating"] [data-sidebar="sidebar"] {
+    background: #121212 !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    border: none !important;
+    padding: 8px !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.37), 0 4px 6px -4px rgba(0, 0, 0, 0.37) !important; /* matches shadow-lg */
+    border-radius: 1rem !important; /* Matches rounded-2xl */
+}
+
+/* Remove borders for all card containers and sidebars globally */
+div[class*="border-zinc-"],
+div[class*="border-themeGrey"],
+div[class*="border-border"],
+aside[class*="border-"],
+[data-sidebar="sidebar"],
+[data-sidebar="rail"],
+[data-sidebar="trigger"],
+[data-sidebar="wrapper"] {
+    border: none !important;
+    border-right: none !important;
+    border-left: none !important;
+    border-top: none !important;
+    border-bottom: none !important;
+}
+
+/* Modern minimalist scrollbars globally */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 9999px;
+  border: 1px solid transparent;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.32);
+}
+
+/* Firefox compatibility */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+}
+
+/* Custom modern scrollbar utility */
+.modern-scrollbar::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+.modern-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 9999px;
+}
+.modern-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
+}
+.modern-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+.modern-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) rgba(255, 255, 255, 0.02);
+}
+
+/* Sliding brand name animation */
+@keyframes slide-name {
+  from {
+    max-width: 0;
+    opacity: 0;
+    margin-left: 0;
+  }
+  to {
+    max-width: 200px;
+    opacity: 1;
+    margin-left: 0px;
   }
 }
 
@@ -294,12 +489,32 @@ aside[class*="border-"],
     padding-top: 10px !important;
     padding-bottom: 10px !important;
 }
+/* Skyline growth animation for leaderboard podium */
+@keyframes skyline-pillar-grow {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
 
+@keyframes skyline-info-slide {
+  from {
+    transform: translateY(240px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
 
+.animate-skyline-pillar {
+  transform-origin: bottom;
+  animation: skyline-pillar-grow 1.2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
 
-
-
-
-
-
-
+.animate-skyline-info {
+  animation: skyline-info-slide 1.2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}

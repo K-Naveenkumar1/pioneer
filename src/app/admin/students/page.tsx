@@ -240,7 +240,7 @@ export default function AdminStudentsPage() {
 
                     return {
                         name: nameKey ? String(row[nameKey]).trim() : "",
-                        rollNo: rollKey ? String(row[rollKey]).trim() : "",
+                        rollNo: rollKey ? String(row[rollKey]).trim().toUpperCase() : "",
                         className: classKey ? String(row[classKey]).trim() : ""
                     }
                 }).filter(s => s.name && s.rollNo)
@@ -360,7 +360,7 @@ export default function AdminStudentsPage() {
                                     required
                                     placeholder="e.g., 2022CS101"
                                     value={rollNo}
-                                    onChange={(e) => setRollNo(e.target.value)}
+                                    onChange={(e) => setRollNo(e.target.value.toUpperCase())}
                                     className="w-full px-4 py-3 bg-black/40 border border-themeGrey rounded-xl text-white placeholder-themeTextGrey focus:outline-none focus:ring-2 focus:ring-white/20 transition-all text-sm"
                                 />
                             </div>
@@ -557,7 +557,7 @@ export default function AdminStudentsPage() {
                                                     <input 
                                                         type="text" 
                                                         value={editRollNo}
-                                                        onChange={(e) => setEditRollNo(e.target.value)}
+                                                        onChange={(e) => setEditRollNo(e.target.value.toUpperCase())}
                                                         className="w-full px-3 py-2 bg-black border border-themeGrey rounded-lg text-white text-xs focus:outline-none focus:ring-1 focus:ring-white/20"
                                                     />
                                                 </div>
@@ -647,7 +647,7 @@ export default function AdminStudentsPage() {
                                                         )}
                                                     </h4>
                                                     <p className="text-xs text-themeTextGrey">
-                                                        Roll No: {student.rollNo} | Created: {new Date(student.createdAt).toLocaleDateString()}
+                                                        Roll No: {student.rollNo.toUpperCase()} | Created: {new Date(student.createdAt).toLocaleDateString()}
                                                     </p>
                                                 </div>
                                             </div>

@@ -1,10 +1,9 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
-import { Users, Award, TrendingUp, ShieldCheck } from "lucide-react"
-import { toast } from "sonner"
-import GlassCard from "@/components/global/glass-card"
 import { getStudentLeaderboardAction, getStudentProfileDetails } from "@/actions/student-actions"
+import GlassCard from "@/components/global/glass-card"
+import { useEffect, useState } from "react"
+import { toast } from "sonner"
 
 export default function StudentLeaderboardPage() {
     const [leaderboard, setLeaderboard] = useState<any[]>([])
@@ -59,120 +58,263 @@ export default function StudentLeaderboardPage() {
                     No leaderboard standings available. Ask the admin to assign you to a class.
                 </GlassCard>
             ) : (
-                <div className="space-y-10">
-                    {/* Podium for Top 3 */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end pt-4">
-                        {/* 2nd Place */}
+                <div className="space-y-4">
+                    {/* Modern 3D Step Podium */}
+                    <div className="flex justify-center items-end gap-0 pt-4 pb-2 w-full mx-auto overflow-visible">
+                        
+                        {/* 2nd Place Column */}
                         {podium[1] && (
-                            <GlassCard className="p-6 border border-zinc-800/80 bg-zinc-950/40 text-center space-y-4 order-2 md:order-1 min-h-[240px] flex flex-col justify-end relative">
-                                <div className="w-12 h-12 rounded-full bg-zinc-300/10 border border-zinc-300/20 text-zinc-300 font-bold text-lg flex items-center justify-center mx-auto shadow-md">
-                                    2
-                                </div>
-                                <div>
-                                    <h3 className="font-bold text-white text-base truncate">{podium[1].name}</h3>
-                                    <p className="text-[10px] text-zinc-500 font-mono mt-0.5">Roll: {podium[1].rollNo}</p>
-                                </div>
-                                <div className="pt-2 border-t border-zinc-800/40 space-y-1">
-                                    <p className="text-lg font-black text-white">{podium[1].totalScore} pts</p>
-                                    <div className="flex justify-center gap-1.5 text-[10px] text-zinc-400 font-medium">
-                                        <span>Tasks: {podium[1].tasksCompleted * 10} pts</span>
-                                        <span>•</span>
-                                        <span>Exams: {podium[1].examScoreSum} pts</span>
+                            <div className="flex flex-col items-center flex-1 min-w-0 z-10">
+                                {/* Student Info above the pillar */}
+                                <div className="text-center space-y-3 mb-3.5 animate-skyline-info opacity-0 [animation-delay:150ms]">
+                                    <div className="relative mx-auto w-fit">
+                                        <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-zinc-800 flex items-center justify-center mx-auto shadow-md select-none overflow-hidden">
+                                            {podium[1].avatar ? (
+                                                podium[1].avatar.startsWith("/avatars/") || podium[1].avatar.startsWith("data:image/") ? (
+                                                    <img src={podium[1].avatar} alt="Avatar" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <span className="text-2xl leading-none">{podium[1].avatar}</span>
+                                                )
+                                            ) : (
+                                                <span className="font-bold text-base text-white select-none">
+                                                    {(podium[1].name || "Student").substring(0, 1).toUpperCase()}
+                                                </span>
+                                            )}
+                                        </div>
+                                        {/* Overlapping Rank Badge */}
+                                        <div className="absolute -top-1 -left-1 w-5 h-5 rounded-full flex items-center justify-center font-bold text-[9px] font-mono select-none bg-zinc-400 text-zinc-950">
+                                            2
+                                        </div>
+                                        {/* Medal Badge */}
+                                        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-zinc-850 flex items-center justify-center text-sm shadow-md select-none">
+                                            🥈
+                                        </div>
+                                    </div>
+                                    <div className="px-0.5 mx-auto text-center flex flex-col items-center w-full">
+                                        <p className="font-bold text-white text-xs md:text-sm text-center leading-tight whitespace-normal break-words w-full">{podium[1].name}</p>
+                                        <span className="text-[10px] text-zinc-400 font-semibold font-mono mt-0.5 select-none uppercase">
+                                            {podium[1].rollNo}
+                                        </span>
                                     </div>
                                 </div>
-                            </GlassCard>
+                                {/* The Pillar Block */}
+                                <div className="w-full h-28 md:h-36 bg-[#1d1d20] border-t border-t-white/5 border-b-[6px] border-b-black/35 flex items-center justify-center relative shadow-lg origin-bottom animate-skyline-pillar [animation-delay:150ms]">
+                                    {/* 3D Top Face */}
+                                    <div 
+                                        className="absolute -top-3 left-0 w-full h-3 bg-[#2a2a2d]" 
+                                        style={{ clipPath: 'polygon(10px 0, 100% 0, 100% 100%, 0 100%)' }}
+                                    />
+                                    <span className="text-6xl md:text-8xl font-black text-white/5 font-mono select-none">{podium[1].totalScore}</span>
+                                </div>
+                            </div>
                         )}
 
-                        {/* 1st Place */}
+                        {/* 1st Place Column */}
                         {podium[0] && (
-                            <GlassCard className="p-8 border border-amber-500/30 bg-amber-500/5 text-center space-y-4 order-1 md:order-2 min-h-[280px] flex flex-col justify-end relative shadow-2xl">
-                                <div className="w-16 h-16 rounded-full bg-amber-400/10 border border-amber-400/20 text-amber-400 font-bold text-2xl flex items-center justify-center mx-auto shadow-lg">
-                                    1
-                                </div>
-                                <div>
-                                    <h3 className="font-extrabold text-white text-lg truncate">{podium[0].name}</h3>
-                                    <p className="text-[10px] text-amber-300/60 font-mono mt-0.5">Roll: {podium[0].rollNo}</p>
-                                </div>
-                                <div className="pt-2 border-t border-amber-500/20 space-y-1">
-                                    <p className="text-2xl font-black text-amber-400">{podium[0].totalScore} pts</p>
-                                    <div className="flex justify-center gap-1.5 text-[10px] text-amber-300/80 font-medium">
-                                        <span>Tasks: {podium[0].tasksCompleted * 10} pts</span>
-                                        <span>•</span>
-                                        <span>Exams: {podium[0].examScoreSum} pts</span>
+                            <div className="flex flex-col items-center flex-1 min-w-0 z-20">
+                                {/* Student Info above the pillar */}
+                                <div className="text-center space-y-3 mb-3.5 animate-skyline-info opacity-0">
+                                    <div className="relative mx-auto w-fit">
+                                        <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-zinc-800 flex items-center justify-center mx-auto shadow-xl select-none overflow-hidden">
+                                            {podium[0].avatar ? (
+                                                podium[0].avatar.startsWith("/avatars/") || podium[0].avatar.startsWith("data:image/") ? (
+                                                    <img src={podium[0].avatar} alt="Avatar" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <span className="text-4xl leading-none">{podium[0].avatar}</span>
+                                                )
+                                            ) : (
+                                                <span className="font-bold text-xl text-white select-none">
+                                                    {(podium[0].name || "Student").substring(0, 1).toUpperCase()}
+                                                </span>
+                                            )}
+                                        </div>
+                                        {/* Overlapping Rank Badge */}
+                                        <div className="absolute -top-1 -left-1 w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs font-mono select-none bg-amber-500 text-white">
+                                            1
+                                        </div>
+                                        {/* Medal Badge */}
+                                        <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-zinc-850 flex items-center justify-center text-base shadow-md select-none">
+                                            🥇
+                                        </div>
+                                    </div>
+                                    <div className="px-0.5 mx-auto text-center flex flex-col items-center w-full">
+                                        <p className="font-extrabold text-white text-sm md:text-base text-center leading-tight whitespace-normal break-words w-full">{podium[0].name}</p>
+                                        <span className="text-[10px] text-zinc-400 font-semibold font-mono mt-0.5 select-none uppercase">
+                                            {podium[0].rollNo}
+                                        </span>
                                     </div>
                                 </div>
-                            </GlassCard>
+                                {/* The Pillar Block (highest) */}
+                                <div className="w-full h-40 md:h-48 bg-[#242427] border-t border-t-white/10 border-b-[6px] border-b-black/35 flex items-center justify-center relative shadow-2xl origin-bottom animate-skyline-pillar">
+                                    {/* 3D Top Face */}
+                                    <div 
+                                        className="absolute -top-3 left-0 w-[calc(100%+10px)] h-3 bg-[#36363a]" 
+                                        style={{ clipPath: 'polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%)' }}
+                                    />
+                                    {/* 3D Right Side Face */}
+                                    <div 
+                                        className="absolute -top-3 -right-[10px] w-[10px] h-[calc(100%+12px)] bg-[#101012] z-10" 
+                                        style={{ clipPath: 'polygon(0 12px, 100% 0, 100% calc(100% - 12px), 0 100%)' }}
+                                    />
+                                    <span className="text-7xl md:text-9xl font-black text-white/5 font-mono select-none">{podium[0].totalScore}</span>
+                                </div>
+                            </div>
                         )}
 
-                        {/* 3rd Place */}
+                        {/* 3rd Place Column */}
                         {podium[2] && (
-                            <GlassCard className="p-6 border border-zinc-800/80 bg-zinc-950/40 text-center space-y-4 order-3 min-h-[210px] flex flex-col justify-end relative">
-                                <div className="w-10 h-10 rounded-full bg-orange-400/10 border border-orange-400/20 text-orange-400 font-bold text-base flex items-center justify-center mx-auto shadow-md">
-                                    3
-                                </div>
-                                <div>
-                                    <h3 className="font-bold text-white text-base truncate">{podium[2].name}</h3>
-                                    <p className="text-[10px] text-zinc-500 font-mono mt-0.5">Roll: {podium[2].rollNo}</p>
-                                </div>
-                                <div className="pt-2 border-t border-zinc-800/40 space-y-1">
-                                    <p className="text-lg font-black text-white">{podium[2].totalScore} pts</p>
-                                    <div className="flex justify-center gap-1.5 text-[10px] text-zinc-400 font-medium">
-                                        <span>Tasks: {podium[2].tasksCompleted * 10} pts</span>
-                                        <span>•</span>
-                                        <span>Exams: {podium[2].examScoreSum} pts</span>
+                            <div className="flex flex-col items-center flex-1 min-w-0 z-10">
+                                {/* Student Info above the pillar */}
+                                <div className="text-center space-y-3 mb-3.5 animate-skyline-info opacity-0 [animation-delay:300ms]">
+                                    <div className="relative mx-auto w-fit">
+                                        <div className="w-10 h-10 md:w-14 md:h-14 rounded-full bg-zinc-800 flex items-center justify-center mx-auto shadow-md select-none overflow-hidden">
+                                            {podium[2].avatar ? (
+                                                podium[2].avatar.startsWith("/avatars/") || podium[2].avatar.startsWith("data:image/") ? (
+                                                    <img src={podium[2].avatar} alt="Avatar" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <span className="text-xl leading-none">{podium[2].avatar}</span>
+                                                )
+                                            ) : (
+                                                <span className="font-bold text-sm text-white select-none">
+                                                    {(podium[2].name || "Student").substring(0, 1).toUpperCase()}
+                                                </span>
+                                            )}
+                                        </div>
+                                        {/* Overlapping Rank Badge */}
+                                        <div className="absolute -top-1 -left-1 w-5 h-5 rounded-full flex items-center justify-center font-bold text-[9px] font-mono select-none bg-orange-500 text-white">
+                                            3
+                                        </div>
+                                        {/* Medal Badge */}
+                                        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-zinc-850 flex items-center justify-center text-sm shadow-md select-none">
+                                            🥉
+                                        </div>
+                                    </div>
+                                    <div className="px-0.5 mx-auto text-center flex flex-col items-center w-full">
+                                        <p className="font-bold text-white text-xs md:text-sm text-center leading-tight whitespace-normal break-words w-full">{podium[2].name}</p>
+                                        <span className="text-[10px] text-zinc-400 font-semibold font-mono mt-0.5 select-none uppercase">
+                                            {podium[2].rollNo}
+                                        </span>
                                     </div>
                                 </div>
-                            </GlassCard>
+                                {/* The Pillar Block (lowest) */}
+                                <div className="w-full h-20 md:h-26 bg-[#18181b] border-t border-t-white/5 border-b-[6px] border-b-black/35 flex items-center justify-center relative shadow-md origin-bottom animate-skyline-pillar [animation-delay:300ms]">
+                                    {/* 3D Top Face */}
+                                    <div 
+                                        className="absolute -top-3 left-0 w-[calc(100%+10px)] h-3 bg-[#222225]" 
+                                        style={{ clipPath: 'polygon(0 0, 100% 0, calc(100% - 10px) 100%, 0 100%)' }}
+                                    />
+                                    {/* 3D Right Side Face */}
+                                    <div 
+                                        className="absolute -top-3 -right-[10px] w-[10px] h-[calc(100%+12px)] bg-[#0d0d0f] z-10" 
+                                        style={{ clipPath: 'polygon(0 12px, 100% 0, 100% calc(100% - 12px), 0 100%)' }}
+                                    />
+                                    <span className="text-5xl md:text-7xl font-black text-white/5 font-mono select-none">{podium[2].totalScore}</span>
+                                </div>
+                            </div>
                         )}
                     </div>
 
-                    {/* Rest of Standings Table */}
-                    {rest.length > 0 && (
-                        <div className="border border-zinc-800/80 rounded-2xl bg-zinc-950/20 overflow-hidden">
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left border-collapse text-xs select-text">
-                                    <thead>
-                                        <tr className="border-b border-zinc-800/80 bg-zinc-950 text-zinc-400 font-bold uppercase tracking-wider">
-                                            <th className="p-4 pl-6 w-16">Rank</th>
-                                            <th className="p-4">Student</th>
-                                            <th className="p-4">Roll Number</th>
-                                            <th className="p-4">Task Marks</th>
-                                            <th className="p-4">Exam Marks</th>
-                                            <th className="p-4 text-right pr-6">Total Score</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {rest.map((player: any, idx: number) => {
-                                            const actualRank = idx + 4
-                                            const isMe = player.rollNo === profile?.rollNo
-                                            return (
-                                                <tr 
-                                                    key={player.id}
-                                                    className={`border-b border-zinc-800/40 transition-all font-medium ${
-                                                        isMe 
-                                                            ? "bg-indigo-500/10 text-white" 
-                                                            : "text-zinc-300 hover:bg-white/[0.01]"
-                                                    }`}
-                                                >
-                                                    <td className="p-4 pl-6 font-bold">{actualRank}</td>
-                                                    <td className="p-4 font-semibold text-white flex items-center gap-2">
+                    {/* Standings Cards List (Starting from Rank 4 onwards) */}
+                    {leaderboard.length > 3 && (
+                        <div className="space-y-2 w-full pt-4">
+                            {leaderboard.slice(3).map((player: any, idx: number) => {
+                                const actualRank = idx + 4
+                                const isMe = player.rollNo === profile?.rollNo
+                                
+                                // Color map for the rank badges based on rank number
+                                const getRankBadgeClass = (rank: number) => {
+                                    switch (rank) {
+                                        case 4:
+                                            return "bg-blue-600 text-white ring-blue-500/30"
+                                        case 5:
+                                            return "bg-teal-600 text-white ring-teal-500/30"
+                                        case 6:
+                                            return "bg-emerald-600 text-white ring-emerald-500/30"
+                                        case 7:
+                                            return "bg-pink-600 text-white ring-pink-500/30"
+                                        default:
+                                            return "bg-zinc-700 text-zinc-200 ring-zinc-600/30"
+                                    }
+                                }
+
+                                return (
+                                    <div 
+                                        key={player.id}
+                                        className={`py-3 px-4 rounded-2xl flex items-center justify-between transition-all ${
+                                            isMe 
+                                                ? "bg-white shadow-lg text-zinc-950" 
+                                                : "bg-[#121212] text-white shadow-md"
+                                        }`}
+                                    >
+                                        <div className="grid grid-cols-[160px_1fr_70px] md:grid-cols-[260px_1fr_100px] items-center w-full">
+                                            {/* Left Column (Avatar + Name info) */}
+                                            <div className="flex items-center min-w-0">
+                                                {/* Avatar element container */}
+                                                <div className="relative shrink-0 select-none">
+                                                    {/* Avatar */}
+                                                    <div className="w-12 h-12 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-base overflow-hidden">
+                                                        {player.avatar ? (
+                                                            player.avatar.startsWith("/avatars/") || player.avatar.startsWith("data:image/") ? (
+                                                                <img src={player.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                                                            ) : (
+                                                                player.avatar
+                                                            )
+                                                        ) : (
+                                                            player.name.substring(0, 1).toUpperCase()
+                                                        )}
+                                                    </div>
+                                                    {/* Overlapping Rank Badge */}
+                                                    <div className={`absolute -top-1 -left-1 w-5 h-5 rounded-full flex items-center justify-center font-bold text-[9px] font-mono select-none ring-2 ${
+                                                        isMe ? "ring-white" : "ring-[#121212]"
+                                                    } ${getRankBadgeClass(actualRank)}`}>
+                                                        {actualRank}
+                                                    </div>
+                                                </div>
+
+                                                {/* Name & stats */}
+                                                <div className="flex flex-col ml-3.5 min-w-0 pr-2">
+                                                    <span className="font-bold text-sm tracking-tight flex items-center gap-1.5 truncate">
                                                         {player.name}
                                                         {isMe && (
-                                                            <span className="text-[8px] bg-indigo-500 text-white px-1.5 py-0.5 rounded font-sans uppercase">
+                                                            <span className="text-[8px] bg-indigo-600 text-white px-1.5 py-0.5 rounded font-sans uppercase font-bold tracking-wider shrink-0">
                                                                 You
                                                             </span>
                                                         )}
-                                                    </td>
-                                                    <td className="p-4 text-zinc-500 font-mono">{player.rollNo}</td>
-                                                    <td className="p-4 font-mono">{player.tasksCompleted * 10} pts <span className="text-[10px] text-zinc-500 font-sans">({player.tasksCompleted} tasks)</span></td>
-                                                    <td className="p-4 font-mono text-zinc-300">{player.examScoreSum} pts</td>
-                                                    <td className="p-4 text-right pr-6 font-bold text-white font-mono">{player.totalScore} pts</td>
-                                                </tr>
-                                            )
-                                        })}
-                                    </tbody>
-                                </table>
-                            </div>
+                                                    </span>
+                                                    <span className={`text-[10px] ${isMe ? 'text-zinc-500' : 'text-zinc-400'} font-semibold font-mono mt-0.5 truncate uppercase`}>
+                                                        {player.rollNo}
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            {/* Middle Column (Both points aligned in a straight line) */}
+                                            <div className="flex items-center justify-center gap-1.5 select-none">
+                                                <div className={`text-sm font-bold px-3.5 py-1 rounded-lg shadow-sm ${
+                                                    isMe 
+                                                        ? "bg-zinc-950 text-white" 
+                                                        : "bg-zinc-800 text-white"
+                                                }`}>
+                                                    {player.tasksCompleted * 10}
+                                                </div>
+                                                <div className={`text-sm font-bold px-3.5 py-1 rounded-lg shadow-sm ${
+                                                    isMe 
+                                                        ? "bg-zinc-950 text-white" 
+                                                        : "bg-zinc-800 text-white"
+                                                }`}>
+                                                    {player.examScoreSum}
+                                                </div>
+                                            </div>
+
+                                            {/* Right Column (Total score badge) */}
+                                            <div className="flex items-center justify-end select-none">
+                                                <div className="text-sm font-bold px-3.5 py-1.5 rounded-lg shadow-md bg-white text-zinc-950">
+                                                    {player.totalScore}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )
+                            })}
                         </div>
                     )}
                 </div>

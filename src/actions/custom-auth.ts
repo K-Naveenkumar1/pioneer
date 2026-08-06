@@ -39,7 +39,7 @@ export async function loginAction(role: "student" | "admin", identity: string, p
         } else {
             // Student Login
             const student = await client.student.findUnique({
-                where: { rollNo: identity.trim() },
+                where: { rollNo: identity.trim().toUpperCase() },
             })
 
             if (!student || !verifyPassword(password, student.password)) {
@@ -71,7 +71,7 @@ export async function loginAction(role: "student" | "admin", identity: string, p
 export async function studentFirstResetAction(rollNo: string, tempPassword: string | null, newPassword: string) {
     try {
         const student = await client.student.findUnique({
-            where: { rollNo: rollNo.trim() },
+            where: { rollNo: rollNo.trim().toUpperCase() },
         })
 
         if (!student) {
@@ -87,7 +87,7 @@ export async function studentFirstResetAction(rollNo: string, tempPassword: stri
         }
 
         const updatedStudent = await client.student.update({
-            where: { rollNo: rollNo.trim() },
+            where: { rollNo: rollNo.trim().toUpperCase() },
             data: {
                 password: hashPassword(newPassword),
                 isFirstLogin: false,

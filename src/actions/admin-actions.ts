@@ -20,7 +20,7 @@ export async function adminCreateStudentAction(rollNo: string, name: string, tem
         const admin = await getAdminUser()
         if (!admin) return { success: false, error: "Unauthorized" }
 
-        const cleanRoll = rollNo.trim()
+        const cleanRoll = rollNo.trim().toUpperCase()
         const cleanName = name.trim()
 
         if (!cleanRoll || !cleanName) {
@@ -71,7 +71,7 @@ export async function adminBatchCreateStudentsAction(
         // 1. Clean the list and filter out invalid rows
         const cleanedList = studentsList.map(item => ({
             name: item.name?.toString().trim(),
-            rollNo: item.rollNo?.toString().trim(),
+            rollNo: item.rollNo?.toString().trim().toUpperCase(),
             className: item.className?.toString().trim()
         })).filter(item => item.name && item.rollNo)
 
@@ -621,7 +621,7 @@ export async function adminUploadStudentsAction(csvText: string) {
             const parts = line.split(",").map(p => p.trim())
             if (parts.length < 2) continue
 
-            const rollNo = parts[0]
+            const rollNo = parts[0].toUpperCase()
             const name = parts[1]
             const department = parts[2] || ""
             const className = parts[3] || ""
@@ -856,17 +856,17 @@ export async function adminUpdateStudentAction(
 
         const existing = await client.student.findFirst({
             where: {
-                rollNo: rollNo.trim(),
+                rollNo: rollNo.trim().toUpperCase(),
                 id: { not: studentId }
             }
         })
 
         if (existing) {
-            return { success: false, error: `Roll number ${rollNo} is already registered to another student.` }
+            return { success: false, error: `Roll number ${rollNo.toUpperCase()} is already registered to another student.` }
         }
 
         const updateData: any = {
-            rollNo: rollNo.trim(),
+            rollNo: rollNo.trim().toUpperCase(),
             name: name.trim(),
             department: department.trim() || null,
             classId: classId && classId.trim() !== "" ? classId.trim() : null

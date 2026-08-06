@@ -192,6 +192,7 @@ model Student {
   allowedClassDate String?
   isAssignedWFH    Boolean      @default(false)
   wfhDeadline      DateTime?
+  avatar       String?          // Apple animoji identifier
   createdAt    DateTime         @default(now())
   attendance   Attendance[]
   submissions  TaskSubmission[]

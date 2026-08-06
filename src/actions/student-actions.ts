@@ -134,7 +134,7 @@ export async function getDashboardDataAction() {
         // Fetch student profile to get classId first
         const dbStudent = await client.student.findUnique({
             where: { id: student.id },
-            select: { id: true, name: true, rollNo: true, department: true, classId: true }
+            select: { id: true, name: true, rollNo: true, department: true, classId: true, avatar: true }
         })
         if (!dbStudent) return { success: false, error: "Student not found" }
 
@@ -768,7 +768,8 @@ export async function getStudentProfileDetails() {
                 isAllowedInClass: true,
                 allowedClassDate: true,
                 isAssignedWFH: true,
-                wfhDeadline: true
+                wfhDeadline: true,
+                avatar: true
             }
         })
         if (!dbStudent) return { success: false, error: "Student profile not found" }
@@ -783,7 +784,8 @@ export async function getStudentProfileDetails() {
             name: dbStudent.name,
             isAllowedInClass,
             isAssignedWFH: dbStudent.isAssignedWFH,
-            wfhDeadline: dbStudent.wfhDeadline
+            wfhDeadline: dbStudent.wfhDeadline,
+            avatar: dbStudent.avatar
         }
         return { success: true, profile }
     } catch (e: any) {
@@ -954,6 +956,7 @@ export async function getStudentLeaderboardAction() {
                     id: true,
                     name: true,
                     rollNo: true,
+                    avatar: true,
                     submissions: {
                         select: { status: true }
                     },
@@ -999,6 +1002,7 @@ export async function getStudentLeaderboardAction() {
                 id: c.id,
                 name: c.name,
                 rollNo: c.rollNo,
+                avatar: c.avatar,
                 tasksCompleted: completedTasksCount,
                 examScoreSum: examScoreSum,
                 totalScore: totalScore
@@ -1421,9 +1425,24 @@ export async function saveCodingDraftAction(
                 codingSubmissions: JSON.stringify(submissionsMap)
             }
         })
-
         return { success: true }
     } catch (e: any) {
         return { success: false, error: e.message }
+    }
+}
+
+export async function updateStudentAvatarAction(avatar: string) {
+    try {
+        const student = await getStudentUser()
+        if (!student) return { success: false, error: "Unauthorized" }
+
+        await client.student.update({
+            where: { id: student.id },
+            data: { avatar }
+        })
+
+        return { success: true, message: "Avatar updated successfully!" }
+    } catch (e: any) {
+        return { success: false, error: e.message || "Failed to update avatar" }
     }
 }
