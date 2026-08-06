@@ -1,12 +1,9 @@
 "use client"
 
-import confetti from "canvas-confetti"
 import { AnimatePresence, motion } from "framer-motion"
 import gsap from "gsap"
 import {
     AlertCircle,
-    Calendar as CalendarIcon,
-    Clock,
     Play
 } from "lucide-react"
 import { useEffect, useRef, useState, useTransition } from "react"
@@ -154,14 +151,6 @@ export default function StudentCheckInPage() {
                 setIsCheckedIn(true)
                 setActiveRecord(res.record)
                 toast.success(res.message || "Successfully Checked-In!")
-                
-                // Trigger celebratory confetti
-                confetti({
-                    particleCount: 80,
-                    spread: 60,
-                    origin: { y: 0.8 },
-                    colors: ["#ffffff", "#6366f1", "#4f46e5"]
-                })
 
                 // GSAP Pulsate timer card
                 if (clockRef.current) {
@@ -213,7 +202,7 @@ export default function StudentCheckInPage() {
     }
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-4">
             {/* Header */}
             <div>
                 <h1 className="text-5xl font-extrabold tracking-tight text-white pb-4">
@@ -223,11 +212,11 @@ export default function StudentCheckInPage() {
             </div>
 
             {/* Attendance Workspace Card */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 {/* Left Column (lg:col-span-2): Stack of Timer Control and Daily Progress */}
-                <div className="lg:col-span-2 flex flex-col gap-6">
+                <div className="lg:col-span-2 flex flex-col gap-4">
                     {/* Timer Control Card */}
-                    <div className="bg-[#121212] border border-zinc-800/80 rounded-2xl shadow-lg p-5 flex flex-col gap-6 overflow-hidden relative hover:border-zinc-700/80 transition-all duration-300 h-fit">
+                    <div className="bg-[#121212] border border-zinc-800/80 rounded-2xl shadow-lg p-5 flex flex-col gap-4 overflow-hidden relative hover:border-zinc-700/80 transition-all duration-300 h-fit">
                         <div className="flex justify-between items-start z-10 w-full">
                             <div>
                                 <h2 className="text-3xl font-bold text-white tracking-tight mt-1">
@@ -271,7 +260,7 @@ export default function StudentCheckInPage() {
 
                         {/* Elapsed Clock View */}
                         <div ref={clockRef} className="my-4 flex flex-col items-center justify-center relative z-10 w-full">
-                            <span className="text-xs text-zinc-500 uppercase tracking-widest font-semibold mb-3">
+                            <span className="text-xs text-zinc-500 tracking-widest font-semibold mb-3">
                                 Session Duration
                             </span>
                             

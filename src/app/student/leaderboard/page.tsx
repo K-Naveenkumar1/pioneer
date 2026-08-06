@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import { Users, Trophy, Award, TrendingUp, ShieldCheck } from "lucide-react"
+import { Users, Award, TrendingUp, ShieldCheck } from "lucide-react"
 import { toast } from "sonner"
 import GlassCard from "@/components/global/glass-card"
 import { getStudentLeaderboardAction, getStudentProfileDetails } from "@/actions/student-actions"
@@ -65,7 +65,6 @@ export default function StudentLeaderboardPage() {
                         {/* 2nd Place */}
                         {podium[1] && (
                             <GlassCard className="p-6 border border-zinc-800/80 bg-zinc-950/40 text-center space-y-4 order-2 md:order-1 min-h-[240px] flex flex-col justify-end relative">
-                                <div className="absolute top-4 left-4 text-xs font-bold text-zinc-400">#2</div>
                                 <div className="w-12 h-12 rounded-full bg-zinc-300/10 border border-zinc-300/20 text-zinc-300 font-bold text-lg flex items-center justify-center mx-auto shadow-md">
                                     2
                                 </div>
@@ -87,8 +86,6 @@ export default function StudentLeaderboardPage() {
                         {/* 1st Place */}
                         {podium[0] && (
                             <GlassCard className="p-8 border border-amber-500/30 bg-amber-500/5 text-center space-y-4 order-1 md:order-2 min-h-[280px] flex flex-col justify-end relative shadow-2xl">
-                                <div className="absolute top-4 left-4 text-xs font-bold text-amber-400">#1</div>
-                                <Trophy className="absolute top-4 right-4 text-amber-400 animate-bounce size-6" />
                                 <div className="w-16 h-16 rounded-full bg-amber-400/10 border border-amber-400/20 text-amber-400 font-bold text-2xl flex items-center justify-center mx-auto shadow-lg">
                                     1
                                 </div>
@@ -110,7 +107,6 @@ export default function StudentLeaderboardPage() {
                         {/* 3rd Place */}
                         {podium[2] && (
                             <GlassCard className="p-6 border border-zinc-800/80 bg-zinc-950/40 text-center space-y-4 order-3 min-h-[210px] flex flex-col justify-end relative">
-                                <div className="absolute top-4 left-4 text-xs font-bold text-orange-400">#3</div>
                                 <div className="w-10 h-10 rounded-full bg-orange-400/10 border border-orange-400/20 text-orange-400 font-bold text-base flex items-center justify-center mx-auto shadow-md">
                                     3
                                 </div>

@@ -150,7 +150,7 @@ export function StudentSidebar({ student, ...props }: StudentSidebarProps & Reac
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-zinc-400 font-bold px-3 py-2 tracking-wider text-[10px] select-none">
+          <SidebarGroupLabel className="text-zinc-400 font-bold px-3 py-2 tracking-wider text-[11px] select-none">
             Student Portal
           </SidebarGroupLabel>
           <SidebarMenu className="gap-2.5 px-1">
