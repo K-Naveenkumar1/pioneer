@@ -95,17 +95,26 @@ export default function AdminExamsPage() {
     const [editQuestions, setEditQuestions] = useState<any[]>([])
     const [savingEdit, setSavingEdit] = useState(false)
 
-    const loadSubmissions = async (examId: string) => {
+    const loadSubmissions = async (examId: string, forceSpinner = false) => {
         if (!examId) return
-        setLoadingSubmissions(true)
-        const res = await adminGetExamSubmissionsAction(examId)
-        if (res.success) {
-            setCompletedAttempts(res.completed || [])
-            setLiveAttempts(res.live || [])
-        } else {
-            toast.error(res.error || "Failed to load attempts")
+        const hasData = completedAttempts.length > 0 || liveAttempts.length > 0
+        if (!hasData || forceSpinner) {
+            setLoadingSubmissions(true)
         }
-        setLoadingSubmissions(false)
+        try {
+            const res = await adminGetExamSubmissionsAction(examId)
+            if (res.success) {
+                setCompletedAttempts(res.completed || [])
+                setLiveAttempts(res.live || [])
+            } else {
+                toast.error(res.error || "Failed to load attempts")
+            }
+        } catch (e) {
+            console.error(e)
+            toast.error("Failed to fetch submissions")
+        } finally {
+            setLoadingSubmissions(false)
+        }
     }
 
     const handleResetAttempt = async (attemptId: string) => {
@@ -174,6 +183,15 @@ export default function AdminExamsPage() {
     // Poll for live submissions when an exam is selected for viewing submissions/monitoring
     useEffect(() => {
         if (!selectedSubmissionsExamId) return
+        if (activeTab !== "submissions" && activeTab !== "monitoring") return
+
+        // Fetch immediately on tab switch/exam change
+        adminGetExamSubmissionsAction(selectedSubmissionsExamId).then(res => {
+            if (res.success) {
+                setCompletedAttempts(res.completed || [])
+                setLiveAttempts(res.live || [])
+            }
+        })
 
         const interval = setInterval(() => {
             adminGetExamSubmissionsAction(selectedSubmissionsExamId).then(res => {
@@ -182,10 +200,10 @@ export default function AdminExamsPage() {
                     setLiveAttempts(res.live || [])
                 }
             })
-        }, 1500)
+        }, 5000) // Poll every 5 seconds to reduce server load
 
         return () => clearInterval(interval)
-    }, [selectedSubmissionsExamId])
+    }, [selectedSubmissionsExamId, activeTab])
 
     const loadClasses = async () => {
         const res = await adminGetClassesAction()
@@ -1150,7 +1168,7 @@ export default function AdminExamsPage() {
 
                         <div className="flex gap-3 shrink-0">
                             <Button
-                                onClick={() => loadSubmissions(selectedSubmissionsExamId)}
+                                onClick={() => loadSubmissions(selectedSubmissionsExamId, true)}
                                 disabled={loadingSubmissions || !selectedSubmissionsExamId}
                                 variant="outline"
                                 className="border border-themeGrey hover:bg-themeGrey/40 text-white flex items-center gap-1.5 py-4 rounded-xl text-xs"

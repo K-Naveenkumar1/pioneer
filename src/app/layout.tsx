@@ -1,4 +1,5 @@
 import MobileBlocker from "@/components/global/mobile-blocker"
+import Preloader from "@/components/global/preloader"
 import { ThemeProvider } from "@/components/theme"
 import { ReactQueryProvider } from "@/react-query/provider"
 import { ReduxProvider } from "@/redux/provider"
@@ -55,6 +56,7 @@ export default function RootLayout({
                     <ReduxProvider>
                         <ReactQueryProvider>
                             <MobileBlocker />
+                            <Preloader />
                             <div className="hidden lg:block min-h-screen">
                                 {children}
                             </div>
