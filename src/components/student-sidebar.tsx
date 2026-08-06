@@ -15,6 +15,7 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -24,8 +25,6 @@ import {
 import {
   BookOpen,
   CheckSquare,
-  ChevronLeft,
-  ChevronRight,
   Clock,
   Code,
   FileText,
@@ -138,9 +137,9 @@ export function StudentSidebar({ student, ...props }: StudentSidebarProps & Reac
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild className="w-full">
-              <Link href="/student/dashboard" className="flex items-center gap-0 pl-3">
+              <Link href="/student/dashboard" className="flex items-center gap-2 pl-3">
                 <Image src="/nk-logo.png" alt="Logo" width={30} height={22} className="object-contain shrink-0" />
-                <div className="animate-slide-name flex items-center">
+                <div className="animate-slide-name flex flex-col items-start gap-0.5 leading-none">
                   <span className={`${logoFont.className} font-bold text-[1.5rem] text-white tracking-tight leading-none`}>Naveo.</span>
                 </div>
               </Link>
@@ -151,6 +150,9 @@ export function StudentSidebar({ student, ...props }: StudentSidebarProps & Reac
 
       <SidebarContent>
         <SidebarGroup>
+          <SidebarGroupLabel className="text-zinc-400 font-bold px-3 py-2 tracking-wider text-[10px] select-none">
+            Student Portal
+          </SidebarGroupLabel>
           <SidebarMenu className="gap-2.5 px-1">
             {data.navItems.map((item) => {
               const isActive = mounted && pathname === item.url
