@@ -417,7 +417,7 @@ export default function StudentCheckInPage() {
                                 Everyday activity log
                             </span>
 
-                            <div className="flex-1 overflow-y-auto space-y-3 max-h-[360px] pr-1">
+                            <div className="flex-1 overflow-y-auto space-y-3 pr-1">
                                 {allRecords.length === 0 ? (
                                     <div className="text-center py-10 text-xs text-zinc-500 border border-dashed border-zinc-800 rounded-xl">
                                         No check-in sessions recorded.

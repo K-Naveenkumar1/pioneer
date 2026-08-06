@@ -35,7 +35,6 @@ export async function checkInAction() {
 
         // Determine check-in type and enforce admin permissions
         const dateStr = getLocalDateString()
-        console.log(`[checkInAction Debug] student: ${dbStudent.name}, isAllowedInClass: ${dbStudent.isAllowedInClass}, allowedClassDate: ${dbStudent.allowedClassDate}, dateStr: ${dateStr}`)
         let checkInType = ""
         if (dbStudent.isAllowedInClass && (dbStudent.allowedClassDate === dateStr || dbStudent.allowedClassDate === "PENDING_" + dateStr)) {
             checkInType = "CLASS"
@@ -777,7 +776,6 @@ export async function getStudentProfileDetails() {
         const dateStr = getLocalDateString()
         const isAllowedInClass = dbStudent.isAllowedInClass && 
             (dbStudent.allowedClassDate === dateStr || dbStudent.allowedClassDate === "PENDING_" + dateStr)
-        console.log(`[getStudentProfileDetails Debug] student: ${dbStudent.name}, rollNo: ${dbStudent.rollNo}, isAllowedInClassDB: ${dbStudent.isAllowedInClass}, allowedClassDateDB: ${dbStudent.allowedClassDate}, dateStr: ${dateStr}, evaluatedIsAllowed: ${isAllowedInClass}`)
 
         const profile = {
             id: dbStudent.id,
