@@ -192,7 +192,7 @@ model Student {
   allowedClassDate String?
   isAssignedWFH    Boolean      @default(false)
   wfhDeadline      DateTime?
-  avatar       String?          // Apple animoji identifier
+  avatar       String?          @db.LongText // Apple animoji identifier or custom base64 image
   createdAt    DateTime         @default(now())
   attendance   Attendance[]
   submissions  TaskSubmission[]

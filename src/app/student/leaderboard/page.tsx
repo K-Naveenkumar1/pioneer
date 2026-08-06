@@ -5,6 +5,39 @@ import GlassCard from "@/components/global/glass-card"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
+function AnimatedScore({ value, delay = 0, duration = 1200 }: { value: number; delay?: number; duration?: number }) {
+    const [count, setCount] = useState(0)
+
+    useEffect(() => {
+        let startTimestamp: number | null = null
+        let animationFrameId: number
+
+        const step = (timestamp: number) => {
+            if (!startTimestamp) startTimestamp = timestamp
+            const progress = Math.min((timestamp - startTimestamp - delay) / duration, 1)
+            if (progress >= 0) {
+                setCount(Math.floor(progress * value))
+            }
+            if (progress < 1) {
+                animationFrameId = window.requestAnimationFrame(step)
+            } else {
+                setCount(value)
+            }
+        }
+
+        const startTimeout = setTimeout(() => {
+            animationFrameId = window.requestAnimationFrame(step)
+        }, delay)
+
+        return () => {
+            clearTimeout(startTimeout)
+            window.cancelAnimationFrame(animationFrameId)
+        }
+    }, [value, delay, duration])
+
+    return <>{count}</>
+}
+
 export default function StudentLeaderboardPage() {
     const [leaderboard, setLeaderboard] = useState<any[]>([])
     const [className, setClassName] = useState("Classroom")
@@ -104,7 +137,9 @@ export default function StudentLeaderboardPage() {
                                         className="absolute -top-3 left-0 w-full h-3 bg-[#2a2a2d]" 
                                         style={{ clipPath: 'polygon(10px 0, 100% 0, 100% 100%, 0 100%)' }}
                                     />
-                                    <span className="text-6xl md:text-8xl font-black text-white/5 font-mono select-none">{podium[1].totalScore}</span>
+                                    <span className="text-6xl md:text-8xl font-black text-white/5 font-mono select-none">
+                                        <AnimatedScore value={podium[1].totalScore} delay={150} duration={1200} />
+                                    </span>
                                 </div>
                             </div>
                         )}
@@ -156,7 +191,9 @@ export default function StudentLeaderboardPage() {
                                         className="absolute -top-3 -right-[10px] w-[10px] h-[calc(100%+12px)] bg-[#101012] z-10" 
                                         style={{ clipPath: 'polygon(0 12px, 100% 0, 100% calc(100% - 12px), 0 100%)' }}
                                     />
-                                    <span className="text-7xl md:text-9xl font-black text-white/5 font-mono select-none">{podium[0].totalScore}</span>
+                                    <span className="text-7xl md:text-9xl font-black text-white/5 font-mono select-none">
+                                        <AnimatedScore value={podium[0].totalScore} delay={0} duration={1200} />
+                                    </span>
                                 </div>
                             </div>
                         )}
@@ -201,14 +238,16 @@ export default function StudentLeaderboardPage() {
                                     {/* 3D Top Face */}
                                     <div 
                                         className="absolute -top-3 left-0 w-[calc(100%+10px)] h-3 bg-[#222225]" 
-                                        style={{ clipPath: 'polygon(0 0, 100% 0, calc(100% - 10px) 100%, 0 100%)' }}
+                                        style={{ clipPath: 'polygon(20px 0, 100% 0, calc(100% - 10px) 100%, 0 100%)' }}
                                     />
                                     {/* 3D Right Side Face */}
                                     <div 
                                         className="absolute -top-3 -right-[10px] w-[10px] h-[calc(100%+12px)] bg-[#0d0d0f] z-10" 
                                         style={{ clipPath: 'polygon(0 12px, 100% 0, 100% calc(100% - 12px), 0 100%)' }}
                                     />
-                                    <span className="text-5xl md:text-7xl font-black text-white/5 font-mono select-none">{podium[2].totalScore}</span>
+                                    <span className="text-5xl md:text-7xl font-black text-white/5 font-mono select-none">
+                                        <AnimatedScore value={podium[2].totalScore} delay={300} duration={1200} />
+                                    </span>
                                 </div>
                             </div>
                         )}
