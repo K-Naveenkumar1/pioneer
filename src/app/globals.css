@@ -267,12 +267,10 @@ aside[class*="border-"],
   from {
     max-width: 0;
     opacity: 0;
-    margin-left: 0;
   }
   to {
     max-width: 200px;
     opacity: 1;
-    margin-left: 0px;
   }
 }
 

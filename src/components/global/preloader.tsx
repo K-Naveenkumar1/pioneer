@@ -8,10 +8,8 @@ const logoFont = Montserrat({ subsets: ["latin"], weight: ["700"] })
 
 export default function Preloader() {
     const [step, setStep] = useState(0)
-    const [mounted, setMounted] = useState(false)
 
     useEffect(() => {
-        setMounted(true)
         // Step 1: Grow the line horizontally
         const t1 = setTimeout(() => setStep(1), 100)
         // Step 2: Morph line to text (slide text up)
@@ -29,7 +27,7 @@ export default function Preloader() {
         }
     }, [])
 
-    if (!mounted || step === 4) return null
+    if (step === 4) return null
 
     return (
         <div
@@ -37,16 +35,16 @@ export default function Preloader() {
                 step === 3 ? "opacity-0 pointer-events-none scale-105" : "opacity-100"
             }`}
         >
-            <div className="relative flex flex-col items-center justify-center">
+            <div className="relative flex flex-col items-stretch justify-center">
                 {/* Logo and Text Wrapper (clipping mask) */}
-                <div className="overflow-hidden h-[60px] flex items-center justify-center mb-2 gap-3">
+                <div className="overflow-hidden h-[45px] flex items-center justify-center mb-1 gap-1.5">
                     <div
-                        className={`flex items-center gap-3 transition-all duration-700 ease-out transform ${
+                        className={`flex items-center gap-1.5 transition-all duration-700 ease-out transform ${
                             step >= 2 ? "translate-y-0 opacity-100" : "translate-y-[100%] opacity-0"
                         }`}
                     >
-                        <Image src="/nk-logo.png" alt="Logo" width={45} height={35} className="object-contain shrink-0" />
-                        <span className={`${logoFont.className} font-bold text-[2rem] tracking-tight text-white leading-none`}>
+                        <Image src="/nk-logo.png" alt="Logo" width={45} height={35} className="object-contain shrink-0 -rotate-45" />
+                        <span className={`${logoFont.className} font-bold text-[2rem] tracking-tight text-white leading-none -ml-1`}>
                             Naveo.
                         </span>
                     </div>
@@ -54,12 +52,10 @@ export default function Preloader() {
 
                 {/* Morphing Line */}
                 <div
-                    className={`h-[3px] bg-white transition-all duration-700 ease-out ${
-                        step === 0 ? "w-0" : ""
+                    className={`h-[3px] bg-white transition-all duration-700 ease-out w-full origin-center ${
+                        step === 0 ? "scale-x-0" : "scale-x-125"
                     } ${
-                        step === 1 ? "w-[200px]" : ""
-                    } ${
-                        step >= 2 ? "w-[200px] bg-white/40" : ""
+                        step >= 2 ? "bg-white/40" : ""
                     }`}
                 />
             </div>

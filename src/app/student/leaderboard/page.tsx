@@ -101,15 +101,15 @@ export default function StudentLeaderboardPage() {
                                 {/* Student Info above the pillar */}
                                 <div className="text-center space-y-3 mb-3.5 animate-skyline-info opacity-0 [animation-delay:150ms]">
                                     <div className="relative mx-auto w-fit">
-                                        <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-zinc-800 flex items-center justify-center mx-auto shadow-md select-none overflow-hidden">
+                                        <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-zinc-800 flex items-center justify-center mx-auto shadow-md select-none overflow-hidden">
                                             {podium[1].avatar ? (
                                                 podium[1].avatar.startsWith("/avatars/") || podium[1].avatar.startsWith("data:image/") ? (
                                                     <img src={podium[1].avatar} alt="Avatar" className="w-full h-full object-cover" />
                                                 ) : (
-                                                    <span className="text-2xl leading-none">{podium[1].avatar}</span>
+                                                    <span className="text-3xl leading-none">{podium[1].avatar}</span>
                                                 )
                                             ) : (
-                                                <span className="font-bold text-base text-white select-none">
+                                                <span className="font-bold text-lg text-white select-none">
                                                     {(podium[1].name || "Student").substring(0, 1).toUpperCase()}
                                                 </span>
                                             )}
@@ -150,15 +150,15 @@ export default function StudentLeaderboardPage() {
                                 {/* Student Info above the pillar */}
                                 <div className="text-center space-y-3 mb-3.5 animate-skyline-info opacity-0">
                                     <div className="relative mx-auto w-fit">
-                                        <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-zinc-800 flex items-center justify-center mx-auto shadow-xl select-none overflow-hidden">
+                                        <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-zinc-800 flex items-center justify-center mx-auto shadow-xl select-none overflow-hidden">
                                             {podium[0].avatar ? (
                                                 podium[0].avatar.startsWith("/avatars/") || podium[0].avatar.startsWith("data:image/") ? (
                                                     <img src={podium[0].avatar} alt="Avatar" className="w-full h-full object-cover" />
                                                 ) : (
-                                                    <span className="text-4xl leading-none">{podium[0].avatar}</span>
+                                                    <span className="text-5xl leading-none">{podium[0].avatar}</span>
                                                 )
                                             ) : (
-                                                <span className="font-bold text-xl text-white select-none">
+                                                <span className="font-bold text-2xl text-white select-none">
                                                     {(podium[0].name || "Student").substring(0, 1).toUpperCase()}
                                                 </span>
                                             )}
@@ -204,15 +204,15 @@ export default function StudentLeaderboardPage() {
                                 {/* Student Info above the pillar */}
                                 <div className="text-center space-y-3 mb-3.5 animate-skyline-info opacity-0 [animation-delay:300ms]">
                                     <div className="relative mx-auto w-fit">
-                                        <div className="w-10 h-10 md:w-14 md:h-14 rounded-full bg-zinc-800 flex items-center justify-center mx-auto shadow-md select-none overflow-hidden">
+                                        <div className="w-14 h-14 md:w-18 md:h-18 rounded-full bg-zinc-800 flex items-center justify-center mx-auto shadow-md select-none overflow-hidden">
                                             {podium[2].avatar ? (
                                                 podium[2].avatar.startsWith("/avatars/") || podium[2].avatar.startsWith("data:image/") ? (
                                                     <img src={podium[2].avatar} alt="Avatar" className="w-full h-full object-cover" />
                                                 ) : (
-                                                    <span className="text-xl leading-none">{podium[2].avatar}</span>
+                                                    <span className="text-3xl leading-none">{podium[2].avatar}</span>
                                                 )
                                             ) : (
-                                                <span className="font-bold text-sm text-white select-none">
+                                                <span className="font-bold text-lg text-white select-none">
                                                     {(podium[2].name || "Student").substring(0, 1).toUpperCase()}
                                                 </span>
                                             )}
@@ -291,12 +291,12 @@ export default function StudentLeaderboardPage() {
                                                 {/* Avatar element container */}
                                                 <div className="relative shrink-0 select-none">
                                                     {/* Avatar */}
-                                                    <div className="w-12 h-12 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-base overflow-hidden">
+                                                    <div className="w-14 h-14 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-lg overflow-hidden">
                                                         {player.avatar ? (
                                                             player.avatar.startsWith("/avatars/") || player.avatar.startsWith("data:image/") ? (
                                                                 <img src={player.avatar} alt="Avatar" className="w-full h-full object-cover" />
                                                             ) : (
-                                                                player.avatar
+                                                                <span className="text-xl leading-none">{player.avatar}</span>
                                                             )
                                                         ) : (
                                                             player.name.substring(0, 1).toUpperCase()

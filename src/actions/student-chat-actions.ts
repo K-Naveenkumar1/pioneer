@@ -84,3 +84,37 @@ export async function adminSendChatMessageAction(message: string) {
         return { success: false, error: error?.message || "Failed to send message" }
     }
 }
+
+export async function deleteStudentChatMessageAction(messageId: string) {
+    try {
+        const admin = await getAdminUser()
+        const student = await getStudentUser()
+        if (!admin && !student) {
+            return { success: false, error: "Unauthorized" }
+        }
+
+        const message = await client.studentMessage.findUnique({
+            where: { id: messageId }
+        })
+
+        if (!message) {
+            return { success: false, error: "Message not found" }
+        }
+
+        // If the logged in user is a student, ensure they own this message
+        if (student) {
+            if (message.studentId !== student.id || message.isAdmin) {
+                return { success: false, error: "Unauthorized to delete this message" }
+            }
+        }
+
+        await client.studentMessage.delete({
+            where: { id: messageId }
+        })
+
+        return { success: true, message: "Message deleted successfully!" }
+    } catch (error: any) {
+        console.error("Delete student chat message error:", error)
+        return { success: false, error: error?.message || "Failed to delete message" }
+    }
+}

@@ -70,10 +70,10 @@ export default function AdminSidebar({ admin }: AdminSidebarProps) {
                 {/* Brand logo & Collapse Button */}
                 <div className={`flex items-center justify-between ${isCollapsed ? "flex-col gap-4" : ""}`}>
                     <div className="flex flex-col items-start">
-                        <div className="flex items-center gap-3">
-                            <Image src="/nk-logo.png" alt="Logo" width={34} height={26} className="object-contain shrink-0" />
+                        <div className="flex items-center gap-1.5">
+                            <Image src="/nk-logo.png" alt="Logo" width={34} height={26} className="object-contain shrink-0 -rotate-45" />
                             {!isCollapsed && (
-                                <div className="animate-slide-name flex items-center">
+                                <div className="animate-slide-name flex items-center -ml-2">
                                     <h2 className={`${logoFont.className} font-bold text-[1.6rem] tracking-tight leading-none text-white`}>Naveo.</h2>
                                 </div>
                             )}

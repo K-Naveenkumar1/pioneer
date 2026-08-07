@@ -1,9 +1,10 @@
 "use client"
 
 import { getStudentUser } from "@/actions/custom-auth"
-import { getStudentChatMessagesAction, sendStudentChatMessageAction } from "@/actions/student-chat-actions"
+import { getStudentChatMessagesAction, sendStudentChatMessageAction, deleteStudentChatMessageAction } from "@/actions/student-chat-actions"
 import { Button } from "@/components/ui/button"
-import { ArrowDown, Clock, MessageSquare, Send, User } from "lucide-react"
+import { motion } from "framer-motion"
+import { ArrowDown, Clock, MessageSquare, Send, User, Trash2 } from "lucide-react"
 import React, { useEffect, useRef, useState, useTransition } from "react"
 import { toast } from "sonner"
 
@@ -103,6 +104,18 @@ export default function StudentChatPage() {
         })
     }
 
+    const handleDeleteMessage = async (messageId: string) => {
+        if (!window.confirm("Are you sure you want to delete your message?")) return
+
+        const res = await deleteStudentChatMessageAction(messageId)
+        if (res.success) {
+            toast.success("Message deleted successfully!")
+            setMessages((prev) => prev.filter((msg) => msg.id !== messageId))
+        } else {
+            toast.error(res.error || "Failed to delete message")
+        }
+    }
+
     const formatMessageTime = (dateStr: Date | string) => {
         return new Date(dateStr).toLocaleTimeString("en-US", {
             hour: "2-digit",
@@ -128,9 +141,9 @@ export default function StudentChatPage() {
     }
 
     return (
-        <div className="space-y-6 flex flex-col h-[calc(100vh-12rem)] max-w-5xl mx-auto">
+        <div className="space-y-4 flex flex-col h-[calc(100vh-7.2rem)] w-full">
             {/* Header Description */}
-            <div className="flex-shrink-0">
+            <div className="flex-shrink-0 pl-1.5 ">
                 <h1 className="text-5xl font-extrabold tracking-tight text-white pb-2 flex items-center gap-2">
                     Doubts Discussion
                 </h1>
@@ -173,8 +186,17 @@ export default function StudentChatPage() {
                                         </div>
                                     )}
 
-                                    <div className={`flex w-full ${isMe ? "justify-end" : "justify-start"}`}>
-                                        <div className={`flex flex-col max-w-[75%] ${isMe ? "items-end" : "items-start"}`}>
+                                    <div className={`flex w-full group ${isMe ? "justify-end" : "justify-start"} min-w-0 items-center gap-2`}>
+                                        {isMe && (
+                                            <button 
+                                                onClick={() => handleDeleteMessage(msg.id)}
+                                                className="p-1.5 rounded-lg text-zinc-650 hover:text-rose-500 hover:bg-rose-500/10 opacity-0 group-hover:opacity-100 transition-all shrink-0 cursor-pointer"
+                                                title="Delete Message"
+                                            >
+                                                <Trash2 size={13} />
+                                            </button>
+                                        )}
+                                        <div className={`flex flex-col max-w-[75%] ${isMe ? "items-end" : "items-start"} min-w-0`}>
                                             {/* Sender Label */}
                                             <span className="text-[10px] text-zinc-400 font-semibold mb-1 flex items-center gap-1">
                                                 <User size={10} className="text-zinc-500" />
@@ -196,13 +218,18 @@ export default function StudentChatPage() {
                                             </span>
 
                                             {/* Chat Bubble */}
-                                            <div className={`px-4 py-3 rounded-2xl break-words whitespace-pre-wrap text-sm leading-relaxed ${
-                                                isMe 
-                                                    ? "bg-white text-black font-medium rounded-tr-none shadow-md" 
-                                                    : "bg-zinc-900 border border-zinc-800 text-zinc-100 rounded-tl-none"
-                                            }`}>
+                                            <motion.div 
+                                                initial={{ opacity: 0, y: 12, scale: 0.96 }}
+                                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                transition={{ duration: 0.2, ease: "easeOut" }}
+                                                className={`px-4 py-3 rounded-2xl break-all whitespace-pre-wrap text-sm leading-relaxed ${
+                                                    isMe 
+                                                        ? "bg-white text-black font-medium rounded-tr-none shadow-md" 
+                                                        : "bg-zinc-900 border border-zinc-800 text-zinc-100 rounded-tl-none"
+                                                }`}
+                                            >
                                                 {msg.message}
-                                            </div>
+                                            </motion.div>
 
                                             {/* Time Label */}
                                             <span className="text-[9px] text-zinc-600 mt-1 flex items-center gap-1 font-mono">

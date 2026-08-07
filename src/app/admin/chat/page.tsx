@@ -1,12 +1,13 @@
 "use client"
 
 import React, { useState, useEffect, useRef } from "react"
-import { MessageSquare, Send, RefreshCw, User, Shield } from "lucide-react"
+import { MessageSquare, Send, RefreshCw, User, Shield, Trash2 } from "lucide-react"
+import { motion } from "framer-motion"
 import { toast } from "sonner"
 
 import GlassCard from "@/components/global/glass-card"
 import { Button } from "@/components/ui/button"
-import { getStudentChatMessagesAction, adminSendChatMessageAction } from "@/actions/student-chat-actions"
+import { getStudentChatMessagesAction, adminSendChatMessageAction, deleteStudentChatMessageAction } from "@/actions/student-chat-actions"
 
 export default function AdminDoubtsChatPage() {
     const [messages, setMessages] = useState<any[]>([])
@@ -60,6 +61,18 @@ export default function AdminDoubtsChatPage() {
         }
     }
 
+    const handleDeleteMessage = async (messageId: string) => {
+        if (!window.confirm("Are you sure you want to delete this message?")) return
+
+        const res = await deleteStudentChatMessageAction(messageId)
+        if (res.success) {
+            toast.success("Message deleted successfully!")
+            setMessages(prev => prev.filter(msg => msg.id !== messageId))
+        } else {
+            toast.error(res.error || "Failed to delete message")
+        }
+    }
+
     const formatTimestamp = (date: string | Date) => {
         return new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
@@ -104,7 +117,7 @@ export default function AdminDoubtsChatPage() {
                             return (
                                 <div
                                     key={msg.id}
-                                    className={`flex items-start gap-3 max-w-[80%] ${
+                                    className={`flex items-start gap-3 max-w-[80%] group ${
                                         isStaff ? "ml-auto flex-row-reverse" : "mr-auto"
                                     }`}
                                 >
@@ -118,7 +131,7 @@ export default function AdminDoubtsChatPage() {
                                     </div>
 
                                     {/* Bubble */}
-                                    <div className="space-y-1">
+                                    <div className="space-y-1 min-w-0">
                                         <div className={`flex items-center gap-2 text-[10px] text-zinc-500 ${
                                             isStaff ? "justify-end" : ""
                                         }`}>
@@ -132,19 +145,33 @@ export default function AdminDoubtsChatPage() {
                                             )}
                                         </div>
 
-                                        <div className={`p-4 rounded-2xl text-xs leading-relaxed border ${
-                                            isStaff
-                                                ? "bg-white text-black border-white rounded-tr-none"
-                                                : "bg-[#0f0f0f]/80 text-zinc-200 border-themeGrey/60 rounded-tl-none"
-                                        }`}>
+                                        <motion.div 
+                                            initial={{ opacity: 0, y: 12, scale: 0.96 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            transition={{ duration: 0.2, ease: "easeOut" }}
+                                            className={`p-4 rounded-2xl text-xs leading-relaxed border break-all ${
+                                                isStaff
+                                                    ? "bg-white text-black border-white rounded-tr-none"
+                                                    : "bg-[#0f0f0f]/80 text-zinc-200 border-themeGrey/60 rounded-tl-none"
+                                            }`}
+                                        >
                                             <p className="whitespace-pre-wrap">{msg.message}</p>
                                             <div className={`text-[9px] mt-2 text-right ${
                                                 isStaff ? "text-black/60" : "text-zinc-500"
                                             }`}>
                                                 {formatTimestamp(msg.createdAt)}
                                             </div>
-                                        </div>
+                                        </motion.div>
                                     </div>
+
+                                    {/* Delete Button (visible on group hover) */}
+                                    <button 
+                                        onClick={() => handleDeleteMessage(msg.id)}
+                                        className="self-center p-1.5 rounded-lg text-zinc-600 hover:text-rose-500 hover:bg-rose-500/10 opacity-0 group-hover:opacity-100 transition-all shrink-0 cursor-pointer"
+                                        title="Delete Message"
+                                    >
+                                        <Trash2 size={13} />
+                                    </button>
                                 </div>
                             )
                         })

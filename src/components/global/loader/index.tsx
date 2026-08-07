@@ -16,7 +16,7 @@ export const Loader = ({ loading, children, className}: LoaderProps) => {
             <img 
                 src="/nk-logo.png" 
                 alt="Loading..."
-                className="w-10 h-10 object-contain animate-pulse"
+                className="w-10 h-10 object-contain animate-pulse -rotate-45"
             />
             <span className="sr-only">Loading...</span> 
         </div>

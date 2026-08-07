@@ -393,7 +393,7 @@ export default function StudentDashboard() {
                     </div>
 
                     {/* Geographic style Classroom stands Card */}
-                    <div className="bg-[#121212] rounded-[20px] p-6 shadow-lg flex flex-col transition-all duration-300">
+                    <div className="bg-[#121212] rounded-[20px] p-6 shadow-lg flex flex-col transition-all duration-300 pb-11">
                         <div className="flex justify-between items-start">
                             <div>
                                 <p className="text-xs text-zinc-500 font-medium tracking-tight">Geographic Stands</p>

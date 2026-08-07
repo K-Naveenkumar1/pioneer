@@ -395,10 +395,9 @@ export default function StudentCheckInPage() {
                 </div>
 
                 {/* Right Column (lg:col-span-1): Everyday Activity Log */}
-                <div className="lg:col-span-1">
+                <div className="lg:col-span-1 lg:h-[665px] flex flex-col min-h-0">
                     {/* Everyday Activity Log */}
-                    <div className="bg-[#121212] border border-zinc-800/80 rounded-2xl shadow-lg p-6 hover:border-zinc-700/80 transition-all duration-300 h-full min-h-[350px] ">
-                        <div className="h-full flex flex-col">
+                    <div className="bg-[#121212] border border-zinc-800/80 rounded-2xl shadow-lg p-6 hover:border-zinc-700/80 transition-all duration-300 flex-1 flex flex-col min-h-0">
                             <h2 className="text-3xl font-bold text-white tracking-tight mt-1 block">
                                 Activity log
                             </h2>
@@ -455,7 +454,6 @@ export default function StudentCheckInPage() {
                         </div>
                     </div>
                 </div>
-            </div>
         </div>
     )
 }
