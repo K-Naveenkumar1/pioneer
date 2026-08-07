@@ -1,13 +1,13 @@
 import BackdropGradient from "@/components/global/backdrop-gradient"
 import GradientText from "@/components/global/gradient-text"
 import { Card, CardDescription, CardTitle } from "@/components/ui/card"
-import { 
-  BookOpen, 
-  CodeXml, 
-  MessageSquare, 
-  CalendarCheck, 
-  Keyboard, 
-  Trophy 
+import {
+  BookOpen,
+  CalendarCheck,
+  CodeXml,
+  Keyboard,
+  MessageSquare,
+  Trophy
 } from "lucide-react"
 
 type FeatureItem = {
@@ -51,20 +51,20 @@ const featuresList: FeatureItem[] = [
 
 export const FeaturesSection = () => {
   return (
-    <div className="w-full pt-8 flex flex-col items-center gap-6" id="features">
+    <div className="w-full pt-8 flex flex-col items-start" id="features">
       <BackdropGradient 
         className="w-8/12 h-full opacity-40 flex flex-col items-center"
-        container="items-center gap-y-4"
+        container="items-center gap-y-2"
       >
-        <GradientText className="text-4xl font-semibold text-center" element="H2">
+        <GradientText className="text-4xl font-semibold text-center pl-5 pb-2" element="H2">
           Designed for Premium Learning
         </GradientText>
-        <p className="text-sm md:text-center text-center text-muted-foreground text-themeTextGrey max-w-xl">
+        <p className="text-sm text-center text-muted-foreground text-themeTextGrey pl-5">
           Everything you need to collaborate, study, build, and level up your skills in one cohesive environment.
         </p>
       </BackdropGradient>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-12 w-full justify-center max-w-6xl px-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-12 w-full justify-center px-4">
         {featuresList.map((feature, idx) => (
           <Card 
             key={idx} 

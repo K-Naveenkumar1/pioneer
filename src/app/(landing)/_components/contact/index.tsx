@@ -47,20 +47,20 @@ export const ContactSection = () => {
   }
 
   return (
-    <div className="w-full pt-20 pb-10 flex flex-col items-center gap-6" id="contact">
+    <div className="w-full pt-20 pb-10 flex flex-col items-start" id="contact">
       <BackdropGradient 
         className="w-8/12 h-full opacity-40 flex flex-col items-center"
-        container="items-center gap-y-4"
+        container="items-center gap-y-2"
       >
-        <GradientText className="text-4xl font-semibold text-center" element="H2">
+        <GradientText className="text-4xl font-semibold text-center pl-5" element="H2">
           Get In Touch
         </GradientText>
-        <p className="text-sm md:text-center text-center text-muted-foreground text-themeTextGrey max-w-xl">
+        <p className="text-sm text-center text-muted-foreground text-themeTextGrey pl-5 pb-2">
           Have questions or want to collaborate?
         </p>
       </BackdropGradient>
 
-      <div className="flex flex-col lg:flex-row gap-10 mt-12 w-full max-w-6xl px-4 items-stretch justify-center">
+      <div className="flex flex-col lg:flex-row gap-10 mt-12 w-full px-4 items-stretch justify-center">
         {/* Contact Info Cards */}
         <div className="flex flex-col gap-6 w-full lg:w-5/12 justify-between">
           <div className="flex flex-col gap-6">

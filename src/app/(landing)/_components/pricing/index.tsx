@@ -9,21 +9,20 @@ type Props = {}
 
 export const PricingSection = (props: Props) => {
   return (
-    <div className="w-full pt-20 flex flex-col items-center gap-6" id="pricing">
+    <div className="w-full pt-20 flex flex-col items-start" id="pricing">
       <BackdropGradient 
         className="w-8/12 h-full opacity-40 flex flex-col items-center"
-        container="items-center gap-y-4"
+        container="items-center gap-y-2"
       >
-        <GradientText className="text-4xl font-semibold text-center " element="H2">
-          Pricing Plans For Billionaires
+        <GradientText className="text-4xl font-semibold text-center pl-5 pb-2" element="H2">
+          Pricing Plans
         </GradientText>
-        <p className="text-sm md:text-center text-center text-muted-foreground text-themeTextGrey">
-          Choose your according to your need and become a billionaire family
-          <br className="hidden md:block" />
-          collabrate, and cultivate meaningful relationships
+        <p className="text-sm text-center text-muted-foreground text-themeTextGrey pl-5">
+          
+          Choose your plan according to your need
         </p>
       </BackdropGradient>
-      <div className="flex flex-col lg:flex-row gap-6 mt-12 w-full justify-center items-stretch max-w-6xl px-4">
+      <div className="flex flex-col lg:flex-row gap-6 mt-12 w-full justify-center items-stretch px-4">
         {/* Starter Plan */}
         <Card className="p-7 flex flex-col justify-between w-full lg:w-1/3 bg-[#121212] border border-zinc-800/80 rounded-2xl shadow-lg hover:border-zinc-700/80 transition-all duration-300">
           <div>
