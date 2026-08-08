@@ -10,31 +10,64 @@ import "./globals.css"
 
 const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"] })
 
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://naveo.com"
+
 export const metadata: Metadata = {
+    metadataBase: new URL(baseUrl),
     title: {
-        default: "Naveo - Empowering Communities & Classrooms",
+        default: "Naveo | Modern Classroom & Community Platform",
         template: "%s | Naveo"
     },
-    description: "Naveo is a vibrant educational and community platform that empowers students and instructors to connect, collaborate, and excel together.",
-    keywords: ["Naveo", "education", "student community", "classrooms", "exam portal", "online learning", "collaboration", "Pioneer"],
-    authors: [{ name: "Naveen" }],
+    description: "Naveo empowers schools, institutions, and students with interactive digital notes, live exam portals, task workflows, and real-time collaboration tools.",
+    keywords: [
+        "Naveo",
+        "Learning Management System",
+        "Online Exam Portal",
+        "Student Community Platform",
+        "Digital Notes App",
+        "Classroom Management",
+        "Interactive Coding Exam",
+        "EduTech Software",
+        "Attendance Check-In System"
+    ],
+    authors: [{ name: "Naveen", url: baseUrl }],
     creator: "Naveen",
+    publisher: "Naveo Inc.",
+    alternates: {
+        canonical: "/",
+    },
     openGraph: {
-        title: "Naveo - Empowering Communities & Classrooms",
-        description: "A vibrant online community and exam platform for modern students and educators.",
-        url: "https://naveo.com",
+        title: "Naveo | Modern Classroom & Community Platform",
+        description: "A vibrant online community and exam platform for modern students, schools, and educators.",
+        url: baseUrl,
         siteName: "Naveo",
         locale: "en_US",
         type: "website",
+        images: [
+            {
+                url: "/nk-logo.png",
+                width: 1200,
+                height: 630,
+                alt: "Naveo Platform Logo"
+            }
+        ]
     },
     twitter: {
         card: "summary_large_image",
-        title: "Naveo - Empowering Communities & Classrooms",
-        description: "Connect, collaborate, and cultivate meaningful learning experiences.",
+        title: "Naveo | Modern Classroom & Community Platform",
+        description: "Connect, collaborate, take exams, and cultivate meaningful learning experiences.",
+        images: ["/nk-logo.png"]
     },
     robots: {
         index: true,
         follow: true,
+        googleBot: {
+            index: true,
+            follow: true,
+            'max-video-preview': -1,
+            'max-image-preview': 'large',
+            'max-snippet': -1,
+        },
     }
 }
 

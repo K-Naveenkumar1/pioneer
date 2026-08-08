@@ -4,8 +4,8 @@ import CallToAction from "./_components/call-to-action";
 import DasboardSnippet from "./_components/dashboard-snippet";
 
 export const metadata: Metadata = {
-    title: "Naveo - Luxury Learning Platform",
-    description: "Welcome to Naveo. Explore modern community platforms, interactive classrooms, secure online testing and robust learning tools all in one premium workspace.",
+    title: "Naveo | All-in-One Learning & Classroom Management Platform",
+    description: "Discover Naveo: the premier educational workspace featuring online exams, digital notes, automated attendance, coding assessments, and real-time student collaboration.",
 }
 
 const PricingSection = dynamic(
@@ -33,8 +33,37 @@ const ContactSection = dynamic(
 )
 
 export default function Home() {
+    const jsonLd = {
+        "@context": "https://schema.org",
+        "@graph": [
+            {
+                "@type": "SoftwareApplication",
+                "name": "Naveo",
+                "operatingSystem": "Web",
+                "applicationCategory": "EducationalApplication",
+                "offers": {
+                    "@type": "Offer",
+                    "price": "0",
+                    "priceCurrency": "USD"
+                },
+                "description": "Naveo is an all-in-one classroom management and learning platform offering online exams, coding challenges, digital notes, and attendance tracking."
+            },
+            {
+                "@type": "Organization",
+                "name": "Naveo",
+                "url": process.env.NEXT_PUBLIC_APP_URL || "https://naveo.com",
+                "logo": `${process.env.NEXT_PUBLIC_APP_URL || "https://naveo.com"}/nk-logo.png`,
+                "sameAs": []
+            }
+        ]
+    }
+
     return (
         <main className="md:px-10 py-20 flex flex-col gap-36">
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+            />
             <div>
                 <CallToAction />
                 <DasboardSnippet />
@@ -45,3 +74,4 @@ export default function Home() {
         </main>
     )
 }
+
