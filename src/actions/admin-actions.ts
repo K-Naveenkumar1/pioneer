@@ -3,7 +3,8 @@
 import { client } from "@/lib/prisma"
 import { getAdminUser } from "./custom-auth"
 import { hashPassword } from "@/lib/hash"
-import mammoth from "mammoth"
+// mammoth is dynamically imported inside parseDocxQuestionsAction (on-demand, not at startup)
+
 
 function getLocalDateString() {
     const d = new Date()
@@ -366,6 +367,8 @@ export async function parseDocxQuestionsAction(base64Data: string) {
         if (!admin) return { success: false, error: "Unauthorized" }
 
         const buffer = Buffer.from(base64Data, "base64")
+        // Dynamically import mammoth only when this function is called
+        const mammoth = (await import("mammoth")).default
         const parseRes = await mammoth.extractRawText({ buffer })
         const text = parseRes.value
 

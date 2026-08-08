@@ -13,14 +13,13 @@ import {
     Trophy,
     Users
 } from "lucide-react"
-import { Montserrat } from "next/font/google"
+import { montserrat as logoFont } from "@/lib/fonts"
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 import AdminLogoutButton from "./logout-button"
 
-const logoFont = Montserrat({ subsets: ["latin"], weight: ["700"] })
 
 interface AdminSidebarProps {
     admin: {

@@ -5,7 +5,8 @@ import { getAdminUser, getStudentUser } from "./custom-auth"
 import fs from "fs"
 import path from "path"
 import { revalidatePath } from "next/cache"
-import mammoth from "mammoth"
+// mammoth is dynamically imported inside autoGeneratePagesFromDocx (on-demand)
+
 
 /**
  * Helper to auto-generate pages from a Word (.docx) document.
@@ -16,6 +17,7 @@ async function autoGeneratePagesFromDocx(materialId: string, fileUrl: string) {
         if (!fs.existsSync(filePath)) return
 
         const buffer = await fs.promises.readFile(filePath)
+        const mammoth = (await import("mammoth")).default
         const result = await mammoth.convertToHtml({ buffer })
         const html = result.value
 

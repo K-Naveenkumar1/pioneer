@@ -40,8 +40,47 @@ export default function AdminDashboardPage() {
 
     if (loading) {
         return (
-            <div className="min-h-[50vh] flex items-center justify-center">
-                <span className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></span>
+            <div className="space-y-8">
+                {/* Header skeleton */}
+                <div className="flex justify-between items-center">
+                    <div className="space-y-2">
+                        <div className="skeleton-shimmer h-9 w-36 rounded-xl" />
+                        <div className="skeleton-shimmer h-3.5 w-64 rounded-lg" />
+                    </div>
+                    <div className="skeleton-shimmer h-10 w-10 rounded-xl" />
+                </div>
+
+                {/* 4 metric cards skeleton */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {[...Array(4)].map((_, i) => (
+                        <div key={i} className="glass-effect rounded-2xl p-6 flex items-center gap-4">
+                            <div className="skeleton-shimmer h-12 w-12 rounded-xl shrink-0" />
+                            <div className="space-y-2 flex-1">
+                                <div className="skeleton-shimmer h-3 w-24 rounded" />
+                                <div className="skeleton-shimmer h-7 w-16 rounded-lg" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Active sessions skeleton */}
+                <div className="space-y-4">
+                    <div className="skeleton-shimmer h-7 w-64 rounded-lg" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {[...Array(3)].map((_, i) => (
+                            <div key={i} className="glass-effect rounded-2xl p-5 flex flex-col justify-between space-y-3">
+                                <div className="flex justify-between items-start">
+                                    <div className="space-y-1.5 flex-1 overflow-hidden">
+                                        <div className="skeleton-shimmer h-4 w-36 rounded" />
+                                        <div className="skeleton-shimmer h-3 w-20 rounded" />
+                                    </div>
+                                    <div className="skeleton-shimmer h-2 w-2 rounded-full shrink-0 ml-2" />
+                                </div>
+                                <div className="skeleton-shimmer h-3.5 w-44 rounded mt-2 pt-3" />
+                            </div>
+                        ))}
+                    </div>
+                </div>
             </div>
         )
     }

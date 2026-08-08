@@ -1,10 +1,12 @@
 export default function Loading() {
     return (
         <div className="space-y-8">
+            {/* Header */}
             <div className="space-y-2">
-                <div className="skeleton-shimmer h-12 w-64 rounded-xl" />
+                <div className="skeleton-shimmer h-12 w-72 rounded-xl" />
                 <div className="skeleton-shimmer h-3.5 w-80 rounded-lg" />
             </div>
+            {/* 2-col coding exam card grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {[...Array(4)].map((_, i) => (
                     <div key={i} className="glass-effect rounded-2xl p-6 flex flex-col justify-between space-y-4 min-h-[200px]">

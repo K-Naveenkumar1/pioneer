@@ -105,8 +105,20 @@ export default function StudentMaterialsPage() {
 
             {/* Split Screen Layout when PDF is selected */}
             {loading ? (
-                <div className="min-h-[30vh] flex items-center justify-center">
-                    <span className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></span>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {[...Array(6)].map((_, i) => (
+                        <div key={i} className="glass-effect rounded-2xl p-5 flex flex-col justify-between space-y-4 min-h-[180px]">
+                            <div className="space-y-2">
+                                <div className="skeleton-shimmer h-5 w-40 rounded-lg" />
+                                <div className="skeleton-shimmer h-3 w-full rounded" />
+                                <div className="skeleton-shimmer h-3 w-3/4 rounded" />
+                            </div>
+                            <div className="flex items-center justify-between pt-2">
+                                <div className="skeleton-shimmer h-4 w-20 rounded" />
+                                <div className="skeleton-shimmer h-8 w-24 rounded-xl" />
+                            </div>
+                        </div>
+                    ))}
                 </div>
             ) : materials.length === 0 ? (
                 <GlassCard className="p-8 text-center text-themeTextGrey text-sm border border-themeGrey">

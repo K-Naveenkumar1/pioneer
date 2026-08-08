@@ -1,12 +1,10 @@
 import GlassSheet from "@/components/global/glass-sheet"
 import { Button } from "@/components/ui/button"
 import { MenuIcon } from "lucide-react"
-import { Montserrat } from "next/font/google"
+import { montserrat as logoFont } from "@/lib/fonts"
 import Image from "next/image"
 import Link from "next/link"
 import Menu from "./menu"
-
-const logoFont = Montserrat({ subsets: ["latin"], weight: ["700"] })
 
 const LandingPageNavbar = () => {
   return (

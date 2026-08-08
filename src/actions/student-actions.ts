@@ -124,34 +124,48 @@ export async function getAttendanceMetrics() {
 
 /**
  * Fetches all data needed for the student dashboard in a single server action call.
- * Replaces 5 separate action calls with one — all queries run in parallel.
+ * All queries run fully in parallel — no sequential round-trips.
  */
 export async function getDashboardDataAction() {
     try {
         const student = await getStudentUser()
         if (!student) return { success: false, error: "Unauthorized" }
 
-        // Fetch student profile to get classId first
-        const dbStudent = await client.student.findUnique({
-            where: { id: student.id },
-            select: { id: true, name: true, rollNo: true, department: true, classId: true, avatar: true }
-        })
-        if (!dbStudent) return { success: false, error: "Student not found" }
-
-        // Run remaining queries in parallel using classId
+        // Fan out ALL queries in one parallel batch.
+        // dbStudent is fetched alongside everything else — no sequential round-trip.
         const [
+            dbStudent,
             tasks,
             submissions,
-            exams,
             attempts,
             distinctStudentSessions,
-            distinctSystemDays,
             sessions
         ] = await Promise.all([
+            client.student.findUnique({
+                where: { id: student.id },
+                select: { id: true, name: true, rollNo: true, department: true, classId: true, avatar: true }
+            }),
             client.task.findMany({ orderBy: { createdAt: "desc" }, take: 10 }),
             client.taskSubmission.findMany({ where: { studentId: student.id } }),
+            client.examAttempt.findMany({ where: { studentId: student.id } }),
+            client.attendance.findMany({
+                where: { studentId: student.id },
+                select: { date: true },
+                distinct: ["date"]
+            }),
+            client.attendance.findMany({
+                where: { studentId: student.id },
+                orderBy: { checkIn: "asc" },
+                take: 90 // cap to ~3 months — avoids unbounded growth
+            })
+        ])
+
+        if (!dbStudent) return { success: false, error: "Student not found" }
+
+        // Now fetch class-scoped data (needs classId) + exams in a second parallel batch
+        const [exams, distinctSystemDays] = await Promise.all([
             client.exam.findMany({
-                where: { 
+                where: {
                     type: { not: "CODING" },
                     OR: [
                         { classId: dbStudent.classId },
@@ -161,20 +175,10 @@ export async function getDashboardDataAction() {
                 include: { _count: { select: { questions: true } } },
                 orderBy: { createdAt: "desc" }
             }),
-            client.examAttempt.findMany({ where: { studentId: student.id } }),
-            client.attendance.findMany({
-                where: { studentId: student.id },
-                select: { date: true },
-                distinct: ["date"]
-            }),
             client.attendance.findMany({
                 where: { student: { classId: dbStudent.classId } },
                 select: { date: true },
                 distinct: ["date"]
-            }),
-            client.attendance.findMany({
-                where: { studentId: student.id },
-                orderBy: { checkIn: "asc" }
             })
         ])
 
@@ -262,34 +266,35 @@ export async function getAttendanceStatus() {
         if (!student) return { isCheckedIn: false, activeRecord: null }
 
         const dateStr = getLocalDateString()
+        const yesterdayDateStr = getYesterdayLocalDateString()
 
-        let activeRecord = await client.attendance.findFirst({
-            where: {
-                studentId: student.id,
-                checkOut: null
-            }
-        })
+        // Fetch the active record and recent history in parallel
+        const [activeRecord, allRecords] = await Promise.all([
+            client.attendance.findFirst({
+                where: { studentId: student.id, checkOut: null }
+            }),
+            // Limit to 90 most recent records — enough for display + yesterday calc
+            client.attendance.findMany({
+                where: { studentId: student.id },
+                orderBy: { checkIn: "desc" },
+                take: 90
+            })
+        ])
 
-        // Auto checkout previous day's session
-        if (activeRecord && activeRecord.date !== dateStr) {
-            const checkInDate = new Date(activeRecord.checkIn)
+        let resolvedActive = activeRecord
+
+        // Auto checkout a previous day's dangling session
+        if (resolvedActive && resolvedActive.date !== dateStr) {
+            const checkInDate = new Date(resolvedActive.checkIn)
             const autoCheckOutTime = new Date(checkInDate.getTime() + 8 * 60 * 60 * 1000)
             await client.attendance.update({
-                where: { id: activeRecord.id },
+                where: { id: resolvedActive.id },
                 data: { checkOut: autoCheckOutTime }
             })
-            activeRecord = null
+            resolvedActive = null
         }
 
-        const allRecords = await client.attendance.findMany({
-            where: {
-                studentId: student.id
-            },
-            orderBy: { checkIn: "desc" }
-        })
-
-        const todayRecords = allRecords.filter(rec => rec.date === dateStr).reverse() // reverse to maintain asc order for today records clock logic
-        const yesterdayDateStr = getYesterdayLocalDateString()
+        const todayRecords = allRecords.filter(rec => rec.date === dateStr).reverse()
 
         let yesterdayTotalMs = 0
         allRecords.forEach(rec => {
@@ -301,8 +306,8 @@ export async function getAttendanceStatus() {
         })
 
         return {
-            isCheckedIn: !!activeRecord,
-            activeRecord,
+            isCheckedIn: !!resolvedActive,
+            activeRecord: resolvedActive,
             todayRecords,
             allRecords,
             yesterdayTotalMs
