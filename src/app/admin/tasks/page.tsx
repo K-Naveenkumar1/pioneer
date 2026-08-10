@@ -13,7 +13,8 @@ import {
     User, 
     Calendar,
     ThumbsUp,
-    ThumbsDown
+    ThumbsDown,
+    ShieldCheck
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -27,8 +28,10 @@ import {
     adminDeclareNoTaskAction,
     adminCheckNoTaskAction
 } from "@/actions/admin-actions"
+import { getAdminUser } from "@/actions/custom-auth"
 
 export default function AdminTasksPage() {
+    const [currentAdmin, setCurrentAdmin] = useState<any>(null)
     const [tasks, setTasks] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const [isPending, startTransition] = useTransition()
@@ -45,6 +48,7 @@ export default function AdminTasksPage() {
     const [hasNoTask, setHasNoTask] = useState(false)
 
     useEffect(() => {
+        getAdminUser().then(user => setCurrentAdmin(user))
         loadTasks()
         loadClasses()
     }, [])
@@ -177,47 +181,59 @@ export default function AdminTasksPage() {
                 {/* Task Form Column */}
                 <div className="space-y-6">
                     <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                        <PlusCircle size={18} /> Allocate New Task
+                        <PlusCircle size={18} /> {currentAdmin?.adminRole === "SUPER_ADMIN" ? "Task Monitoring Mode" : "Allocate New Task"}
                     </h3>
-                    <GlassCard className="p-6 border border-themeGrey">
-                        <form onSubmit={handleCreateTask} className="space-y-5">
-                            <div>
-                                <label className="block text-xs font-semibold text-themeTextGrey uppercase mb-2">
-                                    Task Title
-                                </label>
-                                <input
-                                    type="text"
-                                    required
-                                    placeholder="e.g., Build a login page with NextJS"
-                                    value={title}
-                                    onChange={(e) => setTitle(e.target.value)}
-                                    className="w-full px-4 py-3 bg-black/40 border border-themeGrey rounded-xl text-white placeholder-themeTextGrey focus:outline-none focus:ring-2 focus:ring-white/20 transition-all text-sm"
-                                />
+                    {currentAdmin?.adminRole === "SUPER_ADMIN" ? (
+                        <GlassCard className="p-6 border border-amber-500/30 bg-amber-500/5 space-y-3">
+                            <div className="flex items-center gap-2 font-bold text-amber-300 text-sm">
+                                <ShieldCheck size={18} />
+                                Super Admin Oversight
                             </div>
+                            <p className="text-xs text-zinc-300 leading-relaxed">
+                                Super Admins monitor tasks and student submissions across all classes. Creating and allocating new tasks is managed by Class Admins for their assigned class.
+                            </p>
+                        </GlassCard>
+                    ) : (
+                        <GlassCard className="p-6 border border-themeGrey">
+                            <form onSubmit={handleCreateTask} className="space-y-5">
+                                <div>
+                                    <label className="block text-xs font-semibold text-themeTextGrey uppercase mb-2">
+                                        Task Title
+                                    </label>
+                                    <input
+                                        type="text"
+                                        required
+                                        placeholder="e.g., Build a login page with NextJS"
+                                        value={title}
+                                        onChange={(e) => setTitle(e.target.value)}
+                                        className="w-full px-4 py-3 bg-black/40 border border-themeGrey rounded-xl text-white placeholder-themeTextGrey focus:outline-none focus:ring-2 focus:ring-white/20 transition-all text-sm"
+                                    />
+                                </div>
 
-                            <div>
-                                <label className="block text-xs font-semibold text-themeTextGrey uppercase mb-2">
-                                    Task Description
-                                </label>
-                                <textarea
-                                    rows={5}
-                                    required
-                                    placeholder="Detail the instructions, links, requirements, and submission instructions here..."
-                                    value={description}
-                                    onChange={(e) => setDescription(e.target.value)}
-                                    className="w-full p-4 bg-black/40 border border-themeGrey rounded-xl text-white placeholder-themeTextGrey focus:outline-none focus:ring-2 focus:ring-white/20 transition-all text-sm leading-relaxed"
-                                />
-                            </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-themeTextGrey uppercase mb-2">
+                                        Task Description
+                                    </label>
+                                    <textarea
+                                        rows={5}
+                                        required
+                                        placeholder="Detail the instructions, links, requirements, and submission instructions here..."
+                                        value={description}
+                                        onChange={(e) => setDescription(e.target.value)}
+                                        className="w-full p-4 bg-black/40 border border-themeGrey rounded-xl text-white placeholder-themeTextGrey focus:outline-none focus:ring-2 focus:ring-white/20 transition-all text-sm leading-relaxed"
+                                    />
+                                </div>
 
-                            <Button
-                                type="submit"
-                                disabled={isPending}
-                                className="w-full py-5 bg-white hover:bg-zinc-200 text-black font-semibold rounded-xl"
-                            >
-                                {isPending ? "Allocating..." : "Allocate Task"}
-                            </Button>
-                        </form>
-                    </GlassCard>
+                                <Button
+                                    type="submit"
+                                    disabled={isPending}
+                                    className="w-full py-5 bg-white hover:bg-zinc-200 text-black font-semibold rounded-xl"
+                                >
+                                    {isPending ? "Allocating..." : "Allocate Task"}
+                                </Button>
+                            </form>
+                        </GlassCard>
+                    )}
 
                     {/* Declare No Task Card */}
                     <div className="pt-4 space-y-6">

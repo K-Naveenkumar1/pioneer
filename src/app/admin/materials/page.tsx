@@ -14,7 +14,8 @@ import {
     Image as ImageIcon,
     ChevronLeft,
     CheckCircle,
-    Eye
+    Eye,
+    ShieldCheck
 } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -29,8 +30,10 @@ import {
     adminToggleLockPageAction,
     adminGeneratePagesFromAttachmentAction
 } from "@/actions/material-actions"
+import { getAdminUser } from "@/actions/custom-auth"
 
 export default function AdminMaterialsPage() {
+    const [currentAdmin, setCurrentAdmin] = useState<any>(null)
     const [materials, setMaterials] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const [isPendingAction, startTransitionAction] = useTransition()
@@ -53,6 +56,7 @@ export default function AdminMaterialsPage() {
     const [isGeneratingPages, setIsGeneratingPages] = useState(false)
 
     useEffect(() => {
+        getAdminUser().then(user => setCurrentAdmin(user))
         loadMaterials()
     }, [])
 
@@ -265,12 +269,14 @@ export default function AdminMaterialsPage() {
                     <p className="text-sm text-themeTextGrey">Upload resources, create interactive slides, and configure lock settings for students.</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <Button
-                        onClick={() => setIsCreateOpen(prev => !prev)}
-                        className="bg-white hover:bg-zinc-200 text-black font-semibold flex items-center gap-1.5 py-2.5 px-4 rounded-xl text-xs"
-                    >
-                        <Plus size={14} /> New Material
-                    </Button>
+                    {currentAdmin?.adminRole !== "SUPER_ADMIN" && (
+                        <Button
+                            onClick={() => setIsCreateOpen(prev => !prev)}
+                            className="bg-white hover:bg-zinc-200 text-black font-semibold flex items-center gap-1.5 py-2.5 px-4 rounded-xl text-xs"
+                        >
+                            <Plus size={14} /> New Material
+                        </Button>
+                    )}
                     <button
                         onClick={loadMaterials}
                         className="p-2.5 bg-zinc-900 border border-themeGrey rounded-xl text-themeTextGrey hover:text-white hover:border-zinc-700 transition-all"
@@ -279,6 +285,15 @@ export default function AdminMaterialsPage() {
                     </button>
                 </div>
             </div>
+
+            {currentAdmin?.adminRole === "SUPER_ADMIN" && (
+                <GlassCard className="p-5 border border-amber-500/30 bg-amber-500/5 flex items-center gap-3 text-xs text-zinc-300">
+                    <ShieldCheck size={20} className="text-amber-400 shrink-0" />
+                    <span>
+                        <strong className="text-white font-bold">Super Admin Oversight Mode:</strong> You are monitoring all uploaded course materials. Creating and managing new learning materials is handled by Class Admins.
+                    </span>
+                </GlassCard>
+            )}
 
             {/* Create Material Card */}
             {isCreateOpen && (

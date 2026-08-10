@@ -113,6 +113,10 @@ export async function adminCreateMaterialAction(
         const admin = await getAdminUser()
         if (!admin) return { success: false, error: "Unauthorized" }
 
+        if (admin.adminRole === "SUPER_ADMIN") {
+            return { success: false, error: "Super Admins are restricted from creating course materials. Material management is handled by Class Admins." }
+        }
+
         if (!title.trim()) return { success: false, error: "Title is required" }
 
         const material = await client.courseMaterial.create({

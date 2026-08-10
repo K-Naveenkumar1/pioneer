@@ -176,9 +176,15 @@ enum GROUP_PRIVACY {
 // ==========================================
 
 model Admin {
-  id       String @id @default(uuid())
-  username String @unique
-  password String // hashed password
+  id        String   @id @default(uuid())
+  username  String   @unique
+  password  String   // hashed password
+  role      String   @default("CLASS_ADMIN") // "SUPER_ADMIN" or "CLASS_ADMIN"
+  classId   String?
+  class     Class?   @relation(fields: [classId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+
+  @@index([classId])
 }
 
 model Student {
@@ -210,6 +216,7 @@ model Class {
   id                 String    @id @default(uuid())
   name               String    @unique
   students           Student[]
+  admins             Admin[]
   noTaskDeclarations NoTaskDeclaration[]
   exams              Exam[]
   typingSessions     TypingGameSession[]

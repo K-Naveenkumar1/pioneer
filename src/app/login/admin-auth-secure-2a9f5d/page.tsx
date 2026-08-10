@@ -98,9 +98,9 @@ export default function AdminLoginPage() {
 
             {/* Header Brand */}
             <div className="z-10 mb-8 text-center flex flex-col items-center justify-center leading-none">
-                <div className="flex items-center gap-1.5">
-                    <Image src="/nk-logo.png" alt="Logo" width={34} height={26} className="object-contain -rotate-45" />
-                    <div className="animate-slide-name flex items-center -ml-1">
+                <div className="flex items-center gap-2.5">
+                    <Image src="/nk-logo.png" alt="Logo" width={34} height={26} className="object-contain" />
+                    <div className="animate-slide-name flex items-center">
                         <span className={`${logoFont.className} font-bold text-[1.6rem] text-white tracking-tight leading-none`}>
                             Naveo.
                         </span>

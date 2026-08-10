@@ -120,9 +120,9 @@ export default function LoginPage() {
         <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 select-none relative overflow-hidden">
             <Spotlight className="-top-40 left-0 md:left-60 md:-top-20" fill="white" />
             {/* Header Brand */}
-            <div className="mb-8 text-center z-10 flex items-center justify-center leading-none gap-1.5">
-                <Image src="/nk-logo.png" alt="Naveo Logo" width={38} height={28} className="object-contain -rotate-45" />
-                <div className="animate-slide-name flex items-center -ml-1.5">
+            <div className="mb-8 text-center z-10 flex items-center justify-center leading-none gap-2.5">
+                <Image src="/nk-logo.png" alt="Naveo Logo" width={38} height={28} className="object-contain" />
+                <div className="animate-slide-name flex items-center">
                     <span className={`${logoFont.className} font-bold text-[1.7rem] tracking-tight leading-none text-white`}>
                         Naveo.
                     </span>

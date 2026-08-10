@@ -9,7 +9,8 @@ import {
     AlertCircle, 
     ShieldCheck, 
     LockKeyhole,
-    UploadCloud
+    UploadCloud,
+    Trash2
 } from "lucide-react"
 import { toast } from "sonner"
 import * as XLSX from "xlsx"
@@ -174,6 +175,22 @@ export default function AdminStudentsPage() {
                 await loadStudents()
             } else {
                 toast.error(res.error || "Failed to delete student profiles")
+            }
+        })
+    }
+
+    const handleDeleteSingleStudent = (studentId: string, studentName: string) => {
+        if (!window.confirm(`Are you sure you want to delete ${studentName}? This action will permanently remove all their attendance, exams, task submissions, and data.`)) {
+            return
+        }
+
+        startTransition(async () => {
+            const res = await adminDeleteStudentsAction([studentId])
+            if (res.success) {
+                toast.success(res.message)
+                await loadStudents()
+            } else {
+                toast.error(res.error || "Failed to delete student")
             }
         })
     }
@@ -666,6 +683,13 @@ export default function AdminStudentsPage() {
                                                     className="px-2.5 py-1.5 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white rounded-lg text-[10px] font-bold transition-all"
                                                 >
                                                     Edit
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteSingleStudent(student.id, student.name)}
+                                                    className="p-1.5 bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/20 text-rose-400 rounded-lg text-[10px] font-bold transition-all"
+                                                    title="Delete Student"
+                                                >
+                                                    <Trash2 size={13} />
                                                 </button>
                                             </div>
                                         </div>

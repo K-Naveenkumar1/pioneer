@@ -10,6 +10,7 @@ import {
     Keyboard,
     LayoutDashboard,
     MessageSquare,
+    ShieldCheck,
     Trophy,
     Users
 } from "lucide-react"
@@ -20,28 +21,33 @@ import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 import AdminLogoutButton from "./logout-button"
 
-
 interface AdminSidebarProps {
     admin: {
         username: string
+        adminRole?: string
+        classId?: string | null
+        className?: string | null
     }
 }
-
-const NAV_ITEMS = [
-    { href: "/admin/dashboard", label: "Overview", icon: LayoutDashboard },
-    { href: "/admin/students", label: "Students", icon: Users },
-    { href: "/admin/tasks", label: "Tasks & Submissions", icon: CheckSquare },
-    { href: "/admin/exams", label: "Exams (MCQ)", icon: BookOpen },
-    { href: "/admin/materials", label: "Course Materials", icon: FileText },
-    { href: "/admin/attendance", label: "Attendance Logs", icon: Calendar },
-    { href: "/admin/leaderboard", label: "Leaderboard", icon: Trophy },
-    { href: "/admin/chat", label: "Doubts Chat", icon: MessageSquare },
-    { href: "/admin/typing-game", label: "Conduct Typing", icon: Keyboard }
-]
 
 export default function AdminSidebar({ admin }: AdminSidebarProps) {
     const [isCollapsed, setIsCollapsed] = useState(false)
     const pathname = usePathname()
+
+    const navItems = [
+        { href: "/admin/dashboard", label: "Overview", icon: LayoutDashboard },
+        ...(admin.adminRole === "SUPER_ADMIN"
+            ? [{ href: "/admin/admins", label: "Manage Admins", icon: ShieldCheck }]
+            : []),
+        { href: "/admin/students", label: "Students", icon: Users },
+        { href: "/admin/tasks", label: "Tasks & Submissions", icon: CheckSquare },
+        { href: "/admin/exams", label: "Exams (MCQ)", icon: BookOpen },
+        { href: "/admin/materials", label: "Course Materials", icon: FileText },
+        { href: "/admin/attendance", label: "Attendance Logs", icon: Calendar },
+        { href: "/admin/leaderboard", label: "Leaderboard", icon: Trophy },
+        { href: "/admin/chat", label: "Doubts Chat", icon: MessageSquare },
+        { href: "/admin/typing-game", label: "Conduct Typing", icon: Keyboard }
+    ]
 
     // Persist collapsed state
     useEffect(() => {
@@ -69,16 +75,18 @@ export default function AdminSidebar({ admin }: AdminSidebarProps) {
                 {/* Brand logo & Collapse Button */}
                 <div className={`flex items-center justify-between ${isCollapsed ? "flex-col gap-4" : ""}`}>
                     <div className="flex flex-col items-start">
-                        <div className="flex items-center gap-1.5">
-                            <Image src="/nk-logo.png" alt="Logo" width={34} height={26} className="object-contain shrink-0 -rotate-45" />
+                        <div className="flex items-center gap-2.5">
+                            <Image src="/nk-logo.png" alt="Logo" width={34} height={26} className="object-contain shrink-0" />
                             {!isCollapsed && (
-                                <div className="animate-slide-name flex items-center -ml-2">
+                                <div className="animate-slide-name flex items-center">
                                     <h2 className={`${logoFont.className} font-bold text-[1.6rem] tracking-tight leading-none text-white`}>Naveo.</h2>
                                 </div>
                             )}
                         </div>
                         {!isCollapsed && (
-                            <p className="text-[10px] text-themeTextGrey mt-1 ml-[50px] animate-slide-name">Administrator Portal</p>
+                            <p className="text-[10px] text-themeTextGrey mt-1 ml-[44px] animate-slide-name">
+                                {admin.adminRole === "SUPER_ADMIN" ? "Super Admin Portal" : `Admin (${admin.className || "Class"})`}
+                            </p>
                         )}
                     </div>
                     
@@ -94,7 +102,7 @@ export default function AdminSidebar({ admin }: AdminSidebarProps) {
 
                 {/* Navigation */}
                 <nav className="flex flex-col gap-2 w-full">
-                    {NAV_ITEMS.map((item) => {
+                    {navItems.map((item) => {
                         const Icon = item.icon
                         const isActive = pathname === item.href
                         return (
@@ -119,13 +127,17 @@ export default function AdminSidebar({ admin }: AdminSidebarProps) {
             {/* Profile Footer */}
             <div className={`pt-6 border-t border-themeGrey flex flex-col gap-4 w-full ${isCollapsed ? "items-center" : ""}`}>
                 <div className="flex items-center gap-3 w-full justify-start">
-                    <div className="w-10 h-10 rounded-xl bg-zinc-800 border border-themeGrey flex items-center justify-center font-bold text-sm text-themeTextWhite shrink-0">
-                        AD
+                    <div className="w-10 h-10 rounded-xl bg-zinc-800 border border-themeGrey flex items-center justify-center font-bold text-sm text-amber-400 shrink-0">
+                        {admin.adminRole === "SUPER_ADMIN" ? "SA" : "CA"}
                     </div>
                     {!isCollapsed && (
                         <div className="overflow-hidden">
-                            <p className="font-semibold text-sm truncate">Administrator</p>
-                            <p className="text-[11px] text-themeTextGrey truncate">@{admin.username}</p>
+                            <p className="font-semibold text-sm truncate">
+                                {admin.adminRole === "SUPER_ADMIN" ? "Super Admin" : "Class Admin"}
+                            </p>
+                            <p className="text-[11px] text-amber-400 font-medium truncate">
+                                @{admin.username} {admin.className ? `• ${admin.className}` : ""}
+                            </p>
                         </div>
                     )}
                 </div>

@@ -18,7 +18,8 @@ import {
     Activity,
     Download,
     RefreshCw,
-    Code
+    Code,
+    ShieldCheck
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -39,8 +40,10 @@ import {
     adminEndExamAction,
     adminPublishExamAgainAction
 } from "@/actions/admin-actions"
+import { getAdminUser } from "@/actions/custom-auth"
 
 export default function AdminExamsPage() {
+    const [currentAdmin, setCurrentAdmin] = useState<any>(null)
     const [title, setTitle] = useState("")
     const [duration, setDuration] = useState(60)
     const [examCode, setExamCode] = useState("")
@@ -204,6 +207,10 @@ export default function AdminExamsPage() {
 
         return () => clearInterval(interval)
     }, [selectedSubmissionsExamId, activeTab])
+
+    useEffect(() => {
+        getAdminUser().then(user => setCurrentAdmin(user))
+    }, [])
 
     const loadClasses = async () => {
         const res = await adminGetClassesAction()
@@ -751,6 +758,15 @@ export default function AdminExamsPage() {
             )}
 
             {activeTab === "creator" && (
+                currentAdmin?.adminRole === "SUPER_ADMIN" ? (
+                    <GlassCard className="p-8 text-center border border-amber-500/30 bg-amber-500/5 space-y-3">
+                        <ShieldCheck size={32} className="mx-auto text-amber-400" />
+                        <h3 className="text-lg font-bold text-white">Super Admin Oversight Mode</h3>
+                        <p className="text-sm text-zinc-300 max-w-xl mx-auto leading-relaxed">
+                            Super Admins monitor published exams and student attempt results across all classes. Creating and publishing exams is managed by Class Admins for their assigned classes.
+                        </p>
+                    </GlassCard>
+                ) : (
                 /* Split layout */
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Form & Setup Column */}
@@ -1135,7 +1151,7 @@ export default function AdminExamsPage() {
                         )}
                     </div>
                 </div>
-            )}
+            ))}
 
             {(activeTab === "submissions" || activeTab === "monitoring") && (
                 /* Submissions & Monitoring Tab Panel Grid */

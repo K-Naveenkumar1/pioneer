@@ -151,7 +151,13 @@ export async function adminGetStudentsList() {
         const admin = await getAdminUser()
         if (!admin) return { success: false, error: "Unauthorized" }
 
+        const whereCondition: any = {}
+        if (admin.adminRole === "CLASS_ADMIN" && admin.classId) {
+            whereCondition.classId = admin.classId
+        }
+
         const students = await client.student.findMany({
+            where: whereCondition,
             orderBy: { rollNo: "asc" },
             select: {
                 id: true,
@@ -235,6 +241,10 @@ export async function adminCreateTaskAction(title: string, description: string) 
         const admin = await getAdminUser()
         if (!admin) return { success: false, error: "Unauthorized" }
 
+        if (admin.adminRole === "SUPER_ADMIN") {
+            return { success: false, error: "Super Admins are restricted from creating tasks. Task creation is managed by Class Admins." }
+        }
+
         if (!title.trim() || !description.trim()) {
             return { success: false, error: "Missing title or description" }
         }
@@ -260,12 +270,18 @@ export async function adminGetTasksAndSubmissions() {
         const admin = await getAdminUser()
         if (!admin) return { success: false, error: "Unauthorized" }
 
+        const submissionWhere: any = {}
+        if (admin.adminRole === "CLASS_ADMIN" && admin.classId) {
+            submissionWhere.student = { classId: admin.classId }
+        }
+
         const tasks = await client.task.findMany({
             include: {
                 submissions: {
+                    where: submissionWhere,
                     include: {
                         student: {
-                            select: { name: true, rollNo: true }
+                            select: { name: true, rollNo: true, classId: true }
                         }
                     },
                     orderBy: { submittedAt: "desc" }
@@ -343,10 +359,16 @@ export async function adminGetAttendanceLogs() {
         const admin = await getAdminUser()
         if (!admin) return { success: false, error: "Unauthorized" }
 
+        const whereCondition: any = {}
+        if (admin.adminRole === "CLASS_ADMIN" && admin.classId) {
+            whereCondition.student = { classId: admin.classId }
+        }
+
         const logs = await client.attendance.findMany({
+            where: whereCondition,
             include: {
                 student: {
-                    select: { name: true, rollNo: true }
+                    select: { name: true, rollNo: true, classId: true }
                 }
             },
             orderBy: { checkIn: "desc" }
@@ -513,6 +535,10 @@ export async function adminCreateExamAction(
         const admin = await getAdminUser()
         if (!admin) return { success: false, error: "Unauthorized" }
 
+        if (admin.adminRole === "SUPER_ADMIN") {
+            return { success: false, error: "Super Admins are restricted from creating exams. Exam creation is managed by Class Admins." }
+        }
+
         if (!title.trim() || duration <= 0 || questions.length === 0) {
             return { success: false, error: "Invalid exam details or empty questions list" }
         }
@@ -587,7 +613,13 @@ export async function adminGetClassesAction() {
         const admin = await getAdminUser()
         if (!admin) return { success: false, error: "Unauthorized" }
 
+        const whereCondition: any = {}
+        if (admin.adminRole === "CLASS_ADMIN" && admin.classId) {
+            whereCondition.id = admin.classId
+        }
+
         const classes = await client.class.findMany({
+            where: whereCondition,
             orderBy: { name: "asc" }
         })
 
@@ -943,7 +975,16 @@ export async function adminGetExamsListAction() {
         const admin = await getAdminUser()
         if (!admin) return { success: false, error: "Unauthorized" }
 
+        const whereCondition: any = {}
+        if (admin.adminRole === "CLASS_ADMIN" && admin.classId) {
+            whereCondition.OR = [
+                { classId: admin.classId },
+                { classId: null }
+            ]
+        }
+
         const exams = await client.exam.findMany({
+            where: whereCondition,
             include: {
                 questions: {
                     select: { id: true }
@@ -1037,8 +1078,10 @@ export async function adminBlockAllCheckinsAction(classId: string) {
         const admin = await getAdminUser()
         if (!admin) return { success: false, error: "Unauthorized" }
 
+        const targetClassId = (admin.adminRole === "CLASS_ADMIN" && admin.classId) ? admin.classId : (classId || undefined)
+
         await client.student.updateMany({
-            where: { classId: classId || undefined },
+            where: { classId: targetClassId },
             data: {
                 isAllowedInClass: false,
                 allowedClassDate: null
@@ -1059,8 +1102,10 @@ export async function adminUnblockAllCheckinsAction(classId: string, date: strin
         const admin = await getAdminUser()
         if (!admin) return { success: false, error: "Unauthorized" }
 
+        const targetClassId = (admin.adminRole === "CLASS_ADMIN" && admin.classId) ? admin.classId : (classId || undefined)
+
         await client.student.updateMany({
-            where: { classId: classId || undefined },
+            where: { classId: targetClassId },
             data: {
                 isAllowedInClass: true,
                 allowedClassDate: date
@@ -1081,10 +1126,12 @@ export async function adminGiveCheckinAccessAction(classId: string, date: string
         const admin = await getAdminUser()
         if (!admin) return { success: false, error: "Unauthorized" }
 
+        const targetClassId = (admin.adminRole === "CLASS_ADMIN" && admin.classId) ? admin.classId : (classId || undefined)
+
         const pendingPrefix = "PENDING_" + date
         const result = await client.student.updateMany({
             where: {
-                classId: classId || undefined,
+                classId: targetClassId,
                 isAllowedInClass: true,
                 allowedClassDate: pendingPrefix
             },
@@ -1107,11 +1154,13 @@ export async function adminEndCheckinAction(classId: string) {
         const admin = await getAdminUser()
         if (!admin) return { success: false, error: "Unauthorized" }
 
+        const targetClassId = (admin.adminRole === "CLASS_ADMIN" && admin.classId) ? admin.classId : (classId || undefined)
+
         const dateStr = getLocalDateString()
 
         // 1. Block access for all students in this class
         await client.student.updateMany({
-            where: { classId: classId || undefined },
+            where: { classId: targetClassId },
             data: {
                 isAllowedInClass: false,
                 allowedClassDate: null
@@ -1122,7 +1171,7 @@ export async function adminEndCheckinAction(classId: string) {
         const activeAttendances = await client.attendance.findMany({
             where: {
                 student: {
-                    classId: classId || undefined
+                    classId: targetClassId
                 },
                 checkOut: null
             }
@@ -1317,7 +1366,9 @@ export async function adminGetExamSubmissionsAction(examId: string) {
         if (!exam) return { success: false, error: "Exam not found" }
 
         const attemptsWhere: any = { examId }
-        if (exam.classId) {
+        if (admin.adminRole === "CLASS_ADMIN" && admin.classId) {
+            attemptsWhere.student = { classId: admin.classId }
+        } else if (exam.classId) {
             attemptsWhere.student = { classId: exam.classId }
         }
 
@@ -1519,6 +1570,10 @@ export async function adminCreateCodingExamAction(
         const admin = await getAdminUser()
         if (!admin) return { success: false, error: "Unauthorized" }
 
+        if (admin.adminRole === "SUPER_ADMIN") {
+            return { success: false, error: "Super Admins are restricted from creating coding exams. Exam creation is managed by Class Admins." }
+        }
+
         if (!title.trim() || duration <= 0 || questions.length === 0) {
             return { success: false, error: "Invalid exam details or empty questions list" }
         }
@@ -1562,6 +1617,10 @@ export async function adminStartTypingSessionAction(passage: string, timeLimit: 
     try {
         const admin = await getAdminUser()
         if (!admin) return { success: false, error: "Unauthorized" }
+
+        if (admin.adminRole === "SUPER_ADMIN") {
+            return { success: false, error: "Super Admins are restricted from starting typing sessions. Session management is handled by Class Admins." }
+        }
 
         if (!passage.trim()) {
             return { success: false, error: "Passage cannot be empty" }
@@ -1655,14 +1714,19 @@ export async function adminGetLeaderboardAction(classId: string) {
         const admin = await getAdminUser()
         if (!admin) return { success: false, error: "Unauthorized" }
 
-        if (!classId || classId.trim() === "") {
+        let targetClassId = classId
+        if (admin.adminRole === "CLASS_ADMIN" && admin.classId) {
+            targetClassId = admin.classId
+        }
+
+        if (!targetClassId || targetClassId.trim() === "") {
             return { success: false, error: "Please select a valid class." }
         }
 
         // Fetch target classmates, class details, tasks, and no-task declarations in parallel
         const [classmates, targetClass, allTasks, noTasks] = await Promise.all([
             client.student.findMany({
-                where: { classId },
+                where: { classId: targetClassId },
                 select: {
                     id: true,
                     name: true,
@@ -1677,14 +1741,14 @@ export async function adminGetLeaderboardAction(classId: string) {
                 }
             }),
             client.class.findUnique({
-                where: { id: classId },
+                where: { id: targetClassId },
                 select: { name: true }
             }),
             client.task.findMany({
                 select: { id: true, createdAt: true }
             }),
             client.noTaskDeclaration.findMany({
-                where: { classId },
+                where: { classId: targetClassId },
                 select: { date: true }
             })
         ])

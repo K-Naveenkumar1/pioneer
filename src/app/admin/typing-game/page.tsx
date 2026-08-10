@@ -9,7 +9,8 @@ import {
     Trophy, 
     RefreshCw, 
     Gamepad2,
-    Users
+    Users,
+    ShieldCheck
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -21,6 +22,7 @@ import {
     adminGetTypingLeaderboardAction,
     adminGetClassesAction 
 } from "@/actions/admin-actions"
+import { getAdminUser } from "@/actions/custom-auth"
 
 const PRESETS = [
     {
@@ -38,6 +40,7 @@ const PRESETS = [
 ]
 
 export default function AdminTypingGamePage() {
+    const [currentAdmin, setCurrentAdmin] = useState<any>(null)
     const [passage, setPassage] = useState(PRESETS[0].text)
     const [sessionId, setSessionId] = useState<string | null>(null)
     const [runs, setRuns] = useState<any[]>([])
@@ -53,6 +56,7 @@ export default function AdminTypingGamePage() {
 
     // Retrieve active session from localStorage on mount if any, or do initial check
     useEffect(() => {
+        getAdminUser().then(user => setCurrentAdmin(user))
         const storedSession = localStorage.getItem("active_typing_session_id")
         if (storedSession) {
             setSessionId(storedSession)
@@ -225,6 +229,14 @@ export default function AdminTypingGamePage() {
 
             {/* Session Controller panel */}
             {!isActive ? (
+                currentAdmin?.adminRole === "SUPER_ADMIN" ? (
+                    <GlassCard className="p-5 border border-amber-500/30 bg-amber-500/5 flex items-center gap-3 text-xs text-zinc-300">
+                        <ShieldCheck size={20} className="text-amber-400 shrink-0" />
+                        <span>
+                            <strong className="text-white font-bold">Super Admin Oversight Mode:</strong> You can monitor live typing races and leaderboards across all classes. Starting live typing sessions is managed by Class Admins.
+                        </span>
+                    </GlassCard>
+                ) : (
                 /* Creator Form */
                 <GlassCard className="p-6 border border-themeGrey space-y-6">
                     <div className="space-y-4">
@@ -318,7 +330,7 @@ export default function AdminTypingGamePage() {
                         <Play size={14} fill="currentColor" /> Publish & Start Live Race
                     </Button>
                 </GlassCard>
-            ) : (
+            ) ) : (
                 /* Live Conduct Monitor */
                 <div className="space-y-8">
                     {/* Active Match Banner */}

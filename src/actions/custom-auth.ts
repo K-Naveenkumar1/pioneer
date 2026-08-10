@@ -10,19 +10,30 @@ import { hashPassword, verifyPassword } from "@/lib/hash"
 export async function loginAction(role: "student" | "admin", identity: string, password: string) {
     try {
         if (role === "admin") {
-            // Seed a default admin if none exist in the database
+            // Seed a default Super Admin if none exist in the database
             const adminCount = await client.admin.count()
             if (adminCount === 0) {
                 await client.admin.create({
                     data: {
                         username: "admin",
                         password: hashPassword("admin123"),
+                        role: "SUPER_ADMIN",
                     },
                 })
+            } else {
+                // Ensure existing primary 'admin' user is SUPER_ADMIN
+                const defaultAdmin = await client.admin.findUnique({ where: { username: "admin" } })
+                if (defaultAdmin && defaultAdmin.role !== "SUPER_ADMIN") {
+                    await client.admin.update({
+                        where: { id: defaultAdmin.id },
+                        data: { role: "SUPER_ADMIN" }
+                    })
+                }
             }
 
             const admin = await client.admin.findUnique({
                 where: { username: identity.trim() },
+                include: { class: { select: { name: true } } }
             })
 
             if (!admin || !verifyPassword(password, admin.password)) {
@@ -33,6 +44,9 @@ export async function loginAction(role: "student" | "admin", identity: string, p
                 id: admin.id,
                 username: admin.username,
                 role: "admin",
+                adminRole: admin.role,
+                classId: admin.classId,
+                className: admin.class?.name || null,
             })
 
             return { success: true, redirect: "/admin/dashboard" }
@@ -122,25 +136,41 @@ export async function logoutAction(role: "student" | "admin") {
 
 /**
  * Gets currently logged in admin user.
- * Returns session data directly from the encrypted cookie — no extra DB round-trip.
  */
 export async function getAdminUser() {
     try {
         const session = await getSessionCookie("admin_session")
         if (!session) {
-            console.log("[custom-auth:getAdminUser] No admin_session cookie found or decryption failed")
             return null
         }
         if (session.role !== "admin") {
-            console.warn(`[custom-auth:getAdminUser] Session role mismatch. Expected admin, got: ${session.role}`)
             return null
         }
         if (!session.id) {
-            console.warn("[custom-auth:getAdminUser] Session missing admin ID")
             return null
         }
-        // Trust the encrypted session cookie — avoid a redundant DB call on every page.
-        return { id: session.id as string, username: session.username as string }
+
+        // Fetch fresh admin info from DB to guarantee role & class mapping consistency
+        const admin = await client.admin.findUnique({
+            where: { id: session.id },
+            select: {
+                id: true,
+                username: true,
+                role: true,
+                classId: true,
+                class: { select: { name: true } },
+            },
+        })
+
+        if (!admin) return null
+
+        return {
+            id: admin.id,
+            username: admin.username,
+            adminRole: admin.role, // "SUPER_ADMIN" or "CLASS_ADMIN"
+            classId: admin.classId,
+            className: admin.class?.name || null,
+        }
     } catch (e: any) {
         if (isNextDynamicServerError(e)) {
             throw e

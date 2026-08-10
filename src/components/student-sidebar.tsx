@@ -193,9 +193,9 @@ export function StudentSidebar({ student, ...props }: StudentSidebarProps & Reac
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild className="w-full">
-              <Link href="/student/dashboard" className="flex items-center pl-3">
-                <Image src="/nk-logo.png" alt="Logo" width={34} height={26} className="object-contain shrink-0 -rotate-45" />
-                <div className="animate-slide-name flex flex-col items-start -ml-1">
+              <Link href="/student/dashboard" className="flex items-center gap-2.5 pl-3">
+                <Image src="/nk-logo.png" alt="Logo" width={34} height={26} className="object-contain shrink-0" />
+                <div className="animate-slide-name flex flex-col items-start">
                   <span className={`${logoFont.className} font-bold text-[1.6rem] text-white tracking-tight leading-none`}>Naveo.</span>
                 </div>
               </Link>
