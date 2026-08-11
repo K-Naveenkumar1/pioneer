@@ -167,6 +167,11 @@ export default function StudentLeaderboardPage() {
                                         <span className="text-[10px] text-zinc-400 font-semibold font-mono mt-0.5 select-none uppercase">
                                             {podium[1].rollNo}
                                         </span>
+                                        {podium[1].penaltyPoints > 0 && (
+                                            <span className="text-red-500 font-bold text-xs font-mono mt-0.5 select-none">
+                                                -{podium[1].penaltyPoints}
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                                 {/* The Pillar Block */}
@@ -216,6 +221,11 @@ export default function StudentLeaderboardPage() {
                                         <span className="text-[10px] text-zinc-400 font-semibold font-mono mt-0.5 select-none uppercase">
                                             {podium[0].rollNo}
                                         </span>
+                                        {podium[0].penaltyPoints > 0 && (
+                                            <span className="text-red-500 font-bold text-xs font-mono mt-0.5 select-none">
+                                                -{podium[0].penaltyPoints}
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                                 {/* The Pillar Block (highest) */}
@@ -270,6 +280,11 @@ export default function StudentLeaderboardPage() {
                                         <span className="text-[10px] text-zinc-400 font-semibold font-mono mt-0.5 select-none uppercase">
                                             {podium[2].rollNo}
                                         </span>
+                                        {podium[2].penaltyPoints > 0 && (
+                                            <span className="text-red-500 font-bold text-xs font-mono mt-0.5 select-none">
+                                                -{podium[2].penaltyPoints}
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                                 {/* The Pillar Block (lowest) */}
@@ -384,10 +399,15 @@ export default function StudentLeaderboardPage() {
                                             </div>
 
                                             {/* Right Column (Total score badge) */}
-                                            <div className="flex items-center justify-end select-none">
+                                            <div className="flex items-center justify-end gap-1.5 select-none">
                                                 <div className="text-sm font-bold px-3.5 py-1.5 rounded-lg shadow-md bg-white text-zinc-950">
                                                     {player.totalScore}
                                                 </div>
+                                                {player.penaltyPoints > 0 && (
+                                                    <span className="text-red-500 font-bold text-xs font-mono">
+                                                        -{player.penaltyPoints}
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
                                     </div>

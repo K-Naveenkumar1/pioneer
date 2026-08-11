@@ -121,7 +121,12 @@ export default function AdminLeaderboardPage() {
                                     <p className="text-[10px] text-zinc-500 font-mono mt-0.5">Roll: {podium[1].rollNo}</p>
                                 </div>
                                 <div className="pt-2 border-t border-zinc-800/40 space-y-1">
-                                    <p className="text-lg font-black text-white">{podium[1].totalScore} pts</p>
+                                    <div className="flex items-center justify-center gap-1.5">
+                                        <p className="text-lg font-black text-white">{podium[1].totalScore} pts</p>
+                                        {podium[1].penaltyPoints > 0 && (
+                                            <span className="text-red-500 font-bold text-xs font-mono">-{podium[1].penaltyPoints}</span>
+                                        )}
+                                    </div>
                                     <div className="flex justify-center gap-1.5 text-[10px] text-zinc-400 font-medium">
                                         <span>Tasks: {podium[1].tasksCompleted * 10} pts</span>
                                         <span>•</span>
@@ -144,7 +149,12 @@ export default function AdminLeaderboardPage() {
                                     <p className="text-[10px] text-amber-300/60 font-mono mt-0.5">Roll: {podium[0].rollNo}</p>
                                 </div>
                                 <div className="pt-2 border-t border-amber-500/20 space-y-1">
-                                    <p className="text-2xl font-black text-amber-400">{podium[0].totalScore} pts</p>
+                                    <div className="flex items-center justify-center gap-1.5">
+                                        <p className="text-2xl font-black text-amber-400">{podium[0].totalScore} pts</p>
+                                        {podium[0].penaltyPoints > 0 && (
+                                            <span className="text-red-500 font-bold text-sm font-mono">-{podium[0].penaltyPoints}</span>
+                                        )}
+                                    </div>
                                     <div className="flex justify-center gap-1.5 text-[10px] text-amber-300/80 font-medium">
                                         <span>Tasks: {podium[0].tasksCompleted * 10} pts</span>
                                         <span>•</span>
@@ -166,7 +176,12 @@ export default function AdminLeaderboardPage() {
                                     <p className="text-[10px] text-zinc-500 font-mono mt-0.5">Roll: {podium[2].rollNo}</p>
                                 </div>
                                 <div className="pt-2 border-t border-zinc-800/40 space-y-1">
-                                    <p className="text-lg font-black text-white">{podium[2].totalScore} pts</p>
+                                    <div className="flex items-center justify-center gap-1.5">
+                                        <p className="text-lg font-black text-white">{podium[2].totalScore} pts</p>
+                                        {podium[2].penaltyPoints > 0 && (
+                                            <span className="text-red-500 font-bold text-xs font-mono">-{podium[2].penaltyPoints}</span>
+                                        )}
+                                    </div>
                                     <div className="flex justify-center gap-1.5 text-[10px] text-zinc-400 font-medium">
                                         <span>Tasks: {podium[2].tasksCompleted * 10} pts</span>
                                         <span>•</span>
@@ -205,7 +220,14 @@ export default function AdminLeaderboardPage() {
                                                     <td className="p-4 font-mono">{player.rollNo}</td>
                                                     <td className="p-4 font-mono">{player.tasksCompleted * 10} pts <span className="text-[10px] text-zinc-500 font-sans">({player.tasksCompleted} tasks)</span></td>
                                                     <td className="p-4 font-mono text-zinc-300">{player.examScoreSum} pts</td>
-                                                    <td className="p-4 text-right pr-6 font-bold text-white font-mono">{player.totalScore} pts</td>
+                                                    <td className="p-4 text-right pr-6 font-bold text-white font-mono">
+                                                        <div className="flex items-center justify-end gap-1.5">
+                                                            <span>{player.totalScore} pts</span>
+                                                            {player.penaltyPoints > 0 && (
+                                                                <span className="text-red-500 font-bold text-xs">-{player.penaltyPoints}</span>
+                                                            )}
+                                                        </div>
+                                                    </td>
                                                 </tr>
                                             )
                                         })}

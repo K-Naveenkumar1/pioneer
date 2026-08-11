@@ -1737,6 +1737,13 @@ export async function adminGetLeaderboardAction(classId: string) {
                     attempts: {
                         where: { completedAt: { not: null } },
                         select: { score: true, startedAt: true, examId: true }
+                    },
+                    attendance: {
+                        select: {
+                            date: true,
+                            checkIn: true,
+                            checkOut: true
+                        }
                     }
                 }
             }),
@@ -1764,6 +1771,8 @@ export async function adminGetLeaderboardAction(classId: string) {
 
         const noTaskDates = new Set(noTasks.map(nt => nt.date))
 
+        const nowMs = Date.now()
+
         const leaderboard = classmates.map(c => {
             const approvedSubmissions = c.submissions.filter(s => s.status === "APPROVED")
             const completedTasksCount = approvedSubmissions.length
@@ -1773,7 +1782,43 @@ export async function adminGetLeaderboardAction(classId: string) {
                 examScoreSum += attempt.score
             })
 
-            const totalScore = (completedTasksCount * 10) + examScoreSum
+            // Calculate study hours per day to check for > 8 hours penalty
+            const dailyMsMap: { [dateStr: string]: number } = {}
+            if (c.attendance) {
+                c.attendance.forEach(att => {
+                    if (!att.checkIn) return
+                    const dStr = att.date
+                    const checkInMs = new Date(att.checkIn).getTime()
+                    let checkOutMs = att.checkOut ? new Date(att.checkOut).getTime() : 0
+
+                    if (!att.checkOut) {
+                        const attDateObj = new Date(att.checkIn)
+                        const offset = attDateObj.getTimezoneOffset()
+                        const attDateStr = new Date(attDateObj.getTime() - (offset * 60 * 1000)).toISOString().split('T')[0]
+                        const todayStr = new Date(nowMs - (offset * 60 * 1000)).toISOString().split('T')[0]
+
+                        if (attDateStr === todayStr) {
+                            checkOutMs = nowMs
+                        } else {
+                            checkOutMs = checkInMs + (8 * 60 * 60 * 1000)
+                        }
+                    }
+
+                    const durationMs = Math.max(0, checkOutMs - checkInMs)
+                    dailyMsMap[dStr] = (dailyMsMap[dStr] || 0) + durationMs
+                })
+            }
+
+            let daysExceeding8Hours = 0
+            Object.values(dailyMsMap).forEach(totalMs => {
+                const hours = totalMs / (1000 * 60 * 60)
+                if (hours > 8) {
+                    daysExceeding8Hours++
+                }
+            })
+
+            const penaltyPoints = daysExceeding8Hours * 5
+            const totalScore = (completedTasksCount * 10) + examScoreSum - penaltyPoints
 
             return {
                 id: c.id,
@@ -1781,6 +1826,7 @@ export async function adminGetLeaderboardAction(classId: string) {
                 rollNo: c.rollNo,
                 tasksCompleted: completedTasksCount,
                 examScoreSum: examScoreSum,
+                penaltyPoints: penaltyPoints,
                 totalScore: totalScore
             }
         })
