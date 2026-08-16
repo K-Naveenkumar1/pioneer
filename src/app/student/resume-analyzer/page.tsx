@@ -222,7 +222,8 @@ export default function ResumeAnalyzerPage() {
                         AI Resume Matcher & Interview Prep
                     </h1>
                     <p className="text-zinc-400 text-sm md:text-base leading-relaxed">
-                        Upload your PDF resume and paste any Job Description. The AI will calculate your ATS match score</p>
+                        Upload your PDF resume and paste any Job Description. The AI will calculate your ATS match score, show where changes are needed, detail how to rewrite sections, and build custom interview questions.
+                    </p>
                 </div>
             </div>
 

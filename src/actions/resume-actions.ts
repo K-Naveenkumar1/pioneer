@@ -17,12 +17,16 @@ export interface InterviewQuestion {
 }
 
 export interface AnalysisResult {
+    id?: string
+    jobTitle?: string | null
+    companyName?: string | null
     matchScore: number
     summary: string
     matchingSkills: string[]
     missingSkills: string[]
     improvements: ResumeImprovement[]
     interviewPrep: InterviewQuestion[]
+    createdAt?: string | Date
 }
 
 const TECH_SKILLS_DICTIONARY = [
@@ -171,6 +175,8 @@ function analyzeResumeLocally(jobTitle: string, companyName: string, jobDescript
     ]
 
     return {
+        jobTitle,
+        companyName,
         matchScore,
         summary: `The resume demonstrates a ${matchScore}% ATS match for the ${jobTitle || "target"} position${companyName ? ` at ${companyName}` : ""}. Key matching capabilities include ${matchedSkills.slice(0, 4).join(", ") || "core web development fundamentals"}. Incorporating suggested missing keywords and metric-backed project bullet points will maximize recruiter response rates.`,
         matchingSkills: matchedSkills.length > 0 ? matchedSkills : ["Problem Solving", "Web Development", "Git"],
