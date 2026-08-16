@@ -90,9 +90,10 @@ export default function ResumeAnalyzerPage() {
     }
 
     const extractTextFromPdf = async (arrayBuffer: ArrayBuffer): Promise<string> => {
-        // Attempt 1: Try pdfjs-dist if available
+        // Attempt 1: Try pdfjs-dist web build (bypasses Node canvas dependency)
         try {
-            const pdfjsLib = await import("pdfjs-dist")
+            // @ts-ignore
+            const pdfjsLib = await import("pdfjs-dist/build/pdf.mjs")
             pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version || "3.11.174"}/pdf.worker.min.mjs`
             const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) })
             const pdf = await loadingTask.promise

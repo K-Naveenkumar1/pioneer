@@ -46,17 +46,21 @@ function analyzeResumeLocally(jobTitle: string, companyName: string, jobDescript
     const jdLower = jobDescription.toLowerCase()
     const resumeLower = resumeText.toLowerCase()
 
+    // Extract candidate name or header context from top lines
+    const lines = resumeText.split(/\n|\r/).map(l => l.trim()).filter(Boolean)
+    const candidateName = lines[0] && lines[0].length < 40 && !/resume|curriculum|profile|email|phone/i.test(lines[0]) 
+        ? lines[0] 
+        : "Candidate"
+
     // 1. Dynamic Skill & Keyword Extraction from JD
     const targetSkillsSet = new Set<string>()
 
-    // Check built-in technical dictionary against JD
     TECH_SKILLS_DICTIONARY.forEach(skill => {
         if (jdLower.includes(skill.toLowerCase())) {
             targetSkillsSet.add(skill)
         }
     })
 
-    // Extract significant technical or domain terms from JD
     const cleanJdWords = jobDescription
         .replace(/[^a-zA-Z0-9+#.-]/g, " ")
         .split(/\s+/)
@@ -68,7 +72,6 @@ function analyzeResumeLocally(jobTitle: string, companyName: string, jobDescript
         wordCounts[key] = (wordCounts[key] || 0) + 1
     })
 
-    // Top repeated words from JD
     Object.entries(wordCounts)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 15)
@@ -94,128 +97,109 @@ function analyzeResumeLocally(jobTitle: string, companyName: string, jobDescript
         }
     })
 
-    // 3. Dynamic Score Calculation based on real match ratio & quality signals
+    // 3. Dynamic Match Score based on actual keyword coverage + resume depth
     const totalRequired = targetSkills.length
     const skillRatio = totalRequired > 0 ? matchedSkills.length / totalRequired : 0.5
 
-    let calculatedScore = Math.round(skillRatio * 65) + 15
+    let calculatedScore = Math.round(skillRatio * 60) + 20
 
     const hasMetrics = /\d+%|\$\d+|\d+\s*users|\d+\s*requests|\d+\s*ms|\d+\s*k|\d+\s*projects/i.test(resumeText)
     const hasProjects = /project|built|developed|implemented|created|architected|designed/i.test(resumeText)
     const hasSummary = /summary|about|profile|objective|overview/i.test(resumeText)
-    const resumeLengthBonus = Math.min(10, Math.floor(resumeText.length / 250))
+    const textLengthBonus = Math.min(10, Math.floor(resumeText.length / 300))
 
     if (hasMetrics) calculatedScore += 8
-    if (hasProjects) calculatedScore += 6
+    if (hasProjects) calculatedScore += 5
     if (hasSummary) calculatedScore += 4
-    calculatedScore += resumeLengthBonus
+    calculatedScore += textLengthBonus
 
-    const matchScore = Math.min(96, Math.max(30, calculatedScore))
+    const matchScore = Math.min(97, Math.max(35, calculatedScore))
 
-    // 4. Section Improvements
-    const improvements: ResumeImprovement[] = []
+    // Extract actual project/experience bullet lines from the candidate's resume
+    const candidateBullets = lines.filter(l => 
+        l.length > 25 && /built|developed|created|managed|engineered|designed|implemented|lead|architected|optimized|worked|responsible/i.test(l)
+    )
+    const sampleBullet = candidateBullets[0] || lines.find(l => l.length > 30) || "Developed software solutions"
 
-    // Summary section evaluation
-    if (!hasSummary || !matchedSkills.some(s => resumeLower.indexOf(s.toLowerCase()) < 300)) {
-        improvements.push({
+    const roleName = jobTitle || "Target Role"
+    const targetComp = companyName ? ` at ${companyName}` : ""
+
+    // 4. Section Improvements tailored specifically to candidate's actual text
+    const improvements: ResumeImprovement[] = [
+        {
             section: "Professional Summary",
-            status: "CRITICAL",
-            feedback: "Where changes should be made: The top summary section does not explicitly state your target role or core required keywords.",
-            suggestion: `How the resume should be tailored: Add a 2-3 line summary at the top: 'Results-driven ${jobTitle || "Professional"} proficient in ${matchedSkills.slice(0, 3).join(", ") || "core domain skills"}. Experienced in building high-impact solutions.'`
-        })
-    } else {
-        improvements.push({
-            section: "Professional Summary",
-            status: "GOOD",
-            feedback: "Where changes should be made: Professional summary is present in your resume.",
-            suggestion: "How the resume should be tailored: Ensure your summary highlights your main achievements alongside your top technical skills."
-        })
-    }
-
-    // Projects / Experience evaluation
-    if (!hasMetrics) {
-        improvements.push({
+            status: hasSummary && matchedSkills.length >= 2 ? "GOOD" : "CRITICAL",
+            feedback: `Where changes should be made: ${hasSummary ? "Your summary is present, but needs stronger keyword alignment." : "No explicit summary section targeting " + roleName + " was found at the top of the resume."}`,
+            suggestion: `How the resume should be tailored: Craft a 2-sentence summary: '${candidateName !== "Candidate" ? candidateName + " - " : ""}${roleName} specializing in ${matchedSkills.slice(0, 3).join(", ") || "core web stack"}. Proven track record delivering scalable features matching ${targetComp || "industry standards"}.'`
+        },
+        {
             section: "Work Experience & Projects",
-            status: "CRITICAL",
-            feedback: "Where changes should be made: Project bullet points describe daily tasks rather than measurable metrics.",
-            suggestion: "How the resume should be tailored: Rewrite experience bullet points using Action Verb + Core Skill + Quantifiable Result (e.g. 'Optimized performance by 30%')."
-        })
-    } else {
-        improvements.push({
-            section: "Work Experience & Projects",
-            status: "RECOMMENDED",
-            feedback: "Where changes should be made: Good metrics found, but aligning project verbs with job description keywords will increase ATS ranking.",
-            suggestion: `How the resume should be tailored: Integrate missing skills (${missingSkills.slice(0, 3).join(", ") || "target keywords"}) into your project descriptions.`
-        })
-    }
-
-    // Skills evaluation
-    if (missingSkills.length > 0) {
-        improvements.push({
+            status: hasMetrics ? "RECOMMENDED" : "CRITICAL",
+            feedback: `Where changes should be made: In bullet point: "${sampleBullet.substring(0, 80)}...", impact can be strengthened with metrics.`,
+            suggestion: `How the resume should be tailored: Rewrite as: "Engineered project solution incorporating ${missingSkills[0] || matchedSkills[0] || "core tools"}, resulting in 35% performance improvement and faster delivery cycles."`
+        },
+        {
             section: "Skills & Technical Stack",
-            status: "RECOMMENDED",
-            feedback: `Where changes should be made: Missing keywords requested in the job description: ${missingSkills.slice(0, 4).join(", ")}.`,
-            suggestion: `How the resume should be tailored: Group your skills under clear headings and add ${missingSkills.slice(0, 3).join(", ")} where relevant.`
-        })
-    } else {
-        improvements.push({
-            section: "Skills & Technical Stack",
-            status: "GOOD",
-            feedback: "Where changes should be made: Strong keyword alignment detected.",
-            suggestion: "How the resume should be tailored: Organize your skills clearly into subcategories for optimal recruiter readability."
-        })
-    }
+            status: missingSkills.length === 0 ? "GOOD" : "RECOMMENDED",
+            feedback: missingSkills.length > 0 
+                ? `Where changes should be made: Resume is missing key job keywords: ${missingSkills.slice(0, 4).join(", ")}.`
+                : "Where changes should be made: Excellent skill match detected.",
+            suggestion: missingSkills.length > 0
+                ? `How the resume should be tailored: Add subheadings (Languages, Frameworks, Cloud) and include ${missingSkills.slice(0, 3).join(", ")}.`
+                : "How the resume should be tailored: Highlight your top core competencies prominently near the top of your resume."
+        }
+    ]
 
     // 5. Tailored Interview Prep Questions
-    const mainTech = matchedSkills[0] || missingSkills[0] || "Core Architecture"
-    const secondaryTech = matchedSkills[1] || missingSkills[1] || "Problem Solving"
+    const techA = matchedSkills[0] || "System Architecture"
+    const techB = missingSkills[0] || matchedSkills[1] || "Performance Tuning"
 
     const interviewPrep: InterviewQuestion[] = [
         {
-            question: `How would you utilize ${mainTech} to address the core requirements outlined for this ${jobTitle || "target"} role?`,
+            question: `How would you utilize ${techA} to solve the core requirements outlined for this ${roleName} position${targetComp}?`,
             category: "Technical",
             keyPoints: [
-                `Discuss best practices, trade-offs, and architecture when using ${mainTech}.`,
-                "Explain system design, error handling, and performance optimization.",
-                "Highlight real-world project examples from your experience."
+                `Explain your hands-on experience using ${techA} in your recent projects.`,
+                "Discuss trade-offs, state management, and scalability.",
+                "Detail error handling and production monitoring."
             ]
         },
         {
-            question: `Describe a complex technical challenge you solved in a previous project using ${secondaryTech}.`,
+            question: `Walk me through how you implemented: "${sampleBullet.substring(0, 70)}..." from your resume.`,
             category: "Resume Deep-Dive",
             keyPoints: [
                 "Use the STAR method: Situation, Task, Action, and Result.",
-                "Walk through your step-by-step troubleshooting workflow.",
-                "Share quantifiable results or performance improvements achieved."
+                "Highlight the technical architecture and tools used.",
+                "Quantify the business impact or performance metrics achieved."
             ]
         },
         {
-            question: `How do you approach learning and applying a skill required for this role (like ${missingSkills[0] || "a new framework"}) under tight deadlines?`,
+            question: `How do you plan to quickly get up to speed on ${techB} which is listed in the job description?`,
             category: "Problem Solving",
             keyPoints: [
-                "Demonstrate rapid self-learning via documentation and hands-on practice.",
-                "Mention leveraging community tools, AI assistance, and peer code reviews.",
-                "Emphasize testing and delivering functional, high-quality code."
+                "Demonstrate rapid self-learning via official docs and hands-on projects.",
+                "Mention leveraging AI coding assistants and team code reviews.",
+                "Emphasize writing unit tests and delivering clean code."
             ]
         },
         {
-            question: `Tell me about a time you collaborated with team members or stakeholders to deliver a key project requirement for ${companyName || "a target company"}.`,
+            question: `Describe a situation where you had to balance competing priorities or deliver under tight deadlines${targetComp}.`,
             category: "Behavioral",
             keyPoints: [
-                "Focus on clear communication, priority setting, and active listening.",
-                "Explain how you broke down complex goals into manageable milestones.",
+                "Focus on clear communication, priority setting, and stakeholder alignment.",
+                "Explain how you broke down complex goals into manageable tasks.",
                 "Highlight positive outcomes and project lessons learned."
             ]
         }
     ]
 
     return {
-        jobTitle,
+        jobTitle: roleName,
         companyName,
         matchScore,
-        summary: `The resume demonstrates a ${matchScore}% ATS match for the ${jobTitle || "target"} position${companyName ? ` at ${companyName}` : ""}. Key matching capabilities include ${matchedSkills.slice(0, 4).join(", ") || "core web development fundamentals"}. Incorporating suggested missing keywords and metric-backed project bullet points will maximize recruiter response rates.`,
+        summary: `Resume match score of ${matchScore}% for ${roleName}${targetComp}. Matches ${matchedSkills.length} key requirements (${matchedSkills.slice(0, 4).join(", ") || "core fundamentals"}). Adding missing skills (${missingSkills.slice(0, 3).join(", ") || "target keywords"}) will maximize ATS pass rates.`,
         matchingSkills: matchedSkills.length > 0 ? matchedSkills : ["Problem Solving", "Web Development", "Git"],
-        missingSkills: missingSkills.length > 0 ? missingSkills : ["System Design", "Unit Testing", "CI/CD"],
+        missingSkills: missingSkills.length > 0 ? missingSkills : ["System Architecture", "CI/CD"],
         improvements,
         interviewPrep
     }
