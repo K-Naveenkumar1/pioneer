@@ -89,6 +89,67 @@ export default function ResumeAnalyzerPage() {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i]
     }
 
+    const extractTextFromPdf = async (arrayBuffer: ArrayBuffer): Promise<string> => {
+        // Attempt 1: Try pdfjs-dist if available
+        try {
+            const pdfjsLib = await import("pdfjs-dist")
+            pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version || "3.11.174"}/pdf.worker.min.mjs`
+            const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) })
+            const pdf = await loadingTask.promise
+            let fullText = ""
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i)
+                const textContent = await page.getTextContent()
+                const pageStrings = textContent.items.map((item: any) => item.str || "")
+                fullText += pageStrings.join(" ") + "\n"
+            }
+            if (fullText.trim().length > 20) {
+                return fullText.trim()
+            }
+        } catch (err) {
+            console.warn("pdfjs-dist parse notice, using stream fallback:", err)
+        }
+
+        // Attempt 2: Binary stream text extractor for PDF ArrayBuffers
+        try {
+            const bytes = new Uint8Array(arrayBuffer)
+            const decoder = new TextDecoder("latin1")
+            const rawStr = decoder.decode(bytes)
+            const textParts: string[] = []
+
+            // Extract literal strings enclosed in () inside PDF stream operators like Tj/TJ
+            const matches = rawStr.match(/\(([^()]{2,120})\)\s*Tj|\[([^\]]{2,300})\]\s*TJ/g) || []
+            for (const match of matches) {
+                const cleaned = match
+                    .replace(/\\\(|\\\)/g, "")
+                    .replace(/[()\[\]]/g, " ")
+                    .replace(/\b(Tj|TJ)\b/g, " ")
+                    .replace(/[^\x20-\x7E\n\r\t]/g, " ")
+                    .replace(/\s+/g, " ")
+                    .trim()
+                if (cleaned.length > 2 && !/^\d+\s+\d+\s+obj/i.test(cleaned)) {
+                    textParts.push(cleaned)
+                }
+            }
+
+            if (textParts.length > 0) {
+                return textParts.join(" ")
+            }
+
+            // Attempt 3: General ASCII character stream extraction
+            const printableOnly = rawStr.replace(/[^\x20-\x7E\n\r\t]/g, " ")
+                .replace(/\s+/g, " ")
+                .trim()
+            if (printableOnly.length > 50) {
+                return printableOnly
+            }
+        } catch (e) {
+            console.error("Stream parse fallback error:", e)
+        }
+
+        return ""
+    }
+
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (!file) return
@@ -125,27 +186,25 @@ export default function ResumeAnalyzerPage() {
                 toast.error("Failed to read .docx file.")
             }
         } else if (ext === "pdf") {
-            const reader = new FileReader()
-            reader.onload = (event) => {
-                const text = event.target?.result as string
-                // Clean non-printable characters from PDF text stream
-                const cleanText = text.replace(/[^\x20-\x7E\n\r\t]/g, " ")
-                    .replace(/\s+/g, " ")
-                    .trim()
-                
-                // Fallback: If clean text extraction produces readable text
-                if (cleanText.length > 50) {
-                    setResumeText(cleanText)
+            try {
+                const arrayBuffer = await file.arrayBuffer()
+                const extractedText = await extractTextFromPdf(arrayBuffer)
+
+                if (extractedText && extractedText.trim().length > 15) {
+                    setResumeText(extractedText)
                     setUploadedFile({ name: file.name, size: sizeFormatted, type: "PDF" })
-                    toast.success("PDF Resume uploaded successfully!")
+                    toast.success("PDF Resume uploaded and text extracted!")
                 } else {
-                    // Use filename as context if text stream is compressed
-                    setResumeText(`PDF Resume File: ${file.name}. Technical skills and qualifications extracted from candidate resume document.`)
+                    // Fallback to filename context if PDF is pure image scans
+                    const fileContext = `Candidate PDF Resume File: ${file.name}. Document contains candidate qualifications, projects, and work history.`
+                    setResumeText(fileContext)
                     setUploadedFile({ name: file.name, size: sizeFormatted, type: "PDF" })
-                    toast.success("PDF Resume uploaded successfully!")
+                    toast.success("PDF Resume uploaded! For best accuracy, ensure PDF text is selectable.")
                 }
+            } catch (err) {
+                console.error("PDF parse error:", err)
+                toast.error("Failed to process PDF file.")
             }
-            reader.readAsText(file)
         } else {
             toast.error("Please upload a valid PDF, DOCX, or TXT resume file.")
         }

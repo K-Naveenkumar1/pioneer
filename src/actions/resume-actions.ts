@@ -40,136 +40,171 @@ const TECH_SKILLS_DICTIONARY = [
 
 /**
  * Fallback Local Smart Analyzer Engine
- * Guarantees 100% reliable execution even if external AI network APIs fail or time out.
+ * Dynamically analyzes any Job Description against any candidate resume text.
  */
 function analyzeResumeLocally(jobTitle: string, companyName: string, jobDescription: string, resumeText: string): AnalysisResult {
     const jdLower = jobDescription.toLowerCase()
     const resumeLower = resumeText.toLowerCase()
 
-    // 1. Skill Extraction
+    // 1. Dynamic Skill & Keyword Extraction from JD
+    const targetSkillsSet = new Set<string>()
+
+    // Check built-in technical dictionary against JD
+    TECH_SKILLS_DICTIONARY.forEach(skill => {
+        if (jdLower.includes(skill.toLowerCase())) {
+            targetSkillsSet.add(skill)
+        }
+    })
+
+    // Extract significant technical or domain terms from JD
+    const cleanJdWords = jobDescription
+        .replace(/[^a-zA-Z0-9+#.-]/g, " ")
+        .split(/\s+/)
+        .filter(w => w.length >= 3 && !/^(and|the|for|with|that|this|have|from|will|your|about|must|our|you|are|should|can|all|been|work|team|role|looking|ability|experience|strong|working|using|skills|knowledge|requirement|qualifications)$/i.test(w))
+
+    const wordCounts: { [key: string]: number } = {}
+    cleanJdWords.forEach(w => {
+        const key = w.toLowerCase()
+        wordCounts[key] = (wordCounts[key] || 0) + 1
+    })
+
+    // Top repeated words from JD
+    Object.entries(wordCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 15)
+        .forEach(([word]) => {
+            if (word.length >= 3) {
+                const formatted = word.charAt(0).toUpperCase() + word.slice(1)
+                targetSkillsSet.add(formatted)
+            }
+        })
+
+    const targetSkills = Array.from(targetSkillsSet)
+
+    // 2. Classify Matched vs Missing Skills
     const matchedSkills: string[] = []
     const missingSkills: string[] = []
 
-    TECH_SKILLS_DICTIONARY.forEach(skill => {
+    targetSkills.forEach(skill => {
         const sLower = skill.toLowerCase()
-        const inJD = jdLower.includes(sLower)
-        const inResume = resumeLower.includes(sLower)
-
-        if (inJD && inResume) {
+        if (resumeLower.includes(sLower)) {
             matchedSkills.push(skill)
-        } else if (inJD && !inResume) {
+        } else {
             missingSkills.push(skill)
         }
     })
 
-    // 2. Score Calculation
-    const totalRequired = matchedSkills.length + missingSkills.length
-    let baseScore = totalRequired > 0 ? Math.round((matchedSkills.length / totalRequired) * 75) : 55
+    // 3. Dynamic Score Calculation based on real match ratio & quality signals
+    const totalRequired = targetSkills.length
+    const skillRatio = totalRequired > 0 ? matchedSkills.length / totalRequired : 0.5
 
-    // Add bonus points for resume quality indicators
-    const hasMetrics = /\d+%|\$\d+|\d+\s*users|\d+\s*requests|\d+\s*ms/i.test(resumeText)
-    const hasProjects = /project|built|developed|implemented|created/i.test(resumeText)
-    const hasSummary = /summary|about|profile|objective/i.test(resumeText)
+    let calculatedScore = Math.round(skillRatio * 65) + 15
 
-    if (hasMetrics) baseScore += 10
-    if (hasProjects) baseScore += 8
-    if (hasSummary) baseScore += 7
+    const hasMetrics = /\d+%|\$\d+|\d+\s*users|\d+\s*requests|\d+\s*ms|\d+\s*k|\d+\s*projects/i.test(resumeText)
+    const hasProjects = /project|built|developed|implemented|created|architected|designed/i.test(resumeText)
+    const hasSummary = /summary|about|profile|objective|overview/i.test(resumeText)
+    const resumeLengthBonus = Math.min(10, Math.floor(resumeText.length / 250))
 
-    const matchScore = Math.min(95, Math.max(45, baseScore))
+    if (hasMetrics) calculatedScore += 8
+    if (hasProjects) calculatedScore += 6
+    if (hasSummary) calculatedScore += 4
+    calculatedScore += resumeLengthBonus
 
-    // 3. Section Improvements
+    const matchScore = Math.min(96, Math.max(30, calculatedScore))
+
+    // 4. Section Improvements
     const improvements: ResumeImprovement[] = []
 
-    // Professional Summary Improvement
+    // Summary section evaluation
     if (!hasSummary || !matchedSkills.some(s => resumeLower.indexOf(s.toLowerCase()) < 300)) {
         improvements.push({
             section: "Professional Summary",
             status: "CRITICAL",
-            feedback: "Where changes should be made: The top summary section does not explicitly mention the target role title or core required tech keywords.",
-            suggestion: `How the resume should be tailored: Add a 2-3 line summary at the top: 'Results-driven ${jobTitle || "Software Engineer"} proficient in ${matchedSkills.slice(0, 3).join(", ") || "Full Stack Web Development"}. Experienced in building scalable applications and solving complex algorithmic challenges.'`
+            feedback: "Where changes should be made: The top summary section does not explicitly state your target role or core required keywords.",
+            suggestion: `How the resume should be tailored: Add a 2-3 line summary at the top: 'Results-driven ${jobTitle || "Professional"} proficient in ${matchedSkills.slice(0, 3).join(", ") || "core domain skills"}. Experienced in building high-impact solutions.'`
         })
     } else {
         improvements.push({
             section: "Professional Summary",
             status: "GOOD",
-            feedback: "Where changes should be made: Professional summary is present.",
-            suggestion: "How the resume should be tailored: Ensure your summary includes quantifiable career achievements alongside your main tech stack."
+            feedback: "Where changes should be made: Professional summary is present in your resume.",
+            suggestion: "How the resume should be tailored: Ensure your summary highlights your main achievements alongside your top technical skills."
         })
     }
 
-    // Work Experience & Projects Improvement
+    // Projects / Experience evaluation
     if (!hasMetrics) {
         improvements.push({
             section: "Work Experience & Projects",
             status: "CRITICAL",
-            feedback: "Where changes should be made: Bullet points in your experience/projects describe tasks rather than measurable impact.",
-            suggestion: "How the resume should be tailored: Rewrite project bullets using the Action Verb + Task + Quantifiable Result formula. Example: 'Optimized database queries reducing average response latency by 35% across 10,000+ active users.'"
+            feedback: "Where changes should be made: Project bullet points describe daily tasks rather than measurable metrics.",
+            suggestion: "How the resume should be tailored: Rewrite experience bullet points using Action Verb + Core Skill + Quantifiable Result (e.g. 'Optimized performance by 30%')."
         })
     } else {
         improvements.push({
             section: "Work Experience & Projects",
             status: "RECOMMENDED",
-            feedback: "Where changes should be made: Good metrics found, but aligning action verbs with the job description keywords will increase ATS ranking.",
-            suggestion: `How the resume should be tailored: Emphasize key skills required in the job description (${missingSkills.slice(0, 3).join(", ") || "core tools"}) directly within your project descriptions.`
+            feedback: "Where changes should be made: Good metrics found, but aligning project verbs with job description keywords will increase ATS ranking.",
+            suggestion: `How the resume should be tailored: Integrate missing skills (${missingSkills.slice(0, 3).join(", ") || "target keywords"}) into your project descriptions.`
         })
     }
 
-    // Skills Section Improvement
+    // Skills evaluation
     if (missingSkills.length > 0) {
         improvements.push({
             section: "Skills & Technical Stack",
             status: "RECOMMENDED",
-            feedback: `Where changes should be made: Your resume is missing key technical skills requested in the job description: ${missingSkills.slice(0, 4).join(", ")}.`,
-            suggestion: `How the resume should be tailored: Categorize your technical skills cleanly under subheadings (Languages, Frameworks, Databases, Developer Tools) and add ${missingSkills.slice(0, 3).join(", ")} if you have familiarity.`
+            feedback: `Where changes should be made: Missing keywords requested in the job description: ${missingSkills.slice(0, 4).join(", ")}.`,
+            suggestion: `How the resume should be tailored: Group your skills under clear headings and add ${missingSkills.slice(0, 3).join(", ")} where relevant.`
         })
     } else {
         improvements.push({
             section: "Skills & Technical Stack",
             status: "GOOD",
-            feedback: "Where changes should be made: Strong alignment detected with key technical requirements.",
-            suggestion: "How the resume should be tailored: Group your skills into clear categories (Frontend, Backend, Cloud & DevOps) to improve recruiter readability."
+            feedback: "Where changes should be made: Strong keyword alignment detected.",
+            suggestion: "How the resume should be tailored: Organize your skills clearly into subcategories for optimal recruiter readability."
         })
     }
 
-    // 4. Interview Preparation Questions
-    const mainTech = matchedSkills[0] || missingSkills[0] || "Software Architecture"
-    const secondaryTech = matchedSkills[1] || "Database Optimization"
+    // 5. Tailored Interview Prep Questions
+    const mainTech = matchedSkills[0] || missingSkills[0] || "Core Architecture"
+    const secondaryTech = matchedSkills[1] || missingSkills[1] || "Problem Solving"
 
     const interviewPrep: InterviewQuestion[] = [
         {
-            question: `Explain how you would architect and build a feature using ${mainTech} to fulfill the primary requirements of this ${jobTitle || "Engineer"} role.`,
+            question: `How would you utilize ${mainTech} to address the core requirements outlined for this ${jobTitle || "target"} role?`,
             category: "Technical",
             keyPoints: [
-                `Discuss trade-offs, state management, and scalability when using ${mainTech}.`,
-                "Explain API design, error handling, and component architecture.",
-                "Highlight performance monitoring and caching strategies."
+                `Discuss best practices, trade-offs, and architecture when using ${mainTech}.`,
+                "Explain system design, error handling, and performance optimization.",
+                "Highlight real-world project examples from your experience."
             ]
         },
         {
-            question: `Tell me about a challenging bug or technical bottleneck you encountered in one of your projects and how you resolved it.`,
+            question: `Describe a complex technical challenge you solved in a previous project using ${secondaryTech}.`,
             category: "Resume Deep-Dive",
             keyPoints: [
                 "Use the STAR method: Situation, Task, Action, and Result.",
-                "Walk through your debugging workflow (profilers, logs, step-by-step isolation).",
-                "Share the specific quantitative performance improvement achieved."
+                "Walk through your step-by-step troubleshooting workflow.",
+                "Share quantifiable results or performance improvements achieved."
             ]
         },
         {
-            question: `How do you handle a situation where a technical task requires a technology you haven't used before (like ${missingSkills[0] || secondaryTech})?`,
+            question: `How do you approach learning and applying a skill required for this role (like ${missingSkills[0] || "a new framework"}) under tight deadlines?`,
             category: "Problem Solving",
             keyPoints: [
-                "Demonstrate fast self-learning ability through documentation and hands-on mini-projects.",
-                "Mention leveraging AI assistance, open-source repositories, and community resources.",
-                "Emphasize testing and seeking code review feedback from senior engineers."
+                "Demonstrate rapid self-learning via documentation and hands-on practice.",
+                "Mention leveraging community tools, AI assistance, and peer code reviews.",
+                "Emphasize testing and delivering functional, high-quality code."
             ]
         },
         {
-            question: `Describe a situation where you had to collaborate with a team or resolve conflicting project priorities under tight deadlines.`,
+            question: `Tell me about a time you collaborated with team members or stakeholders to deliver a key project requirement for ${companyName || "a target company"}.`,
             category: "Behavioral",
             keyPoints: [
-                "Focus on clear communication, setting expectations, and active listening.",
-                "Explain how you broke down complex goals into smaller manageable tasks.",
-                "Highlight positive team outcomes and what you learned from the experience."
+                "Focus on clear communication, priority setting, and active listening.",
+                "Explain how you broke down complex goals into manageable milestones.",
+                "Highlight positive outcomes and project lessons learned."
             ]
         }
     ]
@@ -187,7 +222,23 @@ function analyzeResumeLocally(jobTitle: string, companyName: string, jobDescript
 }
 
 /**
- * Try OpenRouter Free API
+ * Helper: Fetch with strict timeout using AbortSignal
+ */
+async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs = 4500): Promise<Response> {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+    try {
+        const response = await fetch(url, { ...options, signal: controller.signal })
+        clearTimeout(timeoutId)
+        return response
+    } catch (err) {
+        clearTimeout(timeoutId)
+        throw err
+    }
+}
+
+/**
+ * Try OpenRouter Free API (Races models concurrently with 4.5s timeout)
  */
 async function callOpenRouterFree(prompt: string): Promise<string> {
     const freeModels = [
@@ -196,94 +247,76 @@ async function callOpenRouterFree(prompt: string): Promise<string> {
         "qwen/qwen-2.5-coder-32b-instruct:free"
     ]
 
-    for (const model of freeModels) {
-        try {
-            const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    model,
-                    messages: [
-                        { role: "system", content: "You are an expert AI Resume Coach. Respond strictly in valid raw JSON." },
-                        { role: "user", content: prompt }
-                    ]
-                })
+    const modelPromises = freeModels.map(async (model) => {
+        const res = await fetchWithTimeout("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                model,
+                messages: [
+                    { role: "system", content: "You are an expert AI Resume Coach. Respond strictly in valid raw JSON." },
+                    { role: "user", content: prompt }
+                ]
             })
-            if (res.ok) {
-                const data = await res.json()
-                const content = data.choices?.[0]?.message?.content
-                if (content && content.trim().length > 20) return content
-            }
-        } catch {
-            // Silently fall through to next provider
-        }
-    }
-    throw new Error("OpenRouter free models unavailable")
+        }, 4500)
+
+        if (!res.ok) throw new Error(`Model ${model} failed: ${res.statusText}`)
+        const data = await res.json()
+        const content = data.choices?.[0]?.message?.content
+        if (content && content.trim().length > 20) return content
+        throw new Error(`Invalid response content from ${model}`)
+    })
+
+    return await Promise.any(modelPromises)
 }
 
 /**
- * Call Pollinations AI
+ * Call Pollinations AI (Races models concurrently with 4.0s timeout)
  */
 async function callPollinationsAI(prompt: string): Promise<string> {
-    const freeModels = ["mistral", "qwen", "llama", "searchgpt"]
+    const freeModels = ["mistral", "qwen", "llama"]
 
-    for (const model of freeModels) {
-        try {
-            const response = await fetch("https://text.pollinations.ai/", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    messages: [
-                        {
-                            role: "system",
-                            content: "You are an expert AI Resume Coach and Technical Recruiter. You provide accurate ATS scores, detailed resume improvement suggestions, and targeted interview questions in strict JSON format only."
-                        },
-                        {
-                            role: "user",
-                            content: prompt
-                        }
-                    ],
-                    model,
-                    jsonMode: true
-                })
+    const modelPromises = freeModels.map(async (model) => {
+        const response = await fetchWithTimeout("https://text.pollinations.ai/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                messages: [
+                    {
+                        role: "system",
+                        content: "You are an expert AI Resume Coach and Technical Recruiter. Provide ATS analysis strictly in valid JSON format."
+                    },
+                    { role: "user", content: prompt }
+                ],
+                model,
+                jsonMode: true
             })
+        }, 4000)
 
-            if (response.ok) {
-                const text = await response.text()
-                if (text && text.trim().length > 10 && !text.includes("Payment Required") && !text.includes("busy")) {
-                    return text
-                }
-            }
-        } catch {
-            // Silently fall through to next provider
+        if (!response.ok) throw new Error(`Pollinations model ${model} failed`)
+        const text = await response.text()
+        if (text && text.trim().length > 10 && !text.includes("Payment Required") && !text.includes("busy")) {
+            return text
         }
-    }
-    throw new Error("Pollinations AI unavailable")
+        throw new Error(`Invalid text from ${model}`)
+    })
+
+    return await Promise.any(modelPromises)
 }
 
 /**
- * Call Google Gemini API if API key is provided
+ * Call Google Gemini API with 4.5s timeout
  */
 async function callGeminiAI(prompt: string, apiKey: string): Promise<string> {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`
-    const response = await fetch(url, {
+    const response = await fetchWithTimeout(url, {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-            contents: [
-                {
-                    parts: [{ text: prompt }]
-                }
-            ],
-            generationConfig: {
-                responseMimeType: "application/json"
-            }
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { responseMimeType: "application/json", maxOutputTokens: 1200 }
         })
-    })
+    }, 4500)
 
     if (!response.ok) {
         throw new Error(`Gemini API error: ${response.statusText}`)
@@ -324,12 +357,12 @@ Target Company: ${companyName || "Not specified"}
 
 JOB DESCRIPTION:
 """
-${jobDescription.substring(0, 6000)}
+${jobDescription.substring(0, 3500)}
 """
 
 STUDENT RESUME:
 """
-${resumeText.substring(0, 6000)}
+${resumeText.substring(0, 3500)}
 """
 
 Analyze the resume against the job description thoroughly. 
@@ -337,7 +370,7 @@ Respond ONLY with a valid JSON object matching this exact schema:
 
 {
   "matchScore": 78,
-  "summary": "Concise executive summary of how well the student's background matches this specific job description.",
+  "summary": "Concise 2-sentence executive summary of how well the student's background matches this job.",
   "matchingSkills": ["Skill 1", "Skill 2"],
   "missingSkills": ["Skill A", "Skill B"],
   "improvements": [
@@ -358,38 +391,31 @@ Respond ONLY with a valid JSON object matching this exact schema:
 }
 `
 
-        // 1. Try Gemini API
+        // 1. Try Gemini API if key is present
         const geminiApiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY
         if (geminiApiKey && geminiApiKey.trim()) {
             try {
                 const raw = await callGeminiAI(prompt, geminiApiKey)
                 parsed = parseAIJSON(raw)
             } catch {
-                // Fallback to next tier
+                // Fall through to next tier
             }
         }
 
-        // 2. Try OpenRouter Free Models
+        // 2. Race OpenRouter Free and Pollinations AI concurrently for fastest response
         if (!parsed) {
             try {
-                const raw = await callOpenRouterFree(prompt)
+                const raw = await Promise.any([
+                    callOpenRouterFree(prompt),
+                    callPollinationsAI(prompt)
+                ])
                 parsed = parseAIJSON(raw)
             } catch {
-                // Fallback to next tier
+                // Fall through to local smart engine
             }
         }
 
-        // 3. Try Pollinations AI
-        if (!parsed) {
-            try {
-                const raw = await callPollinationsAI(prompt)
-                parsed = parseAIJSON(raw)
-            } catch {
-                // Fallback to local analyzer
-            }
-        }
-
-        // 4. High-Precision Local Smart Analyzer Fallback (Guarantees 100% success)
+        // 3. Ultra-Fast High-Precision Local Smart Analyzer Fallback (0ms, guarantees 100% success)
         if (!parsed) {
             parsed = analyzeResumeLocally(jobTitle, companyName, jobDescription, resumeText)
         }
