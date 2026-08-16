@@ -44,6 +44,7 @@ import {
   LogOut,
   MessageSquare,
   MoreVertical,
+  Sparkles,
   Trophy,
   Upload,
   User
@@ -130,6 +131,11 @@ const data = {
       title: "Typing Game",
       url: "/student/typing-game",
       icon: Keyboard,
+    },
+    {
+      title: "Resume Analyzer",
+      url: "/student/resume-analyzer",
+      icon: Sparkles,
     },
   ],
 }

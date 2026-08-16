@@ -491,6 +491,7 @@ export async function getStudentExams(type?: string) {
                 duration: exam.duration,
                 examCode: exam.examCode, // Include exam code
                 isActive: exam.isActive,
+                isAnswerRevealed: exam.isAnswerRevealed ?? false,
                 totalQuestions: exam._count.questions,
                 attempted: !!attempt,
                 attemptId: attempt ? attempt.id : null,
@@ -675,6 +676,7 @@ export async function getExamSessionDetails(attemptId: string) {
                         title: true,
                         duration: true,
                         type: true,
+                        isAnswerRevealed: true,
                         questions: {
                             select: {
                                 id: true,
@@ -689,7 +691,8 @@ export async function getExamSessionDetails(attemptId: string) {
                                 inputFormat: true,
                                 outputFormat: true,
                                 sampleInput: true,
-                                sampleOutput: true
+                                sampleOutput: true,
+                                testCases: true
                             }
                         }
                     }
@@ -702,9 +705,13 @@ export async function getExamSessionDetails(attemptId: string) {
         }
 
         const isCompleted = !!attempt.completedAt
+        const isAnswerRevealed = attempt.exam.isAnswerRevealed ?? false
 
         let questions = attempt.exam.questions.map(q => {
-            const { correctAnswer, ...rest } = q
+            if (isCompleted && isAnswerRevealed) {
+                return q
+            }
+            const { correctAnswer, testCases, ...rest } = q
             return rest
         })
 
@@ -748,11 +755,91 @@ export async function getExamSessionDetails(attemptId: string) {
             warnings: attempt.warnings,
             codingSubmissions: attempt.codingSubmissions,
             isCompleted,
+            isAnswerRevealed,
             studentAnswers,
             score: attempt.score
         }
     } catch (e: any) {
         return { success: false, error: e.message }
+    }
+}
+
+/**
+ * Retrieves full exam questions along with correct answers and test cases for student review.
+ * SECURITY CHECK: Only permitted if student completed the exam AND admin has revealed answers.
+ */
+export async function getStudentExamReviewDetailsAction(examIdOrAttemptId: string) {
+    try {
+        const student = await getStudentUser()
+        if (!student) return { success: false, error: "Unauthorized" }
+
+        // Find attempt by attempt ID first, or by exam ID for current student
+        let attempt = await client.examAttempt.findUnique({
+            where: { id: examIdOrAttemptId },
+            include: {
+                exam: {
+                    include: {
+                        questions: true
+                    }
+                }
+            }
+        })
+
+        if (!attempt) {
+            attempt = await client.examAttempt.findFirst({
+                where: { examId: examIdOrAttemptId, studentId: student.id },
+                include: {
+                    exam: {
+                        include: {
+                            questions: true
+                        }
+                    }
+                }
+            })
+        }
+
+        if (!attempt || attempt.studentId !== student.id) {
+            return { success: false, error: "Exam attempt not found or unauthorized" }
+        }
+
+        if (!attempt.completedAt) {
+            return { success: false, error: "Exam is not yet completed." }
+        }
+
+        if (!attempt.exam.isAnswerRevealed) {
+            return { success: false, error: "Answers for this exam have not been revealed by the instructor yet." }
+        }
+
+        let studentAnswers: Record<string, string> = {}
+        if (attempt.answers) {
+            try {
+                studentAnswers = JSON.parse(attempt.answers)
+            } catch (e) {}
+        }
+
+        let codingSubmissions: Record<string, any> = {}
+        if (attempt.codingSubmissions) {
+            try {
+                codingSubmissions = JSON.parse(attempt.codingSubmissions)
+            } catch (e) {}
+        }
+
+        return {
+            success: true,
+            examId: attempt.exam.id,
+            attemptId: attempt.id,
+            examTitle: attempt.exam.title,
+            examType: attempt.exam.type,
+            duration: attempt.exam.duration,
+            score: attempt.score,
+            completedAt: attempt.completedAt,
+            isAnswerRevealed: attempt.exam.isAnswerRevealed,
+            questions: attempt.exam.questions,
+            studentAnswers,
+            codingSubmissions
+        }
+    } catch (e: any) {
+        return { success: false, error: e.message || "Failed to load exam review" }
     }
 }
 

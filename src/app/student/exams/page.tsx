@@ -7,7 +7,9 @@ import {
     CheckCircle2,
     Clock,
     Play,
-    ShieldAlert
+    ShieldAlert,
+    Eye,
+    EyeOff
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState, useTransition } from "react"
@@ -16,6 +18,7 @@ import { toast } from "sonner"
 import { getStudentExams, startExamAttemptAction } from "@/actions/student-actions"
 import GlassCard from "@/components/global/glass-card"
 import { Button } from "@/components/ui/button"
+import ExamReviewModal from "@/components/global/exam-review-modal"
 
 export default function StudentExamsPage() {
     const router = useRouter()
@@ -24,6 +27,8 @@ export default function StudentExamsPage() {
     const [isPending, startTransition] = useTransition()
     const [showLobby, setShowLobby] = useState<any | null>(null)
     const [examCodeInput, setExamCodeInput] = useState("")
+    const [reviewExamId, setReviewExamId] = useState<string | null>(null)
+    const [isReviewOpen, setIsReviewOpen] = useState(false)
 
     useEffect(() => {
         loadExams()
@@ -153,10 +158,25 @@ export default function StudentExamsPage() {
                                             </p>
                                         </div>
                                     </div>
-                                    <div className="flex flex-col items-end gap-1.5">
+                                    <div className="flex flex-col items-end gap-2">
                                         <p className="text-[10px] text-themeTextGrey">
                                             Completed: {new Date(exam.completedAt).toLocaleDateString()}
                                         </p>
+                                        {exam.isAnswerRevealed ? (
+                                            <Button
+                                                onClick={() => {
+                                                    setReviewExamId(exam.attemptId || exam.id)
+                                                    setIsReviewOpen(true)
+                                                }}
+                                                className="bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl text-xs py-1.5 px-3 flex items-center gap-1.5 shadow-md shadow-purple-900/30 transition-all"
+                                            >
+                                                <Eye size={13} /> View Answers
+                                            </Button>
+                                        ) : (
+                                            <span className="text-[10px] text-zinc-500 italic flex items-center gap-1">
+                                                <EyeOff size={11} /> Answers Not Revealed
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                             ) : exam.isActive === false ? (
@@ -253,6 +273,12 @@ export default function StudentExamsPage() {
                     </motion.div>
                 </div>
             )}
+            {/* Exam Answer Review Modal */}
+            <ExamReviewModal
+                isOpen={isReviewOpen}
+                onClose={() => setIsReviewOpen(false)}
+                examIdOrAttemptId={reviewExamId}
+            />
         </div>
     )
 }

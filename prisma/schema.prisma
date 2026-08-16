@@ -206,6 +206,7 @@ model Student {
   notes        Note[]
   messages     StudentMessage[]
   typingRuns   TypingGameRun[]
+  resumeAnalyses ResumeAnalysis[]
   classId      String?
   class        Class?           @relation(fields: [classId], references: [id], onDelete: SetNull)
 
@@ -282,7 +283,8 @@ model Exam {
   createdAt DateTime       @default(now())
   questions ExamQuestion[]
   attempts  ExamAttempt[]
-  isActive  Boolean        @default(true)
+  isActive          Boolean        @default(true)
+  isAnswerRevealed  Boolean        @default(false)
 
   @@index([classId])
 }
@@ -403,5 +405,24 @@ model CourseMaterialPage {
   courseMaterial   CourseMaterial @relation(fields: [courseMaterialId], references: [id], onDelete: Cascade)
 
   @@index([courseMaterialId])
+}
+
+model ResumeAnalysis {
+  id             String   @id @default(uuid())
+  studentId      String
+  student        Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  jobTitle       String?
+  companyName    String?
+  jobDescription String   @db.Text
+  resumeText     String   @db.Text
+  matchScore     Int
+  summary        String   @db.Text
+  matchingSkills String   @db.Text // JSON string array
+  missingSkills  String   @db.Text // JSON string array
+  improvements   String   @db.Text // JSON string array: [{ section: string, status: string, feedback: string, suggestion: string }]
+  interviewPrep  String   @db.Text // JSON string array: [{ question: string, category: string, keyPoints: string[] }]
+  createdAt      DateTime @default(now())
+
+  @@index([studentId])
 }
 

@@ -1910,3 +1910,28 @@ export async function adminPublishExamAgainAction(examId: string) {
         return { success: false, error: e.message || "Failed to republish exam" }
     }
 }
+
+/**
+ * Toggles whether answers for an exam are revealed to students.
+ */
+export async function adminToggleRevealAnswersAction(examId: string, isAnswerRevealed: boolean) {
+    try {
+        const admin = await getAdminUser()
+        if (!admin) return { success: false, error: "Unauthorized" }
+
+        await client.exam.update({
+            where: { id: examId },
+            data: { isAnswerRevealed }
+        })
+
+        return { 
+            success: true, 
+            message: isAnswerRevealed 
+                ? "Exam answers revealed to students successfully!" 
+                : "Exam answers hidden from students." 
+        }
+    } catch (e: any) {
+        return { success: false, error: e.message || "Failed to toggle answer revelation" }
+    }
+}
+

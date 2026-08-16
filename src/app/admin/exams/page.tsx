@@ -13,6 +13,7 @@ import {
     Check, 
     Trash2, 
     Eye,
+    EyeOff,
     Pencil,
     X,
     Activity,
@@ -38,7 +39,8 @@ import {
     adminCreateCodingExamAction,
     adminGetClassesAction,
     adminEndExamAction,
-    adminPublishExamAgainAction
+    adminPublishExamAgainAction,
+    adminToggleRevealAnswersAction
 } from "@/actions/admin-actions"
 import { getAdminUser } from "@/actions/custom-auth"
 
@@ -272,6 +274,23 @@ export default function AdminExamsPage() {
                 loadExams()
             } else {
                 toast.error(res.error || "Failed to republish exam.")
+            }
+        })
+    }
+
+    const handleToggleRevealAnswers = async (examId: string, currentStatus: boolean) => {
+        const nextStatus = !currentStatus
+        const msg = nextStatus
+            ? "Are you sure you want to reveal answers for this exam to students?"
+            : "Are you sure you want to hide answers for this exam from students?"
+        if (!confirm(msg)) return
+        startTransition(async () => {
+            const res = await adminToggleRevealAnswersAction(examId, nextStatus)
+            if (res.success) {
+                toast.success(res.message || "Updated answer revelation state.")
+                loadExams()
+            } else {
+                toast.error(res.error || "Failed to update answer revelation.")
             }
         })
     }
@@ -690,13 +709,22 @@ export default function AdminExamsPage() {
                                             <h4 className="font-bold text-base text-white tracking-tight line-clamp-1" title={ex.title}>
                                                 {ex.title}
                                             </h4>
-                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded shrink-0 border ${
-                                                ex.isActive === false
-                                                    ? "bg-red-500/10 text-red-400 border-red-500/20"
-                                                    : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                                            }`}>
-                                                {ex.isActive === false ? "Ended" : "Active"}
-                                            </span>
+                                            <div className="flex items-center gap-1.5 shrink-0">
+                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
+                                                    ex.isAnswerRevealed
+                                                        ? "bg-purple-500/10 text-purple-400 border-purple-500/20 flex items-center gap-1"
+                                                        : "bg-zinc-800/80 text-zinc-400 border-zinc-700/80 flex items-center gap-1"
+                                                }`}>
+                                                    {ex.isAnswerRevealed ? <><Eye size={10} /> Answers Revealed</> : <><EyeOff size={10} /> Hidden</>}
+                                                </span>
+                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
+                                                    ex.isActive === false
+                                                        ? "bg-red-500/10 text-red-400 border-red-500/20"
+                                                        : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                                                }`}>
+                                                    {ex.isActive === false ? "Ended" : "Active"}
+                                                </span>
+                                            </div>
                                         </div>
 
                                         <div className="flex flex-wrap gap-2.5 pt-1">
@@ -718,6 +746,21 @@ export default function AdminExamsPage() {
                                     </div>
 
                                     <div className="flex items-center justify-end gap-2 mt-6 pt-4 border-t border-themeGrey/30">
+                                        <button
+                                            onClick={() => handleToggleRevealAnswers(ex.id, !!ex.isAnswerRevealed)}
+                                            className={`px-3 py-1.5 rounded-xl border transition-all flex items-center gap-1 text-[11px] font-bold ${
+                                                ex.isAnswerRevealed
+                                                    ? "bg-purple-950/40 border-purple-900/50 text-purple-400 hover:bg-purple-950/80 hover:text-purple-300 hover:border-purple-500/40"
+                                                    : "bg-purple-600 hover:bg-purple-500 text-white border-purple-500 shadow-md shadow-purple-900/30"
+                                            }`}
+                                            title={ex.isAnswerRevealed ? "Hide Answers from Students" : "Reveal Answers to Students"}
+                                        >
+                                            {ex.isAnswerRevealed ? (
+                                                <><EyeOff size={12} /> Hide Answers</>
+                                            ) : (
+                                                <><Eye size={12} /> Reveal Answers</>
+                                            )}
+                                        </button>
                                         {ex.isActive !== false ? (
                                             <button
                                                 onClick={() => handleEndExam(ex.id)}

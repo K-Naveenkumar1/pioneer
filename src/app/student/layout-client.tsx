@@ -75,6 +75,7 @@ function StudentLayoutInner({ student, children }: { student: any; children: Rea
         if (pathname.includes("/student/coding-exam")) return "Coding Exam"
         if (pathname.includes("/student/typing-game")) return "Typing Game"
         if (pathname.includes("/student/practice")) return "Practice Arena"
+        if (pathname.includes("/student/resume-analyzer")) return "Resume Analyzer"
         return "Workspace"
     }
 
