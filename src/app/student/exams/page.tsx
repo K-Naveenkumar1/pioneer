@@ -233,11 +233,11 @@ export default function StudentExamsPage() {
                                     Lockdown Rules & Instructions
                                 </h4>
                                 <ul className="list-disc pl-4 space-y-2 text-themeTextGrey leading-relaxed">
-                                    <li>**Full-Screen Mode:** The exam will lock the browser in full screen. Do not press Esc or minimize.</li>
-                                    <li>**Tab Tracking:** Switching tabs, opening developers console, or clicking away from the browser window is strictly prohibited.</li>
-                                    <li>**Warnings Limit:** You will receive visual alerts. On the **3rd infraction**, your exam will automatically submit and finalize.</li>
-                                    <li>**Timer Limit:** Keep track of the timer. If it runs out, your session submits automatically.</li>
-                                    <li>**Controls Blocked:** Right-clicks, copy, paste, and text selection are disabled.</li>
+                                    <li><strong className="text-white">Full-Screen Mode:</strong> The exam will lock the browser in full screen. Do not press Esc or minimize.</li>
+                                    <li><strong className="text-white">Tab Tracking:</strong> Switching tabs, opening developers console, or clicking away from the browser window is strictly prohibited.</li>
+                                    <li><strong className="text-white">Warnings Limit:</strong> You will receive visual alerts. On the <strong className="text-white">3rd infraction</strong>, your exam will automatically submit and finalize.</li>
+                                    <li><strong className="text-white">Timer Limit:</strong> Keep track of the timer. If it runs out, your session submits automatically.</li>
+                                    <li><strong className="text-white">Controls Blocked:</strong> Right-clicks, copy, paste, and text selection are disabled.</li>
                                 </ul>
                             </div>
 
@@ -262,8 +262,7 @@ export default function StudentExamsPage() {
                                         setShowLobby(null)
                                         setExamCodeInput("")
                                     }}
-                                    variant="outline"
-                                    className="flex-1 rounded-xl border border-themeGrey hover:bg-themeGrey py-5 text-white"
+                                    className="flex-1 rounded-xl border border-zinc-800 bg-[#18181b] hover:bg-zinc-800 py-5 text-white font-medium"
                                 >
                                     Cancel
                                 </Button>

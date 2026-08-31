@@ -550,20 +550,35 @@ export default function LockdownExamPage() {
         return text.replace(/^\d+[\.\)\s]+/, "").trim()
     }
 
+    const saveTimerRef = useRef<NodeJS.Timeout | null>(null)
+
     const selectOption = (questionId: string, optionLetter: string) => {
         const updatedAnswers = {
             ...answers,
             [questionId]: optionLetter
         }
+        // 1. Instant local state update for <1ms paint frame
         setAnswers(updatedAnswers)
 
-        // Save draft answers to local storage immediately
-        localStorage.setItem(`pioneer_exam_answers_draft_${attemptId}`, JSON.stringify(updatedAnswers))
+        // 2. Non-blocking async local storage write
+        queueMicrotask(() => {
+            try {
+                localStorage.setItem(`pioneer_exam_answers_draft_${attemptId}`, JSON.stringify(updatedAnswers))
+            } catch (e) {}
+        })
 
+        // 3. Debounced background server action to eliminate INP latency
         if (attemptId) {
-            studentUpdateExamAnswersAction(attemptId, updatedAnswers).catch(err => {
-                console.error("Failed to persist answers immediately:", err)
-            })
+            if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+            saveTimerRef.current = setTimeout(() => {
+                startTransition(async () => {
+                    try {
+                        await studentUpdateExamAnswersAction(attemptId, updatedAnswers)
+                    } catch (err) {
+                        console.error("Failed to persist answers:", err)
+                    }
+                })
+            }, 600)
         }
     }
 
@@ -766,7 +781,6 @@ export default function LockdownExamPage() {
             <header className="z-10 m-3 mb-1 bg-[#121212] rounded-xl px-6 py-4 flex items-center justify-between shrink-0 shadow-xl min-h-[64px]">
                 <div>
                     <h2 className="font-bold text-base md:text-lg truncate max-w-[200px] sm:max-w-md">{examTitle}</h2>
-                    <p className="text-xs text-zinc-500">Roll Number Access Session</p>
                 </div>
 
                 <div className="flex items-center gap-4">
@@ -807,7 +821,7 @@ export default function LockdownExamPage() {
                             </div>
 
                             {/* Question Text */}
-                            <div className="max-h-[35vh] overflow-y-auto modern-scrollbar pr-2 select-text w-full text-left">
+                            <div className="max-h-[35vh] overflow-y-auto modern-scrollbar pr-2 pl-3 md:pl-5 select-text w-full text-left">
                                 <h3 className={`leading-relaxed whitespace-pre-wrap text-white text-left ${
                                     activeQuestion.questionText.length > 120 || activeQuestion.questionText.includes('\n')
                                         ? "text-lg md:text-xl font-semibold"
@@ -891,7 +905,7 @@ export default function LockdownExamPage() {
                     <div className="flex-1 bg-[#121212] rounded-xl p-5 flex flex-col justify-between shadow-xl overflow-hidden">
                         <div className="space-y-4 flex-1 flex flex-col overflow-hidden">
                             <h3 className="font-bold text-xs uppercase tracking-wider text-zinc-500 shrink-0">Questions Matrix</h3>
-                            <div className="grid grid-cols-4 gap-2.5 overflow-y-auto pr-1 flex-1 modern-scrollbar">
+                            <div className="grid grid-cols-5 gap-3 overflow-y-auto pr-1 flex-1 modern-scrollbar">
                                 {questions.map((q, idx) => {
                                     const isAnswered = !!answers[q.id]
                                     const isCurr = currentIdx === idx
@@ -914,7 +928,7 @@ export default function LockdownExamPage() {
                                             type="button"
                                             key={q.id}
                                             onClick={() => setCurrentIdx(idx)}
-                                            className={`h-11 w-full text-xs md:text-sm font-bold rounded-lg transition-all flex items-center justify-center border-none ${btnStyle}`}
+                                            className={`aspect-square w-full text-xs md:text-sm font-bold rounded-lg transition-all flex items-center justify-center border-none ${btnStyle}`}
                                             title={`Question ${idx + 1}`}
                                         >
                                             {idx + 1}

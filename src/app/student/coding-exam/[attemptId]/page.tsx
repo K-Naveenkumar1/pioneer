@@ -564,16 +564,24 @@ export default function LockdownCodingExamPage() {
 
     // Question switcher to save database draft before navigating
     const switchQuestion = (newIdx: number) => {
+        // 1. Instant UI update first (<1ms)
+        setCurrentIdx(newIdx)
+
+        // 2. Non-blocking background save to database
         if (currentQuestion && attemptId) {
-            const codeToSave = codes[currentQuestion.id] || selectedLang.default
-            const langId = langs[currentQuestion.id] || LANGUAGES[1].id
+            const qId = currentQuestion.id
+            const codeToSave = codes[qId] || selectedLang.default
+            const langId = langs[qId] || LANGUAGES[1].id
             const langObj = LANGUAGES.find(l => l.id === langId) || LANGUAGES[1]
 
-            saveCodingDraftAction(attemptId, currentQuestion.id, codeToSave, langObj.judge0Id).catch(err => {
-                console.error("Failed to save coding draft:", err)
+            startTransition(async () => {
+                try {
+                    await saveCodingDraftAction(attemptId, qId, codeToSave, langObj.judge0Id)
+                } catch (err) {
+                    console.error("Failed to save coding draft:", err)
+                }
             })
         }
-        setCurrentIdx(newIdx)
     }
 
     // Periodic auto-save to database every 10 seconds

@@ -222,9 +222,9 @@ export default function StudentCodingExamsPage() {
                                 Lockdown Rules & Instructions:
                             </p>
                             <ul className="list-disc pl-4 space-y-2">
-                                <li>The coding exam must be completed in **Fullscreen Mode**.</li>
-                                <li>Exiting fullscreen, changing browser tabs, or blurring focus will trigger a **warning**.</li>
-                                <li>If you register **3 warnings**, your exam session is **terminated and submitted**.</li>
+                                <li>The coding exam must be completed in <strong className="text-white">Fullscreen Mode</strong>.</li>
+                                <li>Exiting fullscreen, changing browser tabs, or blurring focus will trigger a <strong className="text-white">warning</strong>.</li>
+                                <li>If you register <strong className="text-white">3 warnings</strong>, your exam session is <strong className="text-white">terminated and submitted</strong>.</li>
                                 <li>Right-clicks, text copying, pasting, and common editor shortcuts are disabled.</li>
                             </ul>
                         </div>
@@ -247,8 +247,7 @@ export default function StudentCodingExamsPage() {
                         <div className="flex gap-4">
                             <Button
                                 onClick={() => setShowLobby(null)}
-                                variant="outline"
-                                className="flex-1 py-5 border border-themeGrey hover:bg-themeGrey text-white rounded-xl text-xs font-semibold"
+                                className="flex-1 py-5 border border-zinc-800 bg-[#18181b] hover:bg-zinc-800 text-white rounded-xl text-xs font-semibold"
                             >
                                 Cancel
                             </Button>
