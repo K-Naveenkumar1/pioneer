@@ -20,7 +20,8 @@ import {
     Download,
     RefreshCw,
     Code,
-    ShieldCheck
+    ShieldCheck,
+    Calendar
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -737,6 +738,11 @@ export default function AdminExamsPage() {
                                             <span className="text-[10px] bg-zinc-900 border border-zinc-800/80 text-zinc-400 font-medium px-2 py-0.5 rounded flex items-center gap-1">
                                                 <BookOpen size={10} /> Qs: {ex.questions?.length || 0}
                                             </span>
+                                            {ex.createdAt && (
+                                                <span className="text-[10px] bg-zinc-900 border border-zinc-800/80 text-zinc-400 font-medium px-2 py-0.5 rounded flex items-center gap-1" title={`Conducted on ${new Date(ex.createdAt).toLocaleString()}`}>
+                                                    <Calendar size={10} /> {new Date(ex.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                                                </span>
+                                            )}
                                             {ex.class?.name && (
                                                 <span className="text-[10px] text-emerald-400 font-semibold bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
                                                     {ex.class.name}
@@ -1218,11 +1224,21 @@ export default function AdminExamsPage() {
                                 ) : (
                                     exams.map(ex => (
                                         <option key={ex.id} value={ex.id} className="bg-zinc-950 text-white">
-                                            {ex.title}
+                                            {ex.title} {ex.createdAt ? `(${new Date(ex.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })})` : ''}
                                         </option>
                                     ))
                                 )}
                             </select>
+                            {(() => {
+                                const selectedExam = exams.find(e => e.id === selectedSubmissionsExamId)
+                                if (!selectedExam || !selectedExam.createdAt) return null
+                                return (
+                                    <div className="flex items-center gap-1.5 text-xs text-themeTextGrey pt-1">
+                                        <Calendar size={13} className="text-zinc-400" />
+                                        <span>Conducted on: <strong className="text-white">{new Date(selectedExam.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}</strong></span>
+                                    </div>
+                                )
+                            })()}
                         </div>
 
                         <div className="flex gap-3 shrink-0">

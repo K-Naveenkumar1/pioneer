@@ -1,6 +1,7 @@
 import React from "react"
 import { redirect } from "next/navigation"
 import { getAdminUser } from "@/actions/custom-auth"
+import { deleteSessionCookie } from "@/lib/session"
 import AdminSidebar from "./_components/admin-sidebar"
 
 interface Props {
@@ -10,6 +11,7 @@ interface Props {
 export default async function AdminLayout({ children }: Props) {
     const admin = await getAdminUser()
     if (!admin) {
+        await deleteSessionCookie("admin_session")
         redirect("/login")
     }
 

@@ -93,8 +93,8 @@ export default function ResumeAnalyzerPage() {
         // Attempt 1: Try pdfjs-dist web build (bypasses Node canvas dependency)
         try {
             // @ts-ignore
-            const pdfjsLib = await import("pdfjs-dist/build/pdf.mjs")
-            pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version || "3.11.174"}/pdf.worker.min.mjs`
+            const pdfjsLib = await import("pdfjs-dist/build/pdf.js")
+            pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version || "3.11.174"}/pdf.worker.min.js`
             const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) })
             const pdf = await loadingTask.promise
             let fullText = ""

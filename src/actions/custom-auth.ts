@@ -219,14 +219,24 @@ export async function getStudentUser() {
  * Checks if a student roll number exists in the database.
  */
 export async function checkRollNoAction(rollNo: string) {
-    try {
-        const student = await client.student.findUnique({
-            where: { rollNo: rollNo.trim() },
-            select: { id: true, isFirstLogin: true }
-        })
-        return { exists: !!student, isFirstLogin: student?.isFirstLogin || false }
-    } catch (error) {
-        console.error("Check roll number error:", error)
-        return { exists: false, error: "Database error occurred" }
+    let attempts = 0
+    const maxAttempts = 3
+    while (attempts < maxAttempts) {
+        try {
+            attempts++
+            const student = await client.student.findUnique({
+                where: { rollNo: rollNo.trim() },
+                select: { id: true, isFirstLogin: true }
+            })
+            return { exists: !!student, isFirstLogin: student?.isFirstLogin || false }
+        } catch (error: any) {
+            console.error(`Check roll number error (attempt ${attempts}/${maxAttempts}):`, error?.message || error)
+            if (attempts < maxAttempts && (error?.message?.includes("Can't reach database server") || error?.name === "PrismaClientInitializationError")) {
+                await new Promise(res => setTimeout(res, 800))
+                continue
+            }
+            return { exists: false, error: "Unable to connect to database. Please check connection and try again." }
+        }
     }
+    return { exists: false, error: "Database connection timed out. Please try again." }
 }

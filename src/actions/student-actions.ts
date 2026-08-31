@@ -496,7 +496,8 @@ export async function getStudentExams(type?: string) {
                 attempted: !!attempt,
                 attemptId: attempt ? attempt.id : null,
                 score: attempt ? attempt.score : null,
-                completedAt: attempt ? attempt.completedAt : null
+                completedAt: attempt ? attempt.completedAt : null,
+                createdAt: exam.createdAt
             }
         })
 

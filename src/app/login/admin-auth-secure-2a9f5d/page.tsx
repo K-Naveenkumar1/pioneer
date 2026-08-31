@@ -31,6 +31,7 @@ export default function AdminLoginPage() {
     const [isPending, startTransition] = useTransition()
 
     useEffect(() => {
+        router.prefetch("/admin/dashboard")
         const checkSession = async () => {
             const user = await getAdminUser()
             if (user) {
@@ -85,7 +86,8 @@ export default function AdminLoginPage() {
             const res = await loginAction("admin", identity, password)
             if (res.success) {
                 toast.success("Successfully logged in as Admin!")
-                window.location.href = res.redirect || "/admin/dashboard"
+                router.replace(res.redirect || "/admin/dashboard")
+                router.refresh()
             } else {
                 toast.error(res.error || "Invalid admin credentials")
             }

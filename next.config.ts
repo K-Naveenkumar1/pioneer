@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ["canvas", "pdfjs-dist"],
   webpack: (config) => {
     config.resolve.alias = {
       ...config.resolve.alias,
@@ -28,6 +29,11 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 60 * 60 * 24 * 30,
   },
   experimental: {
+    turbo: {
+      resolveAlias: {
+        canvas: "./src/lib/empty-module.ts",
+      },
+    },
     serverActions: {
       bodySizeLimit: "50mb",
     },

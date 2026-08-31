@@ -9,7 +9,8 @@ import {
     Play,
     ShieldAlert,
     Eye,
-    EyeOff
+    EyeOff,
+    Calendar
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState, useTransition } from "react"
@@ -137,13 +138,18 @@ export default function StudentExamsPage() {
                                     )}
                                 </div>
 
-                                <div className="flex items-center gap-4 text-xs text-themeTextGrey">
+                                <div className="flex flex-wrap items-center gap-4 text-xs text-themeTextGrey">
                                     <span className="flex items-center gap-1">
                                         <Clock size={14} /> {exam.duration} Min
                                     </span>
                                     <span className="flex items-center gap-1">
                                         <BookOpen size={14} /> {exam.totalQuestions} Questions
                                     </span>
+                                    {exam.createdAt && (
+                                        <span className="flex items-center gap-1">
+                                            <Calendar size={14} /> {new Date(exam.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
 

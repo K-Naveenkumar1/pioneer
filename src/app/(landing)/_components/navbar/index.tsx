@@ -1,12 +1,17 @@
+import { getAdminUser, getStudentUser } from "@/actions/custom-auth"
 import GlassSheet from "@/components/global/glass-sheet"
 import { Button } from "@/components/ui/button"
-import { MenuIcon } from "lucide-react"
 import { montserrat as logoFont } from "@/lib/fonts"
+import { LayoutDashboard, MenuIcon } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import Menu from "./menu"
 
-const LandingPageNavbar = () => {
+const LandingPageNavbar = async () => {
+  const student = await getStudentUser()
+  const admin = !student ? await getAdminUser() : null
+  const dashboardUrl = student ? "/student/dashboard" : admin ? "/admin/dashboard" : null
+
   return (
     <div className="w-full flex justify-between sticky top-0 items-center py-5 z-50">
         <div className="flex items-center gap-2.5">
@@ -17,11 +22,20 @@ const LandingPageNavbar = () => {
         </div>
         <Menu orientation="desktop"/>
         <div className="flex gap-2">
-          <Link href="/login">
-            <Button className="rounded-2xl text-base">
-              Get Started
-            </Button>
-          </Link>
+          {dashboardUrl ? (
+            <Link href={dashboardUrl}>
+              <Button className="rounded-xl text-base bg-white text-black hover:bg-zinc-200 flex items-center gap-2">
+                <LayoutDashboard size={18} />
+                Dashboard
+              </Button>
+            </Link>
+          ) : (
+            <Link href="/login">
+              <Button className="rounded-2xl text-base">
+                Get Started
+              </Button>
+            </Link>
+          )}
           <GlassSheet triggerClass="lg:hidden"
           trigger={
             <Button
