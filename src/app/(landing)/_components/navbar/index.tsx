@@ -13,7 +13,7 @@ const LandingPageNavbar = async () => {
   const dashboardUrl = student ? "/student/dashboard" : admin ? "/admin/dashboard" : null
 
   return (
-    <div className="w-full flex justify-between sticky top-0 items-center py-5 z-50">
+    <div className="w-full md:px-10 flex justify-between sticky top-0 items-center py-5 z-48">
         <div className="flex items-center gap-2.5">
             <Image src="/nk-logo.png" alt="Naveo Logo" width={34} height={26} className="object-contain" />
             <div className="animate-slide-name flex items-center">
@@ -31,7 +31,7 @@ const LandingPageNavbar = async () => {
             </Link>
           ) : (
             <Link href="/login">
-              <Button className="rounded-2xl text-base">
+              <Button className="rounded-xl text-base">
                 Get Started
               </Button>
             </Link>

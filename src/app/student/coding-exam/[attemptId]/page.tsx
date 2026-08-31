@@ -877,35 +877,38 @@ export default function LockdownCodingExamPage() {
     return (
         <div className="min-h-screen bg-black text-white flex flex-col overflow-hidden select-none">
             {/* Exam Header */}
-            <header className="h-16 shrink-0 bg-black border-b border-themeGrey/80 px-6 flex items-center justify-between z-10">
+            <header className="h-20 shrink-0 bg-zinc-950 border-none px-8 py-5 flex items-center justify-between z-10 shadow-2xl">
                 <div className="flex items-center gap-3">
-                    <span className="p-2 bg-zinc-900 border border-themeGrey rounded-lg text-themeTextWhite font-bold text-sm">
+                    <span className="p-2.5 bg-zinc-900 border-none rounded-xl text-white font-bold text-sm shadow-sm">
                         TCS iON
                     </span>
                     <div>
-                        <h2 className="font-extrabold text-base tracking-tight">{examTitle}</h2>
-                        <p className="text-[10px] text-themeTextGrey">Administrative Secure Workspace</p>
+                        <h2 className="font-extrabold text-lg tracking-tight text-white">{examTitle}</h2>
+                        <p className="text-xs text-zinc-400 font-medium mt-0.5">Administrative Secure Workspace</p>
                     </div>
                 </div>
 
                 <div className="flex items-center gap-4">
                     {/* Warnings log */}
-                    <span className={`text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 border transition-all ${
+                    <span className={`text-xs font-bold px-3.5 py-2.5 rounded-full flex items-center gap-1.5 border-none transition-all ${
                         warnings > 0 
-                            ? "bg-red-500/10 border-red-500/25 text-red-400" 
-                            : "bg-zinc-900 border-zinc-800 text-zinc-400"
+                            ? "bg-red-500/10 text-red-400" 
+                            : "bg-zinc-900 text-zinc-400"
                     }`}>
                         <AlertTriangle size={14} /> Violations: {warnings} / 3
                     </span>
 
-                    {/* Timer */}
-                    <span className="text-xs font-mono font-bold bg-zinc-900 border border-zinc-800 text-themeTextWhite px-3.5 py-2 rounded-xl flex items-center gap-1.5">
-                        <Clock size={14} className="text-zinc-400" /> {formatTime(secondsLeft)}
-                    </span>
+                    {/* Clock Badge */}
+                    <div className="flex items-center gap-2 bg-zinc-900 px-3.5 py-2 rounded-xl border-none">
+                        <Clock size={16} className="text-zinc-400 animate-pulse" />
+                        <span className="font-mono font-bold text-sm sm:text-base tracking-wider text-white">
+                            {formatTime(secondsLeft)}
+                        </span>
+                    </div>
 
                     <Button
                         onClick={() => setShowSubmitModal(true)}
-                        className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl text-xs px-4 py-2"
+                        className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl text-xs px-5 py-2.5 h-10 border-none shadow-md"
                     >
                         Finish Exam
                     </Button>
@@ -917,7 +920,7 @@ export default function LockdownCodingExamPage() {
                 {/* Left Side: Question descriptions & Console */}
                 <div className="w-full lg:w-[45%] flex flex-col gap-4 overflow-hidden h-full">
                     {/* Question Selectors */}
-                    <GlassCard className="p-3 border border-themeGrey flex items-center justify-between shrink-0">
+                    <GlassCard className="p-3 border-none shadow-xl flex items-center justify-between shrink-0">
                         <div className="flex gap-2">
                             {questions.map((q, idx) => {
                                 const graded = gradedSubmissions[q.id]
@@ -930,12 +933,12 @@ export default function LockdownCodingExamPage() {
                                             setStderr("")
                                             setTestResults(null)
                                         }}
-                                        className={`w-9 h-9 rounded-lg font-bold text-xs flex items-center justify-center border transition-all ${
+                                        className={`w-9 h-9 rounded-lg font-bold text-xs flex items-center justify-center border-none transition-all ${
                                             currentIdx === idx
-                                                ? "bg-white text-black border-white"
+                                                ? "bg-white text-black shadow-md"
                                                 : graded
-                                                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/25"
-                                                    : "bg-zinc-900/60 text-zinc-400 border-zinc-850 hover:border-zinc-700"
+                                                    ? "bg-emerald-500/10 text-emerald-400"
+                                                    : "bg-zinc-900/60 text-zinc-400 hover:text-white"
                                         }`}
                                     >
                                         Q{idx + 1}
@@ -952,7 +955,7 @@ export default function LockdownCodingExamPage() {
                                     setStderr("")
                                     setTestResults(null)
                                 }}
-                                className="p-2 bg-zinc-900 border border-zinc-855 rounded-lg text-zinc-400 hover:text-white disabled:opacity-40"
+                                className="p-2 bg-zinc-900 border-none rounded-lg text-zinc-400 hover:text-white disabled:opacity-40"
                             >
                                 <ChevronLeft size={14} />
                             </button>
@@ -964,7 +967,7 @@ export default function LockdownCodingExamPage() {
                                     setStderr("")
                                     setTestResults(null)
                                 }}
-                                className="p-2 bg-zinc-900 border border-zinc-855 rounded-lg text-zinc-400 hover:text-white disabled:opacity-40"
+                                className="p-2 bg-zinc-900 border-none rounded-lg text-zinc-400 hover:text-white disabled:opacity-40"
                             >
                                 <ChevronRight size={14} />
                             </button>
@@ -972,22 +975,22 @@ export default function LockdownCodingExamPage() {
                     </GlassCard>
 
                     {/* Question details Panel */}
-                    <GlassCard className="flex-1 border border-themeGrey flex flex-col overflow-hidden min-h-[220px]">
-                        <div className="bg-black/40 px-5 py-3 border-b border-themeGrey/60 shrink-0 flex justify-between items-center">
+                    <GlassCard className="flex-1 border-none shadow-xl flex flex-col overflow-hidden min-h-[220px]">
+                        <div className="bg-black/40 px-4 py-3 border-none shrink-0 flex justify-between items-center">
                             <span className="text-xs font-bold text-themeTextGrey uppercase tracking-wider">
                                 Question Description (Q{currentIdx + 1})
                             </span>
                             {gradedSubmissions[currentQuestion?.id] && (
-                                <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/20 font-bold">
+                                <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full border-none font-bold">
                                     Graded Score: {gradedSubmissions[currentQuestion.id].marks} / 100
                                 </span>
                             )}
                         </div>
                         
-                        <div className="flex-1 p-6 overflow-y-auto space-y-5 text-sm text-zinc-350 select-text leading-relaxed font-sans">
+                        <div className="flex-1 p-3.5 md:p-4 overflow-y-auto space-y-4 text-sm text-zinc-350 select-text leading-relaxed font-sans">
                             {currentQuestion ? (
                                 <>
-                                    <h3 className="text-xl font-bold text-white tracking-tight">{currentQuestion.title || `Coding Challenge #${currentIdx + 1}`}</h3>
+                                    <h3 className="text-lg md:text-xl font-bold text-white tracking-tight">{currentQuestion.title || `Coding Challenge #${currentIdx + 1}`}</h3>
                                     
                                     <div className="space-y-1">
                                         <p className="font-semibold text-zinc-200">Problem Description:</p>
@@ -997,7 +1000,7 @@ export default function LockdownCodingExamPage() {
                                     {currentQuestion.constraints && (
                                         <div className="space-y-1">
                                             <p className="font-semibold text-zinc-200">Constraints:</p>
-                                            <pre className="p-3 bg-zinc-950 border border-zinc-900 rounded-xl text-zinc-400 text-xs font-mono whitespace-pre-wrap">{currentQuestion.constraints}</pre>
+                                            <pre className="p-3 bg-zinc-950 border-none rounded-xl text-zinc-400 text-xs font-mono whitespace-pre-wrap">{currentQuestion.constraints}</pre>
                                         </div>
                                     )}
 
@@ -1019,11 +1022,11 @@ export default function LockdownCodingExamPage() {
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="space-y-1">
                                                 <p className="font-semibold text-zinc-200">Sample Input:</p>
-                                                <pre className="p-3 bg-zinc-950 border border-zinc-900 rounded-xl text-zinc-400 text-xs font-mono whitespace-pre-wrap">{currentQuestion.sampleInput}</pre>
+                                                <pre className="p-3 bg-zinc-950 border-none rounded-xl text-zinc-400 text-xs font-mono whitespace-pre-wrap">{currentQuestion.sampleInput}</pre>
                                             </div>
                                             <div className="space-y-1">
                                                 <p className="font-semibold text-zinc-200">Sample Output:</p>
-                                                <pre className="p-3 bg-zinc-950 border border-zinc-900 rounded-xl text-zinc-400 text-xs font-mono whitespace-pre-wrap">{currentQuestion.sampleOutput}</pre>
+                                                <pre className="p-3 bg-zinc-950 border-none rounded-xl text-zinc-400 text-xs font-mono whitespace-pre-wrap">{currentQuestion.sampleOutput}</pre>
                                             </div>
                                         </div>
                                     )}

@@ -684,21 +684,38 @@ export default function LockdownExamPage() {
                     ) : results ? (
                         <div className="space-y-6">
                             {/* Summary Card */}
-                            <div className="flex flex-col items-center text-center p-6 bg-zinc-950/40 border border-zinc-800/40 rounded-2xl">
-                                <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full mb-4">
-                                    <Award size={40} />
-                                </div>
-                                <h2 className="text-xl font-bold text-white tracking-tight mb-2">Exam Completed!</h2>
-                                <p className="text-sm text-zinc-400 mb-6">Your answers for <span className="text-white font-semibold">{examTitle}</span> have been submitted successfully.</p>
+            <div className="min-h-screen bg-black text-white flex items-center justify-center p-4 select-none">
+                <div className="w-full max-w-xl p-8 bg-zinc-900/90 border-none rounded-xl space-y-6 text-center shadow-2xl backdrop-blur-md">
+                    <div className="flex justify-center">
+                        <div className="p-4 bg-emerald-500/10 rounded-full text-emerald-400">
+                            <CheckCircle2 size={48} />
+                        </div>
+                    </div>
 
-                                <div className="flex gap-4 items-center justify-center w-full max-w-sm mb-6">
-                                    <div className="flex-1 bg-zinc-900/60 px-4 py-3 border border-zinc-800/60 rounded-xl text-center">
-                                        <p className="text-[10px] text-zinc-500 uppercase font-semibold">Marks Obtained</p>
+                    <div className="space-y-2">
+                        <h2 className="text-3xl font-extrabold text-white tracking-tight">Exam Completed</h2>
+                        <p className="text-xs text-zinc-400">Your responses have been recorded and graded automatically.</p>
+                    </div>
+
+                    {results ? (
+                        <div className="space-y-6 pt-2">
+                            <div className="bg-zinc-950 p-6 rounded-xl space-y-4">
+                                <p className="text-xs text-zinc-400 font-semibold uppercase tracking-wider">Final Score Breakdown</p>
+                                <div className="text-5xl font-black text-white tracking-tight">
+                                    {results.score} <span className="text-xl text-zinc-500 font-semibold">/ {results.totalQuestions}</span>
+                                </div>
+                                <div className="text-sm font-semibold text-emerald-400">
+                                    {results.percentage}% Grade
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3 pt-2">
+                                    <div className="bg-zinc-900/60 px-4 py-3 rounded-lg text-center">
+                                        <p className="text-[10px] text-zinc-500 uppercase font-semibold">Total Attempted</p>
                                         <p className="text-2xl font-extrabold text-white mt-1">
-                                            {results.score} / {results.totalQuestions}
+                                            {results.answeredCount} / {results.totalQuestions}
                                         </p>
                                     </div>
-                                    <div className="flex-1 bg-zinc-900/60 px-4 py-3 border border-zinc-800/60 rounded-xl text-center">
+                                    <div className="bg-zinc-900/60 px-4 py-3 rounded-lg text-center">
                                         <p className="text-[10px] text-zinc-500 uppercase font-semibold">Correct Answers</p>
                                         <p className="text-2xl font-extrabold text-white mt-1">
                                             {results.correctCount}
@@ -708,7 +725,7 @@ export default function LockdownExamPage() {
 
                                 <Button
                                     onClick={() => router.push("/student/exams")}
-                                    className="w-full bg-white hover:bg-zinc-200 text-black font-semibold rounded-xl py-4 h-12 text-sm transition-all"
+                                    className="w-full bg-white hover:bg-zinc-200 text-black font-semibold rounded-lg py-4 h-12 text-sm transition-all"
                                 >
                                     Return to Portal
                                 </Button>
@@ -726,9 +743,9 @@ export default function LockdownExamPage() {
     if (!started) {
         return (
             <div className="min-h-screen bg-black text-white flex items-center justify-center p-4 select-none">
-                <div className="w-full max-w-lg p-8 bg-zinc-900/80 border border-zinc-800 rounded-3xl space-y-6 text-center shadow-2xl backdrop-blur-md">
+                <div className="w-full max-w-lg p-8 bg-zinc-900/90 border-none rounded-xl space-y-6 text-center shadow-2xl backdrop-blur-md">
                     <div className="flex justify-center">
-                        <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-2xl animate-pulse">
+                        <div className="p-3 bg-red-500/10 text-red-400 rounded-xl animate-pulse">
                             <ShieldAlert size={36} />
                         </div>
                     </div>
@@ -746,7 +763,7 @@ export default function LockdownExamPage() {
 
                     <Button
                         onClick={enterFullscreen}
-                        className="w-full bg-white hover:bg-zinc-200 text-black font-bold py-6 rounded-xl flex items-center justify-center gap-2"
+                        className="w-full bg-white hover:bg-zinc-200 text-black font-bold py-6 rounded-lg flex items-center justify-center gap-2"
                     >
                         Enter Fullscreen & Start Exam
                     </Button>
@@ -762,23 +779,25 @@ export default function LockdownExamPage() {
 
     return (
         <div className="h-screen max-h-screen bg-black text-white flex flex-col select-none overflow-hidden relative">
-            {/* Top Floating Header Card */}
-            <header className="z-10 m-4 bg-zinc-900/80 border border-zinc-800 rounded-2xl px-6 py-4 flex items-center justify-between shrink-0 backdrop-blur-md shadow-lg">
+            {/* Top Floating Header Card - Increased Height */}
+            <header className="z-10 m-2.5 mb-1.5 bg-zinc-900/90 border-none rounded-xl px-8 py-5 flex items-center justify-between shrink-0 backdrop-blur-md shadow-2xl h-20">
                 <div>
-                    <h2 className="font-bold text-base truncate max-w-[200px] sm:max-w-md">{examTitle}</h2>
-                    <p className="text-[10px] text-zinc-500">Roll Number Access Session</p>
+                    <h2 className="font-extrabold text-xl sm:text-2xl truncate max-w-[220px] sm:max-w-2xl text-white tracking-tight">{examTitle}</h2>
+                    <p className="text-xs text-zinc-400 font-medium mt-0.5">Roll Number Access Session</p>
                 </div>
 
-                <div className="flex items-center gap-4">
-                    {/* Timer */}
-                    <div className="flex items-center gap-2 bg-zinc-900 border border-zinc-800 px-3.5 py-2 rounded-xl">
+                <div className="flex items-center gap-3">
+                    {/* Clock Badge */}
+                    <div className="flex items-center gap-2 bg-zinc-950 px-4 py-2.5 rounded-lg border-none">
                         <Clock size={16} className="text-zinc-400 animate-pulse" />
-                        <span className="font-mono font-bold text-sm tracking-wider">{formatRemainingTime()}</span>
+                        <span className="font-mono font-bold text-base sm:text-lg tracking-wider text-white">
+                            {formatRemainingTime()}
+                        </span>
                     </div>
 
                     {/* Warnings log */}
-                    <div className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold ${
-                        warnings > 0 ? "bg-red-500/10 border border-red-500/20 text-red-400" : "bg-zinc-900 border border-zinc-800 text-zinc-400"
+                    <div className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-lg text-xs font-bold border-none transition-all ${
+                        warnings > 0 ? "bg-red-500/10 text-red-400" : "bg-zinc-950 text-zinc-400"
                     }`}>
                         <AlertTriangle size={14} /> Warnings: {warnings}/3
                     </div>
@@ -786,7 +805,7 @@ export default function LockdownExamPage() {
                     {/* Quick submit */}
                     <Button 
                         onClick={handleManualSubmit}
-                        className="bg-white hover:bg-zinc-200 text-black font-semibold text-xs px-4 py-2 h-9 rounded-xl border-none"
+                        className="bg-white hover:bg-zinc-200 text-black font-semibold text-xs px-5 py-2.5 h-10 rounded-lg border-none shadow-md"
                     >
                         Submit
                     </Button>
@@ -795,30 +814,32 @@ export default function LockdownExamPage() {
 
             {/* Split Workspace */}
             <div className="flex-1 flex overflow-hidden">
-                {/* Left Side: Primary Question Workspace (Question & Options) as Floating Card */}
-                <main className="flex-1 p-4 flex flex-col overflow-hidden">
-                    {/* Upper Card: Question & MCQ options */}
-                    <div className="flex-1 bg-zinc-900/80 border border-zinc-800 rounded-2xl p-8 overflow-y-auto modern-scrollbar flex flex-col justify-between backdrop-blur-md shadow-lg">
-                        <div className="space-y-5 md:space-y-6 flex-1 flex flex-col justify-center max-w-4xl mx-auto w-full">
-                            <div className="flex justify-between items-start gap-4">
-                                <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider bg-zinc-900 border border-zinc-800 px-3 py-1 rounded-lg">
-                                    Question {currentIdx + 1} of {questions.length}
-                                </span>
+                {/* Left Side: Primary Question Workspace */}
+                <main className="flex-1 p-2.5 pt-0 flex flex-col overflow-hidden">
+                    {/* Upper Card: Question & MCQ options (Fills entire container) */}
+                    <div className="flex-1 bg-zinc-900/90 border-none rounded-xl p-6 md:p-8 overflow-y-auto modern-scrollbar flex flex-col justify-between backdrop-blur-md shadow-2xl">
+                        <div className="flex-1 flex flex-col justify-between w-full h-full">
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-start gap-4">
+                                    <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider bg-zinc-950 border-none px-3 py-1.5 rounded-md">
+                                        Question {currentIdx + 1} of {questions.length}
+                                    </span>
+                                </div>
+
+                                {/* Question Text */}
+                                <div className="max-h-[30vh] overflow-y-auto modern-scrollbar pr-2 select-text">
+                                    <h3 className={`leading-relaxed whitespace-pre-wrap text-white ${
+                                        activeQuestion.questionText.length > 120 || activeQuestion.questionText.includes('\n')
+                                            ? "text-base md:text-lg font-semibold"
+                                            : "text-xl md:text-2xl font-bold"
+                                    }`}>
+                                        {cleanQuestionText(activeQuestion.questionText)}
+                                    </h3>
+                                </div>
                             </div>
 
-                            {/* Question Text */}
-                            <div className="max-h-[25vh] overflow-y-auto modern-scrollbar pr-2 select-text">
-                                <h3 className={`leading-relaxed whitespace-pre-wrap text-white ${
-                                    activeQuestion.questionText.length > 120 || activeQuestion.questionText.includes('\n')
-                                        ? "text-sm md:text-base font-semibold"
-                                        : "text-lg md:text-xl font-bold"
-                                }`}>
-                                    {cleanQuestionText(activeQuestion.questionText)}
-                                </h3>
-                            </div>
-
-                            {/* MCQ Options Grid */}
-                            <div className="grid grid-cols-1 gap-4">
+                            {/* MCQ Options Grid (Expands to fill vertical height) */}
+                            <div className="grid grid-cols-1 gap-3.5 mt-6 flex-1 justify-center">
                                 {[
                                     { key: "A", val: activeQuestion.optionA },
                                     { key: "B", val: activeQuestion.optionB },
@@ -830,14 +851,14 @@ export default function LockdownExamPage() {
                                         <div
                                             key={opt.key}
                                             onClick={() => selectOption(activeQuestion.id, opt.key)}
-                                            className={`flex items-center gap-5 p-5 rounded-xl border cursor-pointer select-none transition-all ${
+                                            className={`flex items-center gap-4 px-5 py-4 min-h-[56px] rounded-lg border-none cursor-pointer select-none transition-all ${
                                                 selected 
-                                                    ? "bg-white/[0.04] border-white text-white font-bold text-lg" 
-                                                    : "bg-zinc-900/40 border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-white text-base"
+                                                    ? "bg-white/[0.08] text-white font-bold text-base md:text-lg shadow-sm" 
+                                                    : "bg-zinc-950/60 text-zinc-400 hover:text-white text-sm md:text-base"
                                             }`}
                                         >
-                                            <div className={`h-8 w-8 rounded-full border text-sm font-bold flex items-center justify-center shrink-0 transition-all ${
-                                                selected ? "bg-white text-black border-white" : "border-zinc-800 text-zinc-400"
+                                            <div className={`h-10 w-10 rounded-md border-none text-sm font-bold flex items-center justify-center shrink-0 transition-all ${
+                                                selected ? "bg-white text-black" : "bg-zinc-950 text-zinc-400"
                                             }`}>
                                                 {opt.key}
                                             </div>
@@ -849,23 +870,23 @@ export default function LockdownExamPage() {
                         </div>
                     </div>
 
-                    {/* Lower Card: Pagination and Mark for Review */}
-                    <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl px-8 py-5 flex justify-between items-center mt-4 backdrop-blur-md shadow-lg shrink-0">
+                    {/* Lower Card: Pagination and Mark for Review - Increased Height */}
+                    <div className="bg-zinc-900/90 border-none rounded-xl px-8 py-4 flex justify-between items-center mt-2.5 backdrop-blur-md shadow-2xl shrink-0 h-16">
                         <Button
                             onClick={() => setCurrentIdx(prev => Math.max(0, prev - 1))}
                             disabled={currentIdx === 0}
                             variant="outline"
-                            className="rounded-xl border border-zinc-800 bg-transparent text-white px-6 py-5 text-sm hover:bg-zinc-900 h-10 flex items-center justify-center gap-1.5"
+                            className="rounded-lg border-none bg-zinc-950 text-white px-6 py-3 text-sm hover:bg-zinc-800 h-11 flex items-center justify-center gap-1.5"
                         >
                             <ChevronLeft size={16} /> Previous
                         </Button>
 
                         <button
                             onClick={() => toggleFlag(activeQuestion.id)}
-                            className={`flex items-center gap-2 text-xs font-bold px-4 py-2.5 rounded-xl border transition-all ${
+                            className={`flex items-center gap-2 text-xs font-bold px-5 py-3 rounded-lg border-none transition-all ${
                                 isFlagged 
-                                    ? "bg-indigo-500/20 border-indigo-500/40 text-indigo-400" 
-                                    : "bg-[#161616] border-zinc-800 text-zinc-400 hover:text-white"
+                                    ? "bg-indigo-500/20 text-indigo-400" 
+                                    : "bg-zinc-950 text-zinc-400 hover:text-white"
                             }`}
                         >
                             <Flag size={14} fill={isFlagged ? "currentColor" : "none"} />
@@ -880,18 +901,18 @@ export default function LockdownExamPage() {
                                     handleManualSubmit()
                                 }
                             }}
-                            className="rounded-xl bg-white hover:bg-zinc-200 text-black font-semibold px-6 py-5 text-sm h-10 flex items-center justify-center gap-1.5"
+                            className="rounded-lg bg-white hover:bg-zinc-200 text-black font-semibold px-6 py-3 text-sm h-11 flex items-center justify-center gap-1.5 border-none"
                         >
                             {currentIdx === questions.length - 1 ? "Finish Attempt" : "Next"} <ChevronRight size={16} />
                         </Button>
                     </div>
                 </main>
 
-                {/* Right Side: Question Navigation Matrix as Floating Card */}
-                <aside className="w-96 p-4 shrink-0 flex flex-col hidden md:flex overflow-hidden">
-                    <div className="flex-1 bg-zinc-900/80 border border-zinc-800 rounded-2xl p-5 flex flex-col justify-between backdrop-blur-md shadow-lg overflow-hidden">
+                {/* Right Side: Question Navigation Matrix */}
+                <aside className="w-96 p-2.5 pl-0 pt-0 shrink-0 flex flex-col hidden md:flex overflow-hidden">
+                    <div className="flex-1 bg-zinc-900/90 border-none rounded-xl p-5 flex flex-col justify-between backdrop-blur-md shadow-2xl overflow-hidden">
                         <div className="space-y-4 flex-1 flex flex-col overflow-hidden">
-                            <h3 className="font-bold text-xs uppercase tracking-wider text-zinc-500 shrink-0">Questions Matrix</h3>
+                            <h3 className="font-bold text-xs uppercase tracking-wider text-zinc-400 shrink-0">Questions Matrix</h3>
                             <div className="grid grid-cols-5 gap-2 overflow-y-auto pr-1 flex-1 modern-scrollbar">
                                 {questions.map((q, idx) => {
                                     const isAnswered = !!answers[q.id]
@@ -899,15 +920,15 @@ export default function LockdownExamPage() {
                                     const isFlg = !!flags[q.id]
                                     const isVisited = !!visited[q.id]
 
-                                    let btnStyle = "bg-zinc-950 border-zinc-850 text-zinc-500"
+                                    let btnStyle = "bg-zinc-950 text-zinc-500"
                                     if (isCurr) {
-                                        btnStyle = "bg-white text-black border-white ring-2 ring-white/50"
+                                        btnStyle = "bg-white text-black shadow-md font-extrabold"
                                     } else if (isFlg) {
-                                        btnStyle = "bg-purple-600 border-purple-600 text-white font-bold"
+                                        btnStyle = "bg-purple-600 text-white font-bold"
                                     } else if (isAnswered) {
-                                        btnStyle = "bg-green-600 border-green-600 text-white font-bold"
+                                        btnStyle = "bg-emerald-600 text-white font-bold"
                                     } else if (isVisited) {
-                                        btnStyle = "bg-red-600 border-red-600 text-white font-bold"
+                                        btnStyle = "bg-red-600 text-white font-bold"
                                     }
 
                                     return (
@@ -915,7 +936,7 @@ export default function LockdownExamPage() {
                                             type="button"
                                             key={q.id}
                                             onClick={() => setCurrentIdx(idx)}
-                                            className={`h-12 w-12 text-sm font-bold rounded-lg border transition-all flex items-center justify-center ${btnStyle}`}
+                                            className={`h-12 w-12 text-sm font-bold rounded-lg border-none transition-all flex items-center justify-center ${btnStyle}`}
                                             title={`Question ${idx + 1}`}
                                         >
                                             {idx + 1}
@@ -926,21 +947,21 @@ export default function LockdownExamPage() {
                         </div>
 
                         {/* Legend */}
-                        <div className="border-t border-zinc-800/80 pt-4 mt-6 space-y-2 text-[10px] text-zinc-400">
+                        <div className="border-t border-zinc-800/40 pt-4 mt-6 space-y-2 text-[10px] text-zinc-400">
                             <div className="flex items-center gap-2">
-                                <span className="h-2.5 w-2.5 rounded-full bg-zinc-950 border border-zinc-850" /> Unvisited
+                                <span className="h-2.5 w-2.5 rounded-full bg-zinc-950" /> Unvisited
                             </div>
                             <div className="flex items-center gap-2">
-                                <span className="h-2.5 w-2.5 rounded-full bg-red-600 border border-red-600" /> Visited but Not Answered
+                                <span className="h-2.5 w-2.5 rounded-full bg-red-600" /> Visited but Not Answered
                             </div>
                             <div className="flex items-center gap-2">
-                                <span className="h-2.5 w-2.5 rounded-full bg-green-600 border border-green-600" /> Answered
+                                <span className="h-2.5 w-2.5 rounded-full bg-emerald-600" /> Answered
                             </div>
                             <div className="flex items-center gap-2">
-                                <span className="h-2.5 w-2.5 rounded-full bg-purple-600 border border-purple-600" /> Mark Review
+                                <span className="h-2.5 w-2.5 rounded-full bg-purple-600" /> Mark Review
                             </div>
                             <div className="flex items-center gap-2">
-                                <span className="h-2.5 w-2.5 rounded-full bg-white border border-white" /> Selected
+                                <span className="h-2.5 w-2.5 rounded-full bg-white" /> Selected
                             </div>
                         </div>
                     </div>
