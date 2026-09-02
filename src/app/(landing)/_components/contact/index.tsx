@@ -163,7 +163,7 @@ export const ContactSection = () => {
             <Button
               type="submit"
               disabled={loading}
-              className="mt-2 w-full rounded-2xl bg-white text-black hover:bg-zinc-200 transition-all font-semibold flex gap-2 items-center justify-center"
+              className="mt-2 w-full rounded-full bg-white text-black hover:bg-zinc-200 transition-all font-semibold flex gap-2 items-center justify-center"
             >
               {loading ? (
                 <>

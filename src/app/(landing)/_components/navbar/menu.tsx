@@ -15,16 +15,16 @@ const Menu = ({orientation}: MenuProps) => {
     switch (orientation) {
         case "desktop":
             return (
-                <Card className="bg-themeGrey border-themeGrey bg-clip-padding backdrop--blur_safari backdrop-filter backdrop-blur-2xl bg-opacity-60 p-1 lg:flex hidden rounded-xl">
-                    <CardContent className="p-0 flex gap-2">
+                <Card className="bg-themeGrey border-themeGrey bg-clip-padding backdrop--blur_safari backdrop-filter backdrop-blur-2xl bg-opacity-60 p-1 lg:flex hidden rounded-full items-center">
+                    <CardContent className="p-0 flex gap-1 items-center">
                         {PIONEER_CONSTANTS.LandingPageMenu.map((menuItem) => (
                             <Link
                                 key={menuItem.id}
                                 href={menuItem.path}
                                 onClick={menuItem.section ? () => onSetSection(menuItem.path) : undefined}
                                 className={cn(
-                                    "rounded-xl flex gap-2 py-3 px-3 items-center",
-                                    section == menuItem.path ? "bg-[#09090B] border-[#27272A]" : ""
+                                    "rounded-full flex gap-2 h-12 px-5 items-center text-base font-medium transition-all",
+                                    section == menuItem.path ? "bg-[#09090B] border border-[#27272A] text-white" : "text-zinc-300 hover:text-white"
                                 )}
                             >
                                 <>
@@ -38,15 +38,15 @@ const Menu = ({orientation}: MenuProps) => {
             )
         case "mobile":
             return (
-                <div className="flex flex-col mt-10">
+                <div className="flex flex-col mt-10 gap-1">
                     {PIONEER_CONSTANTS.LandingPageMenu.map((menuItem) => (
                         <Link
                             key={menuItem.id}
                             href={menuItem.path}
                             onClick={menuItem.section ? () => onSetSection(menuItem.path) : undefined}
                             className={cn(
-                                "rounded-xl flex gap-2 py-2 px-4 items-center",
-                                section == menuItem.path ? "bg-themeGrey border-[#27272A]" : ""
+                                "rounded-full flex gap-2 py-2 px-4 items-center text-base font-medium",
+                                section == menuItem.path ? "bg-themeGrey border border-[#27272A] text-white" : "text-zinc-400 hover:text-white"
                             )}
                         >
                             <>

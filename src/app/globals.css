@@ -360,3 +360,24 @@ aside[class*="border-"],
   animation: shimmer 1.6s infinite linear;
   border-radius: 0.75rem;
 }
+
+/* Hero section title reveal animation */
+@keyframes title-slide-reveal {
+  0% {
+    transform: translateY(110%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0%);
+    opacity: 1;
+  }
+}
+
+.animate-title-reveal {
+  display: inline-block;
+  will-change: transform, opacity;
+  opacity: 0;
+  animation: title-slide-reveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: 1.2s;
+}
+
